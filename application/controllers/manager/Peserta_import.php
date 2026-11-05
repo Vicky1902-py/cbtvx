@@ -31,92 +31,98 @@ class Peserta_import extends Member_Controller {
 	        $config['allowed_types'] = 'xls|xlsx';
 	        $config['max_size']	= '0';
 	        $config['overwrite'] = true;
-	        $config['file_name'] = $_FILES['userfile']['name'];
+	        $config['file_name'] = 'siswa_import_' . time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $_FILES['userfile']['name']);
 	            
 	        $this->load->library('upload', $config);
-            if (!$this->upload->do_upload()){
-            	$data['error_upload'] = $this->upload->display_errors().'Tipe file yang di upload adalah '.$_FILES['userfile']['type'];
+            if (!$this->upload->do_upload('userfile')){
+            	$data['error_upload'] = $this->upload->display_errors().' (Tipe file: '.$_FILES['userfile']['type'].')';
             }else{
             	$upload_data = $this->upload->data();
-                $data['filename'] = 'File '.$upload_data['file_name'].' BERHASIL di IMPORT';
+                $data['filename'] = 'File '.$upload_data['file_name'].' berhasil diunggah.';
                         
                 // disini proses import data
                 $data['hasil'] = $this->import_file($upload_data['file_name']);
             }   
                     
         }else{
-        	$data['error_upload'] = 'Pilih File yang akan di IMPORT';
+        	$data['error_upload'] = 'Pilih file Excel yang akan di-import';
         }
         
-        $this->template->display_admin($this->kelompok.'/peserta_import_view', 'Import Peserta', $data);
+        $this->template->display_admin($this->kelompok.'/peserta_import_view', 'Import Data Peserta', $data);
     }
 
     function import_file($inputfile){
         $this->load->library('excel');
         $inputFileName = './public/uploads/'.$inputfile;
 
-        $excel = PHPExcel_IOFactory::load($inputFileName);
+        try {
+            $excel = PHPExcel_IOFactory::load($inputFileName);
+        } catch (Exception $e) {
+            return '<div class="alert alert-danger" style="border-radius:10px;">Gagal membaca berkas Excel: '.$e->getMessage().'</div>';
+        }
+
         $worksheet = $excel->getSheet(0);
         $highestRow = $worksheet->getHighestRow();
-        $pesan='<div class="alert alert-info alert-dismissable">
+        $pesan = '<div class="alert alert-info alert-dismissible" style="border-radius:10px;">
                     <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
-                    <h4><i class="icon fa fa-info"></i> Informasi!</h4>';
+                    <h4><i class="icon fa fa-info-circle"></i> Hasil Import Peserta:</h4>';
         
-        if($highestRow>2){
-            $jmldatasukses=0;
-            $jmldataerror=0;
-            $row=2;
-            $kosong=0;
-            while($kosong<4){
-                $kosong=0;
-                $kolom1 = $worksheet->getCellByColumnAndRow(1, $row)->getValue();//username
-                $kolom2 = $worksheet->getCellByColumnAndRow(2, $row)->getValue();//password
-                $kolom3 = ucwords(addslashes($worksheet->getCellByColumnAndRow(3, $row)->getValue()));//nama
-                $kolom4 = $worksheet->getCellByColumnAndRow(4, $row)->getValue();//email
-                $kolom5 = $worksheet->getCellByColumnAndRow(5, $row)->getValue();//group
-				$kolom6 = $worksheet->getCellByColumnAndRow(6, $row)->getValue();//keterangan
-                
-                if(empty($kolom1)){ $kosong++; }
-                if(empty($kolom2)){ $kosong++; }
-                if(empty($kolom3)){ $kosong++; }
-                if(empty($kolom5)){ $kosong++; }
-                
-                if($kosong==0){
-                    if($this->cbt_user_grup_model->count_by_kolom('grup_nama', $kolom5)->row()->hasil>0){
-                    	if($this->cbt_user_model->count_by_kolom('user_name', $kolom1)->row()->hasil>0){
-                    		$pesan=$pesan.$kolom1.' - '.$kolom3.' sudah digunakan <br>';
-                        	$jmldataerror++;
-                    	}else{
-                    		$data['user_name'] = $kolom1;
-				            $data['user_password'] = $kolom2;
-				            $data['user_email'] = $kolom4;
-				            $data['user_firstname'] = $kolom3;
-				            $data['user_grup_id'] = $this->cbt_user_grup_model->get_by_kolom_limit('grup_nama', $kolom5, 1)->row()->grup_id;
-							$data['user_detail'] = $kolom6;
+        if($highestRow >= 2){
+            $jmldatasukses = 0;
+            $jmldataerror = 0;
+            $row = 2;
+            $kosong = 0;
+            while($kosong < 3 && $row <= $highestRow){
+                $kolom1 = trim((string)$worksheet->getCellByColumnAndRow(1, $row)->getValue()); // username / NISN
+                $kolom2 = trim((string)$worksheet->getCellByColumnAndRow(2, $row)->getValue()); // password
+                $kolom3 = trim(ucwords(addslashes((string)$worksheet->getCellByColumnAndRow(3, $row)->getValue()))); // nama
+                $kolom4 = trim((string)$worksheet->getCellByColumnAndRow(4, $row)->getValue()); // email
+                $kolom5 = trim((string)$worksheet->getCellByColumnAndRow(5, $row)->getValue()); // group / kelas
+				$kolom6 = trim((string)$worksheet->getCellByColumnAndRow(6, $row)->getValue()); // keterangan / ruang
 
-                    		$this->cbt_user_model->save($data);
-                    		$jmldatasukses++;
-                    	}
-                    }else{
-                        $pesan=$pesan.'Group "'.$kolom5.'" belum dibuat <br>';
+                if(empty($kolom1) && empty($kolom2) && empty($kolom3)){
+                    $kosong++;
+                    $row++;
+                    continue;
+                }
+                $kosong = 0;
+                
+                if(!empty($kolom1) && !empty($kolom2) && !empty($kolom3)){
+                    // Otomatis buat group jika belum ada
+                    if(empty($kolom5)){
+                        $kolom5 = 'SEMUA';
+                    }
+                    if($this->cbt_user_grup_model->count_by_kolom('grup_nama', $kolom5)->row()->hasil == 0){
+                        $this->cbt_user_grup_model->save(array('grup_nama' => $kolom5));
+                    }
+
+                    if($this->cbt_user_model->count_by_kolom('user_name', $kolom1)->row()->hasil > 0){
+                        $pesan .= 'Baris '.$row.': NISN/Username <b>'.$kolom1.'</b> ('.$kolom3.') sudah terdaftar, dilewati.<br>';
                         $jmldataerror++;
+                    }else{
+                        $grup_row = $this->cbt_user_grup_model->get_by_kolom_limit('grup_nama', $kolom5, 1)->row();
+                        $data_siswa['user_name'] = $kolom1;
+                        $data_siswa['user_password'] = $kolom2;
+                        $data_siswa['user_email'] = !empty($kolom4) ? $kolom4 : $kolom1.'@smkn1kupangbarat.sch.id';
+                        $data_siswa['user_firstname'] = $kolom3;
+                        $data_siswa['user_grup_id'] = $grup_row->grup_id;
+                        $data_siswa['user_detail'] = !empty($kolom6) ? $kolom6 : 'Ruang 1, Sesi 1';
+
+                        $this->cbt_user_model->save($data_siswa);
+                        $jmldatasukses++;
                     }
                 }else{
-                	if($kosong<4){
-                		$pesan=$pesan.'Baris ke  '.$row.' GAGAL di simpan : '.$kolom1.' - '.$kolom3.'<br>';
-                    	$jmldataerror++;
-                	}
+                    $pesan .= 'Baris '.$row.': Kolom NISN, Password, atau Nama kosong.<br>';
+                    $jmldataerror++;
                 }
                 
                 $row++;
             }
-            $pesan = $pesan.'<br>Jumlah data yang berhasil diimport adalah '.$jmldatasukses.'<br>
-                            Jumlah data yang gagal di dimport adalah '.$jmldataerror.'<br>
-                            Jumlah total baris yang diproses adalah '.($row-3).'<br>';
+            $pesan .= '<hr style="margin:10px 0;"><i class="fa fa-check text-green"></i> <b>Total Berhasil:</b> '.$jmldatasukses.' peserta.<br>
+                       <i class="fa fa-times text-red"></i> <b>Total Gagal / Dilewati:</b> '.$jmldataerror.' baris.</div>';
         }else{
-            $pesan = $pesan.'Tidak Ada Yang Berhasil Di IMPORT. Cek kembali file excel yang dikirim';
+            $pesan .= 'Tidak ada data peserta yang ditemukan pada file Excel. Cek kembali format berkas yang diunggah.</div>';
         }
-        $pesan = $pesan.'</div>';
         
         return $pesan;
     }

@@ -51,6 +51,9 @@
 							<i class="fa fa-print" style="margin-right: 6px;"></i> Buka & Cetak Kartu (Print)
 						</button>
 
+						<a href="<?php echo site_url(); ?>/manager/pengaturan_sekolah" class="btn btn-default" style="padding: 10px 18px; font-weight: 700; border-radius: 10px; border: 1.5px solid #0077b6; color: #0077b6;">
+							<i class="fa fa-university"></i> Atur Identitas Sekolah & Kop
+						</a>
 						<a href="<?php echo site_url(); ?>/manager/peserta_foto" class="btn btn-default" style="padding: 10px 20px; font-weight: 700; border-radius: 10px; border-color: #cbd5e1;">
 							<i class="fa fa-camera text-blue" style="margin-right: 6px;"></i> Kelola Foto Siswa (.ZIP)
 						</a>

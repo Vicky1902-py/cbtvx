@@ -197,13 +197,35 @@
                             </a>
                         </div>
                         <div class="col-sm-6 col-xs-12" style="margin-bottom: 12px;">
-                            <a href="<?php echo site_url(); ?>/manager/pengaturan_cbt" class="btn btn-block btn-default" style="text-align: left; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px;">
-                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #f1f5f9; color: #475569; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
-                                    <i class="fa fa-sliders"></i>
+                            <a href="<?php echo site_url(); ?>/manager/pengaturan_sekolah" class="btn btn-block btn-default" style="text-align: left; padding: 12px 16px; border-radius: 12px; border: 1.5px solid #0077b6; display: flex; align-items: center; gap: 12px; background: #f0f9ff;">
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #0077b6; color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                    <i class="fa fa-university"></i>
                                 </div>
                                 <div>
-                                    <div style="font-weight: 700; color: #001233; font-size: 13px;">Pengaturan CBT</div>
-                                    <div style="font-size: 11px; color: #64748b;">Identitas sekolah & pengumuman</div>
+                                    <div style="font-weight: 800; color: #0077b6; font-size: 13px;">Data Master Sekolah</div>
+                                    <div style="font-size: 11px; color: #64748b;">Identitas, Kepsek, Kop & Logo</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 col-xs-12" style="margin-bottom: 12px;">
+                            <a href="<?php echo site_url(); ?>/manager/peserta_import" class="btn btn-block btn-default" style="text-align: left; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #dcfce7; color: #059669; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                    <i class="fa fa-file-excel-o"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #001233; font-size: 13px;">Import Siswa (.xlsx)</div>
+                                    <div style="font-size: 11px; color: #64748b;">Unggah data peserta masal</div>
+                                </div>
+                            </a>
+                        </div>
+                        <div class="col-sm-6 col-xs-12" style="margin-bottom: 12px;">
+                            <a href="<?php echo site_url(); ?>/manager/useratur/import" class="btn btn-block btn-default" style="text-align: left; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 12px;">
+                                <div style="width: 36px; height: 36px; border-radius: 8px; background: #fef3c7; color: #d97706; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0;">
+                                    <i class="fa fa-user-plus"></i>
+                                </div>
+                                <div>
+                                    <div style="font-weight: 700; color: #001233; font-size: 13px;">Import Pengguna (.xlsx)</div>
+                                    <div style="font-size: 11px; color: #64748b;">Unggah akun Guru & Proktor</div>
                                 </div>
                             </a>
                         </div>

@@ -49,9 +49,9 @@ class Tes_evaluasi extends Member_Controller {
         $this->load->library('form_validation');
         
         $this->form_validation->set_rules('evaluasi-testlog-id', 'Soal','required|strip_tags');
-        $this->form_validation->set_rules('evaluasi-nilai-min', 'Nilai Minimal','required|decimal|strip_tags');
-        $this->form_validation->set_rules('evaluasi-nilai-max', 'Nilai Maximal','required|decimal|strip_tags');
-        $this->form_validation->set_rules('evaluasi-nilai', '','required|numeric|strip_tags');
+        $this->form_validation->set_rules('evaluasi-nilai-min', 'Nilai Minimal','required|numeric|strip_tags');
+        $this->form_validation->set_rules('evaluasi-nilai-max', 'Nilai Maximal','required|numeric|strip_tags');
+        $this->form_validation->set_rules('evaluasi-nilai', 'Nilai','required|numeric|strip_tags');
         
         if($this->form_validation->run() == TRUE){
             $nilai = $this->input->post('evaluasi-nilai', TRUE);
@@ -150,7 +150,17 @@ class Tes_evaluasi extends Member_Controller {
 			
 			$record[] = $jawaban;
 			
-            $record[] = '<a onclick="evaluasi(\''.$temp->tessoal_id.'\',\''.$temp->tes_score_wrong.'\',\''.$temp->tes_score_right.'\')" style="cursor: pointer;" class="btn btn-default btn-xs">Evaluasi</a>';
+			// Hitung total butir soal untuk menentukan skor maksimal esai
+			$total_soal_q = $this->cbt_tes_soal_model->count_by_kolom('tessoal_tesuser_id', $temp->tesuser_id);
+			$total_soal = ($total_soal_q->num_rows() > 0) ? intval($total_soal_q->row()->hasil) : 0;
+			$max_esai = $temp->tes_score_right;
+			if($total_soal == 25){
+				$max_esai = 10.0;
+			}else if($total_soal == 40){
+				$max_esai = 5.0;
+			}
+
+            $record[] = '<a onclick="evaluasi(\''.$temp->tessoal_id.'\',\''.$temp->tes_score_wrong.'\',\''.$max_esai.'\')" style="cursor: pointer;" class="btn btn-primary btn-xs"><i class="fa fa-pencil"></i> Beri Nilai (Maks '.$max_esai.')</a>';
             
 
 			$output['aaData'][] = $record;

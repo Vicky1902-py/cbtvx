@@ -41,6 +41,7 @@
                     <div class="box-header with-border">
     						<div class="box-title">Daftar Peserta</div>
     						<div class="box-tools pull-right">
+                                <a href="<?php echo site_url(); ?>/manager/peserta_import" class="btn btn-xs btn-success" style="margin-right: 4px;"><i class="fa fa-file-excel-o"></i> Import Siswa (.xlsx)</a>
                                 <a href="<?php echo site_url(); ?>/manager/peserta_foto" class="btn btn-xs btn-default" style="margin-right: 4px;"><i class="fa fa-camera text-blue"></i> Upload Foto (.ZIP)</a>
                                 <a href="<?php echo site_url(); ?>/manager/peserta_kartu" class="btn btn-xs btn-default" style="margin-right: 4px;"><i class="fa fa-print text-green"></i> Cetak Kartu</a>
                                 <a class="btn btn-xs btn-primary" style="cursor: pointer;" onclick="tambah()"><i class="fa fa-plus"></i> Tambah Peserta</a>

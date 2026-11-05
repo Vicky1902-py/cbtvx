@@ -46,6 +46,9 @@ class Useratur extends Member_Controller {
             $data['level_opsi'] = $level_opsi; 
             
             $this->template->display_admin('pengaturan/user/add_view', 'Tambah User', $data);
+        }else if($page=="import"){
+            $this->import();
+            return;
         }else if($page=="edit"){
             parent::cek_akses_crud($data['kode_menu'], 1);
             $this->load->helper('form');
@@ -341,4 +344,108 @@ class Useratur extends Member_Controller {
 
 		return $sort_dir;
 	}
+
+    public function import(){
+        $data['kode_menu'] = 'user_atur';
+        $data['url'] = $this->url;
+
+        parent::cek_akses_crud($data['kode_menu'], 0);
+        $this->load->helper('form');
+        $this->load->library('form_validation');
+
+        $data['error'] = '';
+        $data['error_upload'] = '';
+
+        if(!empty($_FILES['userfile']['name'])){
+            $config['upload_path'] = './public/uploads/';
+            $config['allowed_types'] = 'xls|xlsx';
+            $config['max_size'] = '0';
+            $config['overwrite'] = true;
+            $config['file_name'] = 'user_import_' . time() . '_' . preg_replace('/[^a-zA-Z0-9_\.]/', '', $_FILES['userfile']['name']);
+
+            $this->load->library('upload', $config);
+            if (!$this->upload->do_upload('userfile')){
+                $data['error_upload'] = $this->upload->display_errors().' (Tipe file: '.$_FILES['userfile']['type'].')';
+            }else{
+                $upload_data = $this->upload->data();
+                $data['filename'] = 'File '.$upload_data['file_name'].' berhasil diunggah.';
+                $data['hasil'] = $this->import_user_file($upload_data['file_name']);
+            }
+        }
+
+        $this->template->display_admin('pengaturan/user/import_view', 'Import Data Pengguna', $data);
+    }
+
+    private function import_user_file($inputfile){
+        $this->load->library('excel');
+        $inputFileName = './public/uploads/'.$inputfile;
+
+        try {
+            $excel = PHPExcel_IOFactory::load($inputFileName);
+        } catch (Exception $e) {
+            return '<div class="alert alert-danger">Gagal membaca berkas Excel: '.$e->getMessage().'</div>';
+        }
+
+        $worksheet = $excel->getSheet(0);
+        $highestRow = $worksheet->getHighestRow();
+        $pesan = '<div class="alert alert-info alert-dismissible" style="border-radius:10px;">
+                    <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                    <h4><i class="icon fa fa-info-circle"></i> Hasil Import Pengguna:</h4>';
+
+        if($highestRow > 1){
+            $jmldatasukses = 0;
+            $jmldataerror = 0;
+            $row = 2;
+            $kosong = 0;
+            while($kosong < 3 && $row <= $highestRow){
+                $kolom1 = trim((string)$worksheet->getCellByColumnAndRow(1, $row)->getValue()); // username
+                $kolom2 = trim((string)$worksheet->getCellByColumnAndRow(2, $row)->getValue()); // password
+                $kolom3 = trim((string)$worksheet->getCellByColumnAndRow(3, $row)->getValue()); // nama
+                $kolom4 = trim((string)$worksheet->getCellByColumnAndRow(4, $row)->getValue()); // level
+                $kolom5 = trim((string)$worksheet->getCellByColumnAndRow(5, $row)->getValue()); // opsi1
+                $kolom6 = trim((string)$worksheet->getCellByColumnAndRow(6, $row)->getValue()); // keterangan
+
+                if(empty($kolom1) && empty($kolom2) && empty($kolom3)){
+                    $kosong++;
+                    $row++;
+                    continue;
+                }
+                $kosong = 0;
+
+                if(!empty($kolom1) && !empty($kolom2) && !empty($kolom3)){
+                    if($this->users_model->get_login_info($kolom1)){
+                        $pesan .= 'Baris '.$row.': Username <b>'.$kolom1.'</b> ('.$kolom3.') sudah terdaftar, dilewati.<br>';
+                        $jmldataerror++;
+                    }else{
+                        $lvl = !empty($kolom4) ? strtolower($kolom4) : 'guru';
+                        if(!in_array($lvl, array('admin', 'guru', 'operator'))){
+                            $lvl = 'guru';
+                        }
+                        $data_user = array(
+                            'username' => $kolom1,
+                            'password' => sha1($kolom2),
+                            'nama' => $kolom3,
+                            'level' => $lvl,
+                            'opsi1' => $kolom5,
+                            'opsi2' => '',
+                            'keterangan' => $kolom6
+                        );
+                        $this->users_model->save($data_user);
+                        $jmldatasukses++;
+                    }
+                }else{
+                    $pesan .= 'Baris '.$row.': Kolom Username, Password, atau Nama kosong.<br>';
+                    $jmldataerror++;
+                }
+
+                $row++;
+            }
+            $pesan .= '<hr style="margin:10px 0;"><i class="fa fa-check text-green"></i> <b>Total Berhasil:</b> '.$jmldatasukses.' pengguna.<br>
+                       <i class="fa fa-times text-red"></i> <b>Total Gagal / Dilewati:</b> '.$jmldataerror.' baris.</div>';
+        }else{
+            $pesan .= 'Tidak ada data pengguna yang ditemukan di lembar Excel.</div>';
+        }
+
+        return $pesan;
+    }
 }

@@ -163,11 +163,33 @@ class Tes_kerjakan extends Tes_Controller {
                     // Memulai transaction mysql
                     $this->db->trans_start();
 
+                    // Mendapatkan data konfigurasi tes
+                    $query_tes = $this->cbt_tes_model->get_by_kolom_limit('tes_id', $tes_id, 1)->row();
+
+                    // Hitung total butir soal yang diujikan pada sesi siswa ini
+                    $total_soal_q = $this->cbt_tes_soal_model->count_by_kolom('tessoal_tesuser_id', $tes_user_id);
+                    $total_soal = ($total_soal_q->num_rows() > 0) ? intval($total_soal_q->row()->hasil) : 0;
+
+                    // Aturan bobot nilai SMKN 1 Kupang Barat Standar 100 Poin
+                    $poin_benar = $query_tes->tes_score_right;
+                    if($total_soal == 25){
+                        // Paket 25 Soal: Benar/Salah 5 no @ 4 (tot 20), PG 15 no @ 2 (tot 30), Uraian 5 no @ 10 (tot 50) => Total 100
+                        if($query_soal->soal_tipe == 4){
+                            $poin_benar = 4.0;
+                        }else if($query_soal->soal_tipe == 1 || $query_soal->soal_tipe == 3){
+                            $poin_benar = 2.0;
+                        }
+                    }else if($total_soal == 40){
+                        // Paket 40 Soal: Benar/Salah 10 no @ 1 (tot 10), PG 20 no @ 2 (tot 40), Uraian 10 no @ 5 (tot 50) => Total 100
+                        if($query_soal->soal_tipe == 4){
+                            $poin_benar = 1.0;
+                        }else if($query_soal->soal_tipe == 1 || $query_soal->soal_tipe == 3){
+                            $poin_benar = 2.0;
+                        }
+                    }
+
                     // Mengecek jenis soal
                     if($query_soal->soal_tipe==1 || $query_soal->soal_tipe==4){
-                        // Mendapatkan data tes
-                        $query_tes = $this->cbt_tes_model->get_by_kolom_limit('tes_id', $tes_id, 1)->row();
-
                         // Mendapatkan data jawaban
                         $query_jawaban = $this->cbt_tes_soal_jawaban_model->get_by_tessoal_answer($tes_soal_id, $jawaban)->row();
 
@@ -178,9 +200,9 @@ class Tes_kerjakan extends Tes_Controller {
                         $data_jawaban['soaljawaban_selected']=0;
                         $this->cbt_tes_soal_jawaban_model->update_by_tessoal_answer_salah($tes_soal_id, $jawaban, $data_jawaban);
 
-                        // Mengupdate score, change time jika pilihan benar (Null check safe)
+                        // Mengupdate score, change time jika pilihan benar (Null check safe & Standard Bobot 100)
                         if(!empty($query_jawaban) && isset($query_jawaban->jawaban_benar) && $query_jawaban->jawaban_benar == 1){
-                            $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_right;
+                            $data_tes_soal['tessoal_nilai'] = $poin_benar;
                         }else{
                             $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_wrong;
                         }
@@ -201,13 +223,10 @@ class Tes_kerjakan extends Tes_Controller {
                         $status['nomor_soal'] = $tes_soal_nomor;
                         $status['pesan'] = 'Jawaban yang dimasukkan berhasil disimpan';
                     }else if($query_soal->soal_tipe==3){
-                        // Mendapatkan data tes
-                        $query_tes = $this->cbt_tes_model->get_by_kolom_limit('tes_id', $tes_id, 1)->row();
-                        
-                        // Mengupdate change time, dan jawaban essay
+                        // Mengupdate change time, dan jawaban isian singkat
                         $data_tes_soal['tessoal_jawaban_text'] = $jawaban;
-                        if(strtoupper($query_soal->soal_kunci)==strtoupper($jawaban)){
-                            $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_right;
+                        if(strtoupper(trim($query_soal->soal_kunci)) == strtoupper(trim($jawaban))){
+                            $data_tes_soal['tessoal_nilai'] = $poin_benar;
                         }else{
                             $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_wrong;
                         }

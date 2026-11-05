@@ -329,8 +329,14 @@ class Tes_tambah extends Member_Controller {
             if($query_tes->num_rows()>0){
                 $query_tes = $query_tes->row();
                 $query_soal = $this->cbt_tes_topik_set_model->get_by_kolom('tset_tes_id', $tes_id)->result();
+                $total_butir = 0;
                 foreach ($query_soal as $soal) {
+                    $total_butir += intval($soal->tset_jumlah);
                     $max_score = $max_score+($soal->tset_jumlah*$query_tes->tes_score_right);
+                }
+                // Jika total soal sesuai paket standar asesmen 25 atau 40 soal, skor maksimal selalu 100
+                if($total_butir == 25 || $total_butir == 40){
+                    $max_score = 100.0;
                 }
             }
         }

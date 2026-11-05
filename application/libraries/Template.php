@@ -19,8 +19,12 @@ class Template{
 	}
 
 	public function get_sekolah_info(){
+		$nama_sekolah = $this->get_config_val('sekolah_nama', '');
+		if(empty($nama_sekolah) || stripos($nama_sekolah, 'COMPUTER BASED') !== false || stripos($nama_sekolah, 'ZYA') !== false || strtoupper($nama_sekolah) === 'DEFAULT'){
+			$nama_sekolah = 'SMK NEGERI 1 KUPANG BARAT';
+		}
 		return array(
-			'nama' => $this->get_config_val('sekolah_nama', $this->get_config_val('cbt_nama', 'SMK NEGERI 1 KUPANG BARAT')),
+			'nama' => $nama_sekolah,
 			'provinsi' => $this->get_config_val('sekolah_provinsi', 'PEMERINTAH PROVINSI NUSA TENGGARA TIMUR'),
 			'dinas' => $this->get_config_val('sekolah_dinas', 'DINAS PENDIDIKAN DAN KEBUDAYAAN'),
 			'alamat' => $this->get_config_val('sekolah_alamat', 'Jln. Jurusan Batakte - Kuanheun, Desa Kuanheun'),
