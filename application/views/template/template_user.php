@@ -2,23 +2,24 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8">
-    <title><?php if(!empty($site_name)){ echo $site_name; } ?> | <?php echo $title; ?></title>
-    <!-- Responsive meta -->
-    <meta content='width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes' name='viewport'>
-    <meta name="description" content="Aplikasi CBT Modern Standar TKA Kemdikbud oleh Vicky Koroh">
-    <meta name="keywords" content="CBT, TKA Kemdikbud, Ujian Online, Vicky Koroh">
+    <title><?php if(!empty($site_name)){ echo $site_name; }else{ echo 'SMKN 1 Kupang Barat'; } ?> | <?php echo $title; ?></title>
+    <!-- Viewport responsive mobile first -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, shrink-to-fit=no, user-scalable=yes">
+    <meta name="description" content="Aplikasi CBT Modern Standar TKA Pusmendik Kemdikbud - SMK Negeri 1 Kupang Barat oleh Vicky Koroh">
     <meta name="author" content="Vicky Koroh">
+
+    <!-- Favicon SMKN 1 Kupang Barat -->
+    <link rel="icon" type="image/png" href="<?php echo base_url(); ?>public/images/favicon.png">
+    <link rel="shortcut icon" href="<?php echo base_url(); ?>public/images/favicon.png">
 
     <!-- Bootstrap 3.3.4 & Font Awesome -->
     <link href="<?php echo base_url(); ?>public/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url(); ?>public/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
-    
-    <!-- Theme style -->
     <link href="<?php echo base_url(); ?>public/plugins/adminlte/css/AdminLTE.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url(); ?>public/plugins/adminlte/css/skins/_all-skins.min.css" rel="stylesheet" type="text/css" />
     <link href="<?php echo base_url(); ?>public/plugins/iCheck/square/blue.css" rel="stylesheet" type="text/css" />
 
-    <!-- Google Fonts: Inter & Plus Jakarta Sans -->
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- KaTeX Offline Math Engine by Vicky Koroh -->
@@ -33,21 +34,41 @@
     <script src="<?php echo base_url(); ?>public/plugins/iCheck/icheck.min.js" type="text/javascript"></script>
     <script src="<?php echo base_url(); ?>public/app.js" type="text/javascript"></script>
 
-    <!-- Modern Motion & Styling System by Vicky Koroh -->
+    <!-- SMKN 1 Kupang Barat Blue Design System & Ultra-Responsive Motion -->
     <style type="text/css">
+      :root {
+        --smk-blue-primary: #0077b6;
+        --smk-blue-vibrant: #0096c7;
+        --smk-blue-cyan: #00b4d8;
+        --smk-blue-sky: #90e0ef;
+        --smk-blue-dark: #03045e;
+        --smk-blue-navy: #001233;
+        --smk-yellow: #ffb703;
+        --smk-red: #ef233c;
+      }
+
       * {
         font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
         -webkit-font-smoothing: antialiased;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        overflow-x: hidden;
+        width: 100%;
+        min-height: 100vh;
       }
 
       body {
-        background-color: #0b1329 !important;
-        background: radial-gradient(circle at 10% 20%, rgba(37, 99, 235, 0.15) 0%, transparent 40%),
-                    radial-gradient(circle at 90% 80%, rgba(14, 165, 233, 0.12) 0%, transparent 45%),
-                    radial-gradient(circle at 50% 50%, rgba(30, 58, 138, 0.2) 0%, transparent 60%),
-                    #070d1e !important;
+        background-color: var(--smk-blue-navy) !important;
+        background: radial-gradient(circle at 15% 15%, rgba(0, 180, 216, 0.22) 0%, transparent 45%),
+                    radial-gradient(circle at 85% 85%, rgba(0, 119, 182, 0.25) 0%, transparent 50%),
+                    radial-gradient(circle at 50% 50%, rgba(3, 4, 94, 0.6) 0%, transparent 70%),
+                    #020b1e !important;
         min-height: 100vh;
-        color: #1e293b;
+        color: #f1f5f9;
+        margin: 0;
+        padding: 0;
       }
 
       .wrapper {
@@ -55,80 +76,83 @@
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+        width: 100%;
       }
 
-      /* Modern Glassmorphic Top Navigation */
-      .cbt-modern-nav {
-        background: rgba(15, 23, 42, 0.75) !important;
+      /* Navbar SMKN 1 Kupang Barat */
+      .smk-header-nav {
+        background: rgba(3, 18, 48, 0.85) !important;
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 12px 0;
+        border-bottom: 2px solid rgba(0, 180, 216, 0.35);
+        padding: 10px 0;
         position: sticky;
         top: 0;
         z-index: 1000;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.35);
       }
 
-      .cbt-brand {
-        display: inline-flex;
+      .smk-brand-wrapper {
+        display: flex;
         align-items: center;
         gap: 12px;
         text-decoration: none !important;
       }
 
-      .cbt-brand-icon {
-        width: 38px;
-        height: 38px;
-        border-radius: 10px;
-        background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-size: 18px;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      .smk-logo-img {
+        width: 44px;
+        height: 44px;
+        object-fit: contain;
+        filter: drop-shadow(0 3px 8px rgba(0, 180, 216, 0.45));
+        transition: transform 0.25s ease;
       }
 
-      .cbt-brand-text {
+      .smk-brand-wrapper:hover .smk-logo-img {
+        transform: scale(1.06);
+      }
+
+      .smk-title-main {
         font-size: 16px;
         font-weight: 800;
-        letter-spacing: -0.3px;
         color: #ffffff;
         margin: 0;
+        letter-spacing: -0.2px;
+        line-height: 1.2;
       }
 
-      .cbt-brand-sub {
+      .smk-subtitle {
         font-size: 11px;
-        font-weight: 600;
-        color: #94a3b8;
-        letter-spacing: 0.3px;
+        font-weight: 700;
+        color: var(--smk-blue-cyan);
+        letter-spacing: 0.6px;
+        margin-top: 2px;
         text-transform: uppercase;
       }
 
-      .cbt-clock-pill {
+      .smk-time-pill {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        background: rgba(255, 255, 255, 0.08);
-        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 180, 216, 0.12);
+        border: 1px solid rgba(0, 180, 216, 0.3);
         padding: 6px 14px;
         border-radius: 20px;
-        color: #e2e8f0;
-        font-size: 13px;
+        color: #e0f2fe;
+        font-size: 12px;
         font-weight: 600;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
       }
 
-      .pulse-dot {
+      .pulse-indicator {
         width: 8px;
         height: 8px;
         border-radius: 50%;
         background-color: #10b981;
         box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-        animation: pulse 1.8s infinite;
+        animation: pulseEffect 2s infinite;
       }
 
-      @keyframes pulse {
+      @keyframes pulseEffect {
         0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
         70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
@@ -138,15 +162,16 @@
       .content-wrapper {
         background: transparent !important;
         flex: 1;
-        padding-top: 25px;
-        padding-bottom: 40px;
+        padding-top: 20px;
+        padding-bottom: 35px;
+        width: 100%;
       }
 
-      /* Animations */
-      @keyframes fadeInUp {
+      /* Entrance Animation */
+      @keyframes fadeInUpSmooth {
         from {
           opacity: 0;
-          transform: translateY(20px);
+          transform: translateY(16px);
         }
         to {
           opacity: 1;
@@ -154,36 +179,53 @@
         }
       }
 
-      .cbt-card-animated {
-        animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      .smk-animated-box {
+        animation: fadeInUpSmooth 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
-      /* Modern Footer */
-      .cbt-modern-footer {
-        background: rgba(11, 19, 41, 0.95);
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        padding: 20px 0;
+      /* Footer */
+      .smk-footer {
+        background: rgba(2, 8, 24, 0.96);
+        border-top: 1px solid rgba(0, 180, 216, 0.2);
+        padding: 16px 0;
         color: #94a3b8;
-        font-size: 13px;
+        font-size: 12px;
         margin-top: auto;
       }
 
-      .cbt-modern-footer a {
-        color: #38bdf8;
-        text-decoration: none;
-        font-weight: 600;
-        transition: color 0.2s ease;
-      }
-
-      .cbt-modern-footer a:hover {
-        color: #7dd3fc;
-        text-decoration: underline;
-      }
-
-      /* Responsive Adjustments */
+      /* Responsive Rules */
       @media (max-width: 768px) {
-        .cbt-clock-pill {
+        .smk-header-nav {
+          padding: 8px 0;
+        }
+        .smk-logo-img {
+          width: 36px;
+          height: 36px;
+        }
+        .smk-title-main {
+          font-size: 14px;
+        }
+        .smk-subtitle {
+          font-size: 10px;
+        }
+        .smk-time-pill {
+          padding: 4px 10px;
+          font-size: 11px;
+        }
+        .smk-time-label {
           display: none;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .smk-title-main {
+          font-size: 13px;
+        }
+        .smk-subtitle {
+          display: none;
+        }
+        .smk-time-pill {
+          font-size: 10.5px;
         }
       }
     </style>
@@ -211,23 +253,21 @@
 
   <body>
     <div class="wrapper">
-      <!-- Modern Glassmorphic Topbar -->
-      <nav class="cbt-modern-nav">
+      <!-- Navbar SMK Negeri 1 Kupang Barat -->
+      <nav class="smk-header-nav">
         <div class="container">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
-            <a href="<?php echo base_url(); ?>" class="cbt-brand">
-              <div class="cbt-brand-icon">
-                <i class="fa fa-graduation-cap"></i>
-              </div>
+          <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <a href="<?php echo base_url(); ?>" class="smk-brand-wrapper">
+              <img src="<?php echo base_url(); ?>public/images/logo_smk.png" alt="Logo SMKN 1 Kupang Barat" class="smk-logo-img" />
               <div>
-                <h1 class="cbt-brand-text"><?php if(!empty($site_name)){ echo $site_name; }else{ echo 'CBT STANDAR TKA'; } ?></h1>
-                <div class="cbt-brand-sub">PUSMENDIK KEMDIKBUD • VICKY KOROH</div>
+                <h1 class="smk-title-main">SMKN 1 KUPANG BARAT</h1>
+                <div class="smk-subtitle">CBT MODERN STANDAR TKA PUSMENDIK</div>
               </div>
             </a>
 
-            <div class="cbt-clock-pill">
-              <span class="pulse-dot"></span>
-              <span>WAKTU SERVER:</span>
+            <div class="smk-time-pill">
+              <span class="pulse-indicator"></span>
+              <span class="smk-time-label">SERVER:</span>
               <span id="timestamp" style="font-family: monospace; font-weight: 700; color: #38bdf8;">--:--:--</span>
             </div>
           </div>
@@ -244,21 +284,21 @@
       </div>
 
       <!-- Modern Footer with Vicky Koroh Copyright -->
-      <footer class="cbt-modern-footer">
+      <footer class="smk-footer">
         <div class="container">
           <div class="row" style="align-items: center;">
-            <div class="col-sm-6 text-left">
+            <div class="col-sm-7 col-xs-12 text-left" style="margin-bottom: 6px;">
               <strong>Hak Cipta &copy; <?php echo date('Y'); ?> Vicky Koroh. All rights reserved.</strong>
-              <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
-                Aplikasi CBT Modern Standar TKA Kemdikbud (Pilihan Ganda, Benar/Salah, Uraian & Formula LaTeX)
+              <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                Aplikasi CBT Modern Standar TKA Kemdikbud &bull; SMK Negeri 1 Kupang Barat
               </div>
             </div>
-            <div class="col-sm-6 text-right" style="margin-top: 6px;">
+            <div class="col-sm-5 col-xs-12 text-right">
               <?php
                 if(!empty($link_login_operator) && $link_login_operator=='ya'){
-                  echo '<a href="'.site_url().'/manager/" class="btn btn-xs btn-default" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #cbd5e1;"><i class="fa fa-user-secret"></i> Portal Operator / Admin</a>';
+                  echo '<a href="'.site_url().'/manager/" class="btn btn-xs btn-default" style="background: rgba(0, 180, 216, 0.15); border-color: rgba(0, 180, 216, 0.3); color: #38bdf8; font-weight: 600;"><i class="fa fa-user-secret"></i> Portal Operator / Admin</a>';
                 } else {
-                  echo '<a href="'.base_url().'" class="btn btn-xs btn-default" style="background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.15); color: #cbd5e1;"><i class="fa fa-home"></i> Halaman Utama Peserta</a>';
+                  echo '<a href="'.base_url().'" class="btn btn-xs btn-default" style="background: rgba(0, 180, 216, 0.15); border-color: rgba(0, 180, 216, 0.3); color: #38bdf8; font-weight: 600;"><i class="fa fa-home"></i> Halaman Utama Peserta</a>';
                 }
               ?>
             </div>
@@ -269,19 +309,19 @@
 
     <!-- Modal Loading Global Modern -->
     <div class="modal fade" id="modal-proses" data-backdrop="static" tabindex="-1" role="dialog">
-      <div class="modal-dialog modal-sm" style="margin-top: 18vh;">
-        <div class="modal-content" style="border-radius: 18px; border: none; background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(12px); color: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
-          <div class="modal-body text-center" style="padding: 30px 20px;">
-            <div style="width: 48px; height: 48px; border: 4px solid rgba(56, 189, 248, 0.2); border-top-color: #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px auto;"></div>
-            <h4 style="font-weight: 700; margin: 0 0 6px 0; font-size: 16px;">Memproses Data</h4>
-            <p style="margin: 0; font-size: 13px; color: #94a3b8;">Mohon tunggu beberapa saat...</p>
+      <div class="modal-dialog modal-sm" style="margin: 20vh auto 0 auto; max-width: 320px; width: 90%;">
+        <div class="modal-content" style="border-radius: 18px; border: 1px solid rgba(0, 180, 216, 0.3); background: rgba(3, 18, 48, 0.95); backdrop-filter: blur(16px); color: #ffffff; box-shadow: 0 20px 40px rgba(0,0,0,0.6);">
+          <div class="modal-body text-center" style="padding: 28px 20px;">
+            <div style="width: 44px; height: 44px; border: 4px solid rgba(0, 180, 216, 0.2); border-top-color: #00b4d8; border-radius: 50%; animation: spinLoader 0.8s linear infinite; margin: 0 auto 14px auto;"></div>
+            <h4 style="font-weight: 700; margin: 0 0 6px 0; font-size: 15px;">Sedang Memproses...</h4>
+            <p style="margin: 0; font-size: 12px; color: #94a3b8;">Mohon tunggu beberapa saat</p>
           </div>
         </div>
       </div>
     </div>
 
     <style>
-      @keyframes spin {
+      @keyframes spinLoader {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
       }

@@ -2,12 +2,15 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title><?php if(!empty($site_name)){ echo $site_name; } ?> | <?php echo $title; ?></title>
-    <!-- Tell the browser to be responsive to screen width -->
-    <meta content='width=device-width, initial-scale=1, maximum-scale=10, user-scalable=yes' name='viewport'>
-	<meta name="description" content="CBT Modern Standar TKA Kemdikbud oleh Vicky Koroh">
-	<meta name="keywords" content="CBT, TKA Kemdikbud, Ujian Online, Vicky Koroh">
+    <title><?php if(!empty($site_name)){ echo $site_name; }else{ echo 'SMKN 1 Kupang Barat'; } ?> | <?php echo $title; ?></title>
+    <!-- Viewport responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, shrink-to-fit=no, user-scalable=yes">
+	<meta name="description" content="CBT Modern Standar TKA Kemdikbud - SMK Negeri 1 Kupang Barat oleh Vicky Koroh">
 	<meta name="author" content="Vicky Koroh">
+
+    <!-- Favicon SMKN 1 Kupang Barat -->
+    <link rel="icon" type="image/png" href="<?php echo base_url(); ?>public/images/favicon.png">
+    <link rel="shortcut icon" href="<?php echo base_url(); ?>public/images/favicon.png">
     <!-- Bootstrap 3.3.4 -->
     <link href="<?php echo base_url(); ?>public/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
     <!-- Font Awesome Icons -->
@@ -172,37 +175,37 @@
         animation: fadeInUpModern 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
-      /* Header Navbar: Glassmorphic Navy */
+      /* Header Navbar: SMKN 1 Kupang Barat Deep Blue */
       .skin-green .main-header .navbar {
-        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.15);
+        background: linear-gradient(135deg, #03045e 0%, #0077b6 100%) !important;
+        border-bottom: 2px solid rgba(0, 180, 216, 0.3);
+        box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.25);
       }
       .skin-green .main-header .logo {
-        background: #0b1329 !important;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        background: #001233 !important;
+        border-bottom: 2px solid rgba(0, 180, 216, 0.3);
         font-weight: 800;
-        letter-spacing: 0.8px;
+        letter-spacing: 0.5px;
         transition: all 0.25s ease;
       }
       .skin-green .main-header .logo:hover {
-        background: #0284c7 !important;
+        background: #0077b6 !important;
       }
       .main-header .sidebar-toggle {
         transition: all 0.2s ease;
       }
       .main-header .sidebar-toggle:hover {
-        background: rgba(255, 255, 255, 0.1) !important;
+        background: rgba(0, 180, 216, 0.2) !important;
       }
 
-      /* Sidebar: Sleek Dark Slate */
+      /* Sidebar: Deep Navy SMK */
       .skin-green .main-sidebar, .skin-green .left-side {
-        background-color: #0b1329 !important;
-        box-shadow: 2px 0 16px rgba(0, 0, 0, 0.12);
+        background-color: #001233 !important;
+        box-shadow: 2px 0 16px rgba(0, 0, 0, 0.2);
       }
       .sidebar-menu > li.header {
         background: transparent !important;
-        color: #64748b !important;
+        color: #00b4d8 !important;
         font-size: 11px !important;
         font-weight: 700 !important;
         letter-spacing: 1px !important;
@@ -218,21 +221,22 @@
         transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1) !important;
       }
       .sidebar-menu > li > a:hover {
-        background: rgba(255, 255, 255, 0.06) !important;
+        background: rgba(0, 180, 216, 0.12) !important;
         color: #ffffff !important;
         transform: translateX(4px);
       }
       .sidebar-menu > li.active > a, .sidebar-menu > li.menu-open > a {
-        background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+        background: linear-gradient(135deg, #0077b6, #00b4d8) !important;
         color: #ffffff !important;
         font-weight: 700 !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35) !important;
+        box-shadow: 0 4px 14px rgba(0, 180, 216, 0.4) !important;
       }
       .treeview-menu {
-        background: rgba(15, 23, 42, 0.6) !important;
+        background: rgba(3, 18, 48, 0.8) !important;
         padding: 4px 0 !important;
         border-radius: 8px;
         margin: 2px 12px !important;
+      }
       }
       .treeview-menu > li > a {
         border-radius: 6px !important;
@@ -422,9 +426,9 @@
         <!-- Logo -->
         <a href="<?php echo site_url(); ?>/manager" class="logo">
           <!-- mini logo for sidebar mini 50x50 pixels -->
-          <span class="logo-mini"><b>TKA</b></span>
+          <span class="logo-mini"><img src="<?php echo base_url(); ?>public/images/logo_smk.png" style="width: 28px; height: 28px; object-fit: contain;" /></span>
           <!-- logo for regular state and mobile devices -->
-          <span class="logo-lg"><i class="fa fa-graduation-cap"></i> <b>CBT TKA</b> MODERN</span>
+          <span class="logo-lg"><img src="<?php echo base_url(); ?>public/images/logo_smk.png" style="width: 28px; height: 28px; object-fit: contain; margin-right: 6px; vertical-align: middle;" /> <b>SMKN 1</b> KUPANG BARAT</span>
         </a>
 
         <!-- Header Navbar: style can be found in header.less -->
@@ -472,14 +476,13 @@
         <!-- sidebar: style can be found in sidebar.less -->
         <section class="sidebar">
           <!-- Sidebar user panel -->
-          <div class="user-panel">
+          <div class="user-panel" style="padding: 14px 15px; border-bottom: 1px solid rgba(0, 180, 216, 0.15);">
             <div class="pull-left image">
-              <img src="<?php echo base_url(); ?>public/plugins/adminlte/img/avatar04.png" class="img-circle" alt="User Image" />
+              <img src="<?php echo base_url(); ?>public/images/logo_smk.png" style="width: 44px; height: 44px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0, 180, 216, 0.45));" alt="Logo SMK" />
             </div>
-            <div class="pull-left info">
-              <p><?php if(!empty($nama)){ echo $nama; }else{ echo 'Administrator'; } ?></p>
-
-              <a href="#"><i class="fa fa-circle text-success"></i> Online</a>
+            <div class="pull-left info" style="padding-left: 12px;">
+              <p style="font-weight: 700; color: #ffffff; margin-bottom: 4px;"><?php if(!empty($nama)){ echo $nama; }else{ echo 'Vicky Koroh'; } ?></p>
+              <a href="#" style="color: #38bdf8; font-size: 11px;"><i class="fa fa-circle text-success"></i> Operator Aktif</a>
             </div>
           </div>
           
@@ -508,9 +511,9 @@
 		?>
       </div><!-- /.content-wrapper -->
 
-      <footer class="main-footer">
+      <footer class="main-footer" style="background: #ffffff; border-top: 1px solid #e2e8f0; padding: 14px 20px; font-size: 12px; color: #64748b;">
         <div class="pull-right hidden-xs">
-          <b>Version</b> <?php if(!empty($site_version)){ echo $site_version; } ?> | Dirancang oleh <b>Vicky Koroh</b>
+          <b>SMK Negeri 1 Kupang Barat</b> &bull; Versi Modern TKA
         </div>
         <strong>Hak Cipta &copy; <?php echo date('Y'); ?> Vicky Koroh. All rights reserved.</strong>
       </footer>

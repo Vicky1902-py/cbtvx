@@ -2,11 +2,15 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8">
-    <title><?php if(!empty($site_name)){ echo $site_name; } ?> | <?php echo $title; ?></title>
-    <meta content='width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes' name='viewport'>
-    <meta name="description" content="Aplikasi CBT Modern Standar TKA Kemdikbud">
+    <title><?php if(!empty($site_name)){ echo $site_name; }else{ echo 'SMKN 1 Kupang Barat'; } ?> | <?php echo $title; ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, shrink-to-fit=no, user-scalable=yes">
+    <meta name="description" content="Aplikasi CBT Modern Standar TKA Kemdikbud - SMK Negeri 1 Kupang Barat">
     <meta name="author" content="Vicky Koroh">
     <meta name="copyright" content="Hak Cipta © Vicky Koroh">
+
+    <!-- Favicon SMKN 1 Kupang Barat -->
+    <link rel="icon" type="image/png" href="<?php echo base_url(); ?>public/images/favicon.png">
+    <link rel="shortcut icon" href="<?php echo base_url(); ?>public/images/favicon.png">
     
     <!-- Bootstrap 3.3.4 -->
     <link href="<?php echo base_url(); ?>public/bootstrap/css/bootstrap.min.css" rel="stylesheet" type="text/css" />
@@ -53,12 +57,13 @@
         padding: 0;
       }
 
-      /* TKA Top Navbar */
+      /* TKA Top Navbar SMKN 1 Kupang Barat */
       .tka-navbar {
-        background: linear-gradient(135deg, #0f2b48 0%, #1e3a5f 100%);
+        background: linear-gradient(135deg, #03045e 0%, #0077b6 100%);
         color: #ffffff;
         padding: 8px 15px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        border-bottom: 2px solid rgba(0, 180, 216, 0.35);
         position: sticky;
         top: 0;
         z-index: 1030;
@@ -447,12 +452,10 @@
           <!-- Brand -->
           <div class="col-xs-12 col-sm-5" style="display: flex; align-items: center; padding: 4px 0;">
             <div class="tka-brand">
-              <div class="tka-logo-badge">
-                <i class="fa fa-graduation-cap"></i>
-              </div>
+              <img src="<?php echo base_url(); ?>public/images/logo_smk.png" alt="Logo SMKN 1 Kupang Barat" style="width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 6px rgba(0, 180, 216, 0.45)); flex-shrink: 0;" />
               <div class="tka-title-box">
-                <h3><?php if(!empty($site_name)){ echo $site_name; }else{ echo 'CBT TKA KEMDIKBUD'; } ?></h3>
-                <p><i class="fa fa-shield"></i> Tes Kompetensi Akademik Terstandar Pusmendik</p>
+                <h3 style="margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -0.2px;">SMKN 1 KUPANG BARAT</h3>
+                <p style="margin: 0; font-size: 11px; color: #90e0ef;"><i class="fa fa-shield"></i> CBT Modern Standar TKA Pusmendik</p>
               </div>
             </div>
           </div>

@@ -8,3 +8,8 @@ git sudah ada di pc saya
 semua ini sudah saya siapkan. yang belum adalah :
 Menghubungkan GitHub ke cpanel via git control 
 Upload aplikasi ke sana.
+
+
+User: chaf2674_cbtsmk
+Database: chaf2674_cbtsmk
+Pass : cyow&GN+~~SY@T.M

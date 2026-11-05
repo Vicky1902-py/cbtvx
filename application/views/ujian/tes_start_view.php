@@ -3,15 +3,14 @@
         <div class="col-md-8 col-md-offset-2 col-sm-10 col-sm-offset-1 col-xs-12">
             <!-- Modern Test Confirmation Card -->
             <div style="background: #ffffff; border-radius: 20px; box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; overflow: hidden;">
-                <!-- Header with Indigo Gradient -->
-                <div style="background: linear-gradient(135deg, #0f2b48 0%, #1e3a5f 60%, #2563eb 100%); padding: 24px 28px; color: #ffffff;">
-                    <div style="display: flex; align-items: center; gap: 14px;">
-                        <div style="width: 44px; height: 44px; border-radius: 12px; background: rgba(255,255,255,0.15); display: flex; align-items: center; justify-content: center; font-size: 20px; backdrop-filter: blur(8px);">
-                            <i class="fa fa-pencil-square-o"></i>
-                        </div>
+                <!-- Header with SMKN 1 Kupang Barat Gradient -->
+                <div style="background: linear-gradient(135deg, #03045e 0%, #0077b6 60%, #00b4d8 100%); padding: clamp(16px, 4vw, 24px) 24px; color: #ffffff;">
+                    <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+                        <img src="<?php echo base_url(); ?>public/images/logo_smk.png" alt="Logo SMKN 1 Kupang Barat" 
+                             style="width: 46px; height: 46px; object-fit: contain; filter: drop-shadow(0 2px 8px rgba(0, 180, 216, 0.45)); flex-shrink: 0;" />
                         <div>
-                            <h3 style="margin: 0; font-size: 18px; font-weight: 800; letter-spacing: -0.3px;">Konfirmasi Pelaksanaan Tes</h3>
-                            <p style="margin: 0; font-size: 12px; color: #cbd5e1;">Silahkan periksa detail dan informasi tes sebelum menekan tombol Mulai</p>
+                            <h3 style="margin: 0; font-size: clamp(16px, 3vw, 18px); font-weight: 800; letter-spacing: -0.3px;">Konfirmasi Pelaksanaan Tes</h3>
+                            <p style="margin: 0; font-size: 12px; color: #e0f2fe;">SMK Negeri 1 Kupang Barat &bull; Standar TKA Pusmendik</p>
                         </div>
                     </div>
                 </div>

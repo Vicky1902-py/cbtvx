@@ -1,24 +1,30 @@
 <div class="container cbt-card-animated" style="margin-top: 20px; margin-bottom: 50px;">
-    <!-- Modern Header Banner -->
-    <div style="background: linear-gradient(135deg, #0f2b48 0%, #1e3a5f 50%, #2563eb 100%); border-radius: 20px; padding: 26px 30px; color: #ffffff; box-shadow: 0 10px 25px -5px rgba(15, 43, 72, 0.35); margin-bottom: 25px; position: relative; overflow: hidden;">
-        <div style="position: absolute; right: -30px; top: -30px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(255,255,255,0.12) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
+    <!-- Modern Header Banner SMKN 1 Kupang Barat -->
+    <div style="background: linear-gradient(135deg, #03045e 0%, #0077b6 60%, #00b4d8 100%); border-radius: 20px; padding: clamp(18px, 4vw, 28px); color: #ffffff; box-shadow: 0 10px 25px -5px rgba(0, 119, 182, 0.4); margin-bottom: 25px; position: relative; overflow: hidden; border: 1.5px solid rgba(0, 180, 216, 0.35);">
+        <div style="position: absolute; right: -30px; top: -30px; width: 180px; height: 180px; background: radial-gradient(circle, rgba(0, 180, 216, 0.25) 0%, transparent 70%); border-radius: 50%; pointer-events: none;"></div>
         
         <div class="row" style="position: relative; z-index: 2;">
             <div class="col-md-8 col-sm-7 col-xs-12">
-                <div style="display: inline-flex; align-items: center; gap: 8px; background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(8px); padding: 5px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; margin-bottom: 12px; letter-spacing: 0.5px;">
-                    <span style="width: 8px; height: 8px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
-                    PORTAL ASESMEN SISWA RESMI
+                <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 12px; flex-wrap: wrap;">
+                    <img src="<?php echo base_url(); ?>public/images/logo_smk.png" alt="Logo SMKN 1 Kupang Barat" 
+                         style="width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 3px 10px rgba(0, 180, 216, 0.5)); flex-shrink: 0;" />
+                    <div>
+                        <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(0, 180, 216, 0.2); backdrop-filter: blur(8px); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; border: 1px solid rgba(0, 180, 216, 0.4); color: #e0f2fe;">
+                            <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; display: inline-block;"></span>
+                            SMKN 1 KUPANG BARAT &bull; PORTAL SISWA
+                        </div>
+                        <h2 style="margin: 4px 0 0 0; font-size: clamp(18px, 3.5vw, 24px); font-weight: 800; letter-spacing: -0.5px; color: #ffffff;">
+                            Selamat Datang, <?php if(!empty($nama)){ echo $nama; }else{ echo 'Peserta Ujian'; } ?>!
+                        </h2>
+                    </div>
                 </div>
-                <h2 style="margin: 0 0 8px 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">
-                    Selamat Datang, <?php if(!empty($nama)){ echo $nama; }else{ echo 'Peserta Ujian'; } ?>!
-                </h2>
-                <p style="margin: 0; font-size: 13px; color: #cbd5e1; line-height: 1.5;">
-                    Kelas / Rombel: <span class="label" style="background: rgba(255,255,255,0.2); font-size: 12px; padding: 3px 10px; border-radius: 12px;"><?php if(!empty($group)){ echo $group; }else{ echo 'Peserta'; } ?></span>
-                    &bull; Pastikan membaca tata tertib dan petunjuk soal dengan seksama.
+                <p style="margin: 0; font-size: 13px; color: #e0f2fe; line-height: 1.5;">
+                    Kelas / Rombel: <span class="label" style="background: rgba(0, 180, 216, 0.3); font-size: 12px; padding: 3px 10px; border-radius: 12px; border: 1px solid rgba(0, 180, 216, 0.4);"><?php if(!empty($group)){ echo $group; }else{ echo 'Peserta'; } ?></span>
+                    &bull; Pastikan membaca petunjuk soal sebelum mulai mengerjakan.
                 </p>
             </div>
             <div class="col-md-4 col-sm-5 col-xs-12 text-right" style="margin-top: 10px;">
-                <div style="background: rgba(15, 23, 42, 0.4); backdrop-filter: blur(10px); padding: 12px 18px; border-radius: 14px; display: inline-block; text-align: left; border: 1px solid rgba(255,255,255,0.15);">
+                <div style="background: rgba(2, 11, 30, 0.45); backdrop-filter: blur(10px); padding: 12px 18px; border-radius: 14px; display: inline-block; text-align: left; border: 1px solid rgba(0, 180, 216, 0.3);">
                     <div style="font-size: 11px; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
                         <i class="fa fa-info-circle text-yellow"></i> Standar Asesmen
                     </div>
@@ -26,7 +32,7 @@
                         TKA Kemdikbud Modern
                     </div>
                     <div style="font-size: 11px; color: #38bdf8;">
-                        PG • Benar/Salah • Uraian
+                        PG &bull; Benar/Salah &bull; Uraian
                     </div>
                 </div>
             </div>
@@ -95,8 +101,8 @@
         </div>
         
         <!-- Card Footer Vicky Koroh Signature -->
-        <div style="background: #f8fafc; padding: 14px 24px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b;">
-            <span><i class="fa fa-shield text-green"></i> Sesi pengerjaan terlindungi & tersimpan otomatis per butir soal.</span>
+        <div style="background: #f8fafc; padding: 14px 24px; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b; flex-wrap: wrap; gap: 8px;">
+            <span><i class="fa fa-shield" style="color: #0077b6;"></i> SMK Negeri 1 Kupang Barat &bull; Sesi pengerjaan terlindungi otomatis.</span>
             <span>Hak Cipta &copy; <b>Vicky Koroh</b></span>
         </div>
     </div>

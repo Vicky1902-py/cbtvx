@@ -3,32 +3,32 @@
     <div class="col-xs-12" style="margin-bottom: 15px;">
         <div style="background: #ffffff; border-radius: 10px; padding: 12px 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.04); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
             <!-- Nama Tes -->
-            <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="background: #e0f2fe; color: #0369a1; padding: 6px 12px; border-radius: 6px; font-weight: 700; font-size: 13px;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <span style="background: #e0f2fe; color: #0077b6; padding: 6px 12px; border-radius: 8px; font-weight: 700; font-size: 13px; border: 1px solid rgba(0, 180, 216, 0.3);">
                     <i class="fa fa-book"></i> MATA UJI
                 </span>
-                <span style="font-weight: 700; font-size: 16px; color: #0f172a;">
+                <span style="font-weight: 800; font-size: clamp(14px, 2.5vw, 16px); color: #001233;">
                     <?php if(!empty($tes_name)){ echo $tes_name; }else{ echo 'Ujian'; } ?>
                 </span>
             </div>
 
             <!-- Timer & Controls -->
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                 <!-- Ukuran Font -->
-                <div style="display: inline-flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 3px 6px;">
-                    <span style="font-size: 11px; font-weight: 600; color: #64748b; margin-right: 6px;">Ukuran Font:</span>
-                    <button type="button" class="tka-zoom-btn" onclick="zoomkecil()" title="Ukuran Font Kecil" style="font-size: 12px; margin-right: 3px;">A-</button>
-                    <button type="button" class="tka-zoom-btn" onclick="zoomnormal()" title="Ukuran Font Normal" style="font-size: 14px; margin-right: 3px;">A</button>
-                    <button type="button" class="tka-zoom-btn" onclick="zoombesar()" title="Ukuran Font Besar" style="font-size: 16px;">A+</button>
+                <div style="display: inline-flex; align-items: center; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 3px 6px;">
+                    <span style="font-size: 11px; font-weight: 600; color: #64748b; margin-right: 4px;" class="hidden-xs">Font:</span>
+                    <button type="button" class="tka-zoom-btn" onclick="zoomkecil()" title="Ukuran Font Kecil" style="font-size: 12px; margin-right: 2px;">A-</button>
+                    <button type="button" class="tka-zoom-btn" onclick="zoomnormal()" title="Ukuran Font Normal" style="font-size: 13px; margin-right: 2px;">A</button>
+                    <button type="button" class="tka-zoom-btn" onclick="zoombesar()" title="Ukuran Font Besar" style="font-size: 15px;">A+</button>
                 </div>
 
                 <!-- Timer Sisa Waktu -->
-                <div class="tka-timer-box" id="tka-timer-display" title="Sisa Waktu Pengerjaan">
+                <div class="tka-timer-box" id="tka-timer-display" title="Sisa Waktu Pengerjaan" style="border-radius: 8px; font-size: 15px; padding: 6px 12px;">
                     <i class="fa fa-clock-o"></i> <span id="sisa-waktu-digital">--:--:--</span>
                 </div>
 
                 <!-- Tombol Daftar Soal Modal -->
-                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-daftar-soal" style="background: #0f2b48; border-color: #0f2b48; font-weight: 700; padding: 8px 16px; border-radius: 6px;">
+                <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#modal-daftar-soal" style="background: linear-gradient(135deg, #0077b6 0%, #0096c7 100%); border: none; font-weight: 700; padding: 7px 14px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0, 119, 182, 0.3);">
                     <i class="fa fa-th"></i> Daftar Soal
                 </button>
             </div>
