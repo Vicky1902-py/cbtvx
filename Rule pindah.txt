@@ -1,0 +1,10 @@
+Hapus semua yang membebani laptop yang terkait apalikasi ini . saya ingin kita langsung deploy ke cpanel saya saja melalui GitHub.
+
+untuk domain : https://bikinaplikasi.my.id/
+repo GitHub : https://github.com/Vicky1902-py/cbtvx.git
+
+git sudah ada di pc saya
+
+semua ini sudah saya siapkan. yang belum adalah :
+Menghubungkan GitHub ke cpanel via git control 
+Upload aplikasi ke sana.

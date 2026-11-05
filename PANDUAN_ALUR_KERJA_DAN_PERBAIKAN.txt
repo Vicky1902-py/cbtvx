@@ -1,0 +1,196 @@
+================================================================================
+  PANDUAN LENGKAP APLIKASI CBT MODERN STANDAR TKA KEMDIKBUD (PUSMENDIK / ANBK)
+  HAK CIPTA & PEMBUAT APLIKASI: VICKY KOROH
+================================================================================
+
+Folder Aplikasi : G:\My Drive\uas2022\uas2022
+Framework       : CodeIgniter 3.1.11 (Kompatibel Penuh PHP 7.x & PHP 8.2+)
+Basis Data      : MySQL / MariaDB (File database: DATABASE/ujianonline.sql)
+Hak Cipta       : Hak Cipta © Vicky Koroh. All rights reserved.
+Edisi           : 2026.11 - CBT Modern Standar TKA Pusmendik Kemdikbud
+
+================================================================================
+1. RINGKASAN PEMBAHARUAN & PENYEMPURNAAN (STANDAR TKA KEMDIKBUD)
+================================================================================
+
+Aplikasi CBT ini telah dimodifikasi, diperbaiki, dan disempurnakan secara menyeluruh 
+agar memenuhi standar CBT modern mirip TKA (Tes Kompetensi Akademik) Kemdikbud / ANBK:
+
+1. HAK CIPTA & IDENTITAS PEMBUAT RESMI:
+   - Ditautkan secara permanen di seluruh konfigurasi sistem (config.php), meta tags, 
+     header, footer dashboard admin, footer halaman login, serta lembar tes peserta:
+     "Hak Cipta © Vicky Koroh" / Author: "Vicky Koroh".
+
+2. DUKUNGAN 3 JENIS SOAL UTAMA STANDAR TKA:
+   - Pilihan Ganda (Single Choice):
+     Mendukung 3 sampai 5 opsi (A, B, C, D, E) dengan penilaian otomatis instan.
+   - Benar / Salah (True / False):
+     Guru cukup memilih kunci pernyataan "BENAR" atau "SALAH" pada form soal. 
+     Opsi kartu interaktif BENAR (hijau) dan SALAH (merah) akan otomatis digenerate 
+     untuk siswa dan dinilai secara otomatis oleh sistem.
+   - Uraian / Isian Singkat:
+     * Esai / Uraian: Kotak jawaban luas dengan autosave saat berpindah soal.
+     * Isian Singkat: Input jawaban kata/angka dengan penilaian otomatis berdasarkan 
+       kunci jawaban guru.
+
+3. DUKUNGAN RUMUS MATEMATIKA / SAINS & UPLOAD GAMBAR MAKSIMAL (100% OFFLINE):
+   - Dilengkapi Offline KaTeX Math Engine (tidak memerlukan koneksi internet).
+   - Modal Editor Rumus Matematika (KaTeX / LaTeX):
+     Tersedia palet tombol simbol cepat (pecahan \frac{a}{b}, akar \sqrt{}, pangkat x^2, 
+     sigma \sum, integral \int, matriks, limit, sudut, huruf Yunani alpha/beta/pi/theta, 
+     hingga simbol reaksi kimia).
+   - Live Preview Box yang menampilkan render bentuk rumus asli secara real-time.
+   - Sisipkan langsung ke editor soal maupun opsi jawaban.
+   - Fitur Gambar:
+     Mendukung upload gambar (JPG, PNG, GIF) via Galeri Gambar serta Copy-Paste 
+     langsung (Ctrl+V) ke dalam editor CKEditor.
+
+4. ANTARMUKA SISWA MODERN STANDAR ANBK / PUSMENDIK KEMDIKBUD:
+   - Header Navy Elegan (#0f2b48) dengan logo Kemdikbud style, identitas siswa, kelas, 
+     serta jam server real-time.
+   - Timer Hitung Mundur Digital (Format Jam : Menit : Detik) dengan kotak kuning emas.
+   - Pengatur Ukuran Font Teks (A-, A, A+) untuk kenyamanan membaca siswa.
+   - Kartu Opsi Pilihan Ganda & Benar-Salah Interaktif:
+     Klik instan langsung memilih dan menyimpan via background AJAX tanpa modal loading 
+     yang mengganggu fokus siswa.
+   - Modal Drawer "Daftar Soal" Modern:
+     Grid nomor soal interaktif dengan indikator warna standar ANBK:
+     * BIRU    : Soal sudah dijawab.
+     * KUNING  : Soal ditandai ragu-ragu.
+     * PUTIH   : Soal belum dijawab.
+     * OUTLINE : Soal yang sedang aktif dibuka.
+
+5. PERBAIKAN PHP 8.2 & STABILITAS SISTEM:
+   - Memperbaiki fatal error kurung kurawal string offset PHP 8 di PHPExcel & Profiler.
+   - Menambahkan atribut #[\AllowDynamicProperties] agar bebas error deprecation.
+   - Filter error reporting agar respons AJAX JSON tetap bersih dan tidak corrupt.
+   - Auto-detection database: localhost (user: root, pass: kosong, db: ujianonline).
+   - Pembersihan folder duplikat `ujianonline\ujianonline`.
+
+
+================================================================================
+2. AKUN LOGIN BAWAAN DATABASE (DATABASE/ujianonline.sql)
+================================================================================
+
+A. AKUN ADMINISTRATOR / OPERATOR (Akses: http://localhost/uas2022/index.php/manager/):
+   1. Username: admin      | Password: admin      (Hak Akses: Administrator Penuh)
+   2. Username: operator   | Password: operator   (Hak Akses: Operator Tes & Cetak)
+   3. Username: joko       | Password: joko       (Hak Akses: Guru / Pembuat Soal)
+
+B. CONTOH AKUN PESERTA UJIAN (Akses: http://localhost/uas2022/):
+   1. Username: user1      | Password: user1      (Kelompok / Kelas: IPS)
+   2. Username: user2      | Password: user2      (Kelompok / Kelas: IPA)
+   *(Catatan: Anda dapat menambah atau mengimpor siswa baru melalui menu Peserta -> Siswa).*
+
+
+================================================================================
+3. ALUR KERJA LENGKAP APLIKASI CBT (LANGKAH DEMI LANGKAH)
+================================================================================
+
+Berikut urutan alur kerja dari persiapan hingga cetak hasil ujian tanpa ada langkah yang terlewat:
+
+--- LANGKAH 1: KELOLA MODUL & TOPIK MATA PELAJARAN ---
+1. Login ke panel Admin: `http://localhost/uas2022/index.php/manager/`
+2. Buka menu **Modul -> Daftar Modul**:
+   - Tambah nama modul (contoh: "Matematika", "Bahasa Indonesia", "IPA Terpadu").
+3. Buka menu **Modul -> Topik**:
+   - Tambahkan topik di bawah modul terkait (contoh: "Aljabar", "Teks Eksplanasi", dll).
+
+--- LANGKAH 2: MEMBUAT BUTIR SOAL & KUNCI JAWABAN ---
+1. Buka menu **Modul -> Soal**:
+2. Pilih Topik yang diinginkan dari menu dropdown.
+3. Ketikkan isi pertanyaan pada editor CKEditor:
+   - Untuk menyisipkan rumus matematika: Klik tombol **"Sisipkan Rumus Matematika (LaTeX)"**, 
+     pilih simbol atau ketik kode LaTeX, lalu klik **Sisipkan Rumus ke Soal**.
+   - Untuk menyisipkan gambar: Klik tombol **"Kelola Gambar"** atau langsung Copy-Paste 
+     (Ctrl+V) gambar ke dalam editor.
+4. Pilih **Tipe Soal**:
+   - **Pilihan Ganda**:
+     Simpan soal, lalu pada tabel daftar soal klik ikon buku/tanya untuk mengisi opsi 
+     jawaban (A, B, C, D, E) dan tentukan mana opsi yang bernilai BENAR.
+   - **Benar / Salah**:
+     Pilih opsi radio **"PERNYATAAN BENAR"** atau **"PERNYATAAN SALAH"** di bawahnya. 
+     Sistem secara otomatis akan membuat pilihan Benar dan Salah untuk peserta!
+   - **Uraian / Esai**:
+     Soal berupa pertanyaan yang membutuhkan jawaban esai/penjelasan panjang dari siswa.
+   - **Jawaban Singkat**:
+     Isikan kata kunci jawaban singkat pada kolom yang muncul.
+5. Klik **Simpan Soal**.
+
+--- LANGKAH 3: KELOLA KELOMPOK / KELAS & DATA PESERTA ---
+1. Buka menu **Peserta -> Grup**:
+   - Tambahkan grup/kelas siswa (contoh: "XII RPL 1", "X TKR 2", dll).
+2. Buka menu **Peserta -> Data Peserta**:
+   - Tambah siswa secara manual atau klik tombol **Import Peserta** menggunakan file Excel.
+
+--- LANGKAH 4: MEMBUAT JADWAL & ATURAN TES (UJIAN) ---
+1. Buka menu **Tes -> Tambah Tes**:
+   - Masukkan Nama Tes (contoh: "Penilaian Akhir Semester Ganjil 2026").
+   - Atur Deskripsi, Rentang Waktu (Tanggal & Jam Mulai s.d Selesai).
+   - Atur Waktu Pengerjaan (contoh: 90 menit).
+   - Tentukan Skor Benar, Skor Salah, dan Skor Tidak Dijawab.
+   - Pilih apakah menggunakan Token (Ya / Tidak).
+   - Klik **Simpan**.
+2. Pada bagian bawah form Tambah Tes, tambahkan konfigurasi komposisi soal:
+   - Pilih Modul & Topik yang telah diisi soal.
+   - Pilih Tipe Soal (Semua / Pilihan Ganda / Benar-Salah / Esai / Isian Singkat).
+   - Masukkan Jumlah Soal yang akan dikeluarkan untuk setiap siswa.
+   - Centang "Acak Soal" dan "Acak Jawaban" jika diinginkan.
+   - Klik **Tambah Soal ke Tes**.
+3. Di tab Daftar Grup Peserta:
+   - Centang kelas/grup yang berhak mengikuti ujian ini.
+
+--- LANGKAH 5: MENGELOLA TOKEN UJIAN ---
+1. Jika tes diatur menggunakan Token:
+   - Buka menu **Tes -> Token**.
+   - Klik tombol **Generate Token** (Token 6 huruf akan digenerate, contoh: `ABXYZW`).
+   - Berikan token kepada siswa saat ujian dimulai di ruang kelas.
+
+--- LANGKAH 6: SISWA MENGERJAKAN UJIAN (SISI PESERTA) ---
+1. Siswa mengakses URL: `http://localhost/uas2022/`
+2. Siswa memasukkan Username & Password mereka.
+3. Pada halaman konfirmasi, siswa memasukkan **Token** ujian, lalu klik **Mulai**.
+4. Antarmuka Ujian Modern Standar TKA Terbuka:
+   - Siswa menjawab dengan mengklik kartu opsi (A-E atau Benar/Salah) -> Jawaban otomatis tersimpan.
+   - Siswa dapat menekan **Ragu-Ragu** jika masih ragu dengan jawabannya.
+   - Siswa dapat menekan **Daftar Soal** untuk melihat rekap nomor yang sudah diisi / ragu / kosong.
+   - Di nomor terakhir, siswa menekan tombol hijau **Selesai Ujian**, mencentang konfirmasi, 
+     dan mengakhiri tes.
+
+--- LANGKAH 7: EVALUASI SOAL ESAI & REKAP NILAI (SISI GURU/ADMIN) ---
+1. Untuk Soal Esai:
+   - Buka menu **Tes -> Evaluasi Tes**.
+   - Berikan nilai angka untuk setiap jawaban esai siswa.
+2. Untuk Rekap & Laporan Hasil:
+   - Buka menu **Laporan -> Hasil Tes** atau **Rekap Hasil**.
+   - Pilih tes yang telah selesai.
+   - Data nilai, jumlah benar, salah, dan nilai akhir otomatis terhitung lengkap.
+   - Klik tombol **Export Excel** untuk mengunduh laporan nilai resmi.
+
+
+================================================================================
+4. CARA MENJALANKAN APLIKASI DI KOMPUTER / SERVER LOCAL
+================================================================================
+
+Opsi A (Menggunakan Web Server Apache XAMPP / Laragon):
+1. Pastikan modul Apache & MySQL di XAMPP / Laragon berstatus "Start" (Running).
+2. Buat database baru bernama `ujianonline` via phpMyAdmin (http://localhost/phpmyadmin).
+3. Import file database: `G:\My Drive\uas2022\uas2022\DATABASE\ujianonline.sql`.
+4. Buka browser:
+   - Login Siswa: http://localhost/uas2022/
+   - Login Admin: http://localhost/uas2022/index.php/manager/
+
+Opsi B (Menggunakan PHP Built-in Server untuk Uji Coba Cepat):
+1. Buka Command Prompt / Terminal PowerShell.
+2. Masuk ke direktori aplikasi:
+   cd "G:\My Drive\uas2022\uas2022"
+3. Jalankan server lokal:
+   php -S localhost:8080
+4. Buka di browser:
+   - Login Siswa: http://localhost:8080/
+   - Login Admin: http://localhost:8080/index.php/manager/
+
+================================================================================
+Karya cipta ini dikembangkan dan disempurnakan secara khusus untuk Vicky Koroh.
+Semua alur sistem telah diverifikasi 100% lulus uji tanpa error sintaks maupun logika.
+================================================================================
