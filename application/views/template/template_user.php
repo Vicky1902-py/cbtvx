@@ -158,13 +158,32 @@
         100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
       }
 
-      /* Content Area */
+      /* Content Area - Force zero sidebar margin for 100% centered alignment */
+      body.layout-top-nav .content-wrapper,
+      body.layout-top-nav .main-footer,
+      body.layout-top-nav .right-side,
+      .content-wrapper,
+      .main-footer,
+      .right-side {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+      }
+
       .content-wrapper {
         background: transparent !important;
         flex: 1;
-        padding-top: 20px;
-        padding-bottom: 35px;
+        padding-top: 15px;
+        padding-bottom: 30px;
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
       }
 
       /* Entrance Animation */
@@ -251,7 +270,7 @@
     </script>
   </head>
 
-  <body>
+  <body class="hold-transition skin-blue layout-top-nav">
     <div class="wrapper">
       <!-- Navbar SMK Negeri 1 Kupang Barat -->
       <nav class="smk-header-nav">
