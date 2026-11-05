@@ -16,7 +16,7 @@ class Pengaturan_zyacbt extends Member_Controller {
         $data['kode_menu'] = $this->kode_menu;
         $data['url'] = $this->url;
         
-        $this->template->display_admin($this->kelompok.'/pengaturan_zyacbt_view', 'Pengaturan CBT & Slideshow', $data);
+        $this->template->display_admin($this->kelompok.'/pengaturan_zyacbt_view', 'Pengaturan Sekolah & CBT', $data);
     }
 
 	private function update_or_insert_config($kode, $isi, $keterangan = ''){
@@ -44,25 +44,84 @@ class Pengaturan_zyacbt extends Member_Controller {
     function simpan(){
         $this->load->library('form_validation');
         
-        $this->form_validation->set_rules('zyacbt-nama', 'Nama CBT','required|strip_tags');
+        $this->form_validation->set_rules('zyacbt-nama', 'Nama Sekolah / CBT','required|strip_tags');
         $this->form_validation->set_rules('zyacbt-keterangan', 'Keterangan CBT','required|strip_tags');
 		$this->form_validation->set_rules('zyacbt-link-login', 'Link Login Operator','required|strip_tags');
 		$this->form_validation->set_rules('zyacbt-mobile-lock-xambro', 'Lock Mobile Exam Browser','required|strip_tags');
 		$this->form_validation->set_rules('zyacbt-informasi', 'Informasi Peserta Tes','required');
         
         if($this->form_validation->run() == TRUE){
-			$this->update_or_insert_config('cbt_nama', $this->input->post('zyacbt-nama', true), 'Nama Penyelenggara CBT');
+			// Identitas Utama
+			$nama_sekolah = $this->input->post('zyacbt-nama', true);
+			$this->update_or_insert_config('cbt_nama', $nama_sekolah, 'Nama Penyelenggara CBT');
+			$this->update_or_insert_config('sekolah_nama', $nama_sekolah, 'Nama Resmi Sekolah');
 			$this->update_or_insert_config('cbt_keterangan', $this->input->post('zyacbt-keterangan', true), 'Keterangan Penyelenggara CBT');
 			$this->update_or_insert_config('link_login_operator', $this->input->post('zyacbt-link-login', true), 'Menampilkan Link Login Operator');
 			$this->update_or_insert_config('cbt_mobile_lock_xambro', $this->input->post('zyacbt-mobile-lock-xambro', true), 'Lock Mobile Browser');
 			$this->update_or_insert_config('cbt_informasi', $this->input->post('zyacbt-informasi', false), 'Informasi Dashboard Peserta');
 
+			// Pengaturan Sekolah & Kop Surat
+			$this->update_or_insert_config('sekolah_provinsi', $this->input->post('sekolah_provinsi', true), 'Pemerintah Provinsi');
+			$this->update_or_insert_config('sekolah_dinas', $this->input->post('sekolah_dinas', true), 'Dinas Pendidikan');
+			$this->update_or_insert_config('sekolah_alamat', $this->input->post('sekolah_alamat', true), 'Alamat Sekolah');
+			$this->update_or_insert_config('sekolah_kecamatan', $this->input->post('sekolah_kecamatan', true), 'Kecamatan');
+			$this->update_or_insert_config('sekolah_kota', $this->input->post('sekolah_kota', true), 'Kabupaten / Kota');
+			$this->update_or_insert_config('sekolah_titimangsa', $this->input->post('sekolah_titimangsa', true), 'Tempat Titimangsa Kartu');
+			$this->update_or_insert_config('sekolah_telepon', $this->input->post('sekolah_telepon', true), 'Nomor Telepon');
+			$this->update_or_insert_config('sekolah_email', $this->input->post('sekolah_email', true), 'Email Sekolah');
+			$this->update_or_insert_config('sekolah_website', $this->input->post('sekolah_website', true), 'Website Sekolah');
+			$this->update_or_insert_config('sekolah_kepsek_nama', $this->input->post('sekolah_kepsek_nama', true), 'Nama Kepala Sekolah');
+			$this->update_or_insert_config('sekolah_kepsek_nip', $this->input->post('sekolah_kepsek_nip', true), 'NIP Kepala Sekolah');
+
+			// File Upload Helper
+			$this->load->library('upload');
+
+			// Upload Logo Pemprov NTT
+			if(!empty($_FILES['logo_provinsi_file']['name'])){
+				$conf_prov['upload_path'] = './public/images/';
+				$conf_prov['allowed_types'] = 'png|jpg|jpeg|svg';
+				$conf_prov['max_size'] = 3072;
+				$conf_prov['file_name'] = 'logo_pemprov_custom_'.time();
+				$conf_prov['overwrite'] = TRUE;
+				$this->upload->initialize($conf_prov);
+				if($this->upload->do_upload('logo_provinsi_file')){
+					$up = $this->upload->data();
+					$this->update_or_insert_config('sekolah_logo_provinsi', base_url('public/images/'.$up['file_name']), 'Logo Pemprov Kop');
+				}
+			}
+
+			// Upload Logo Sekolah
+			if(!empty($_FILES['logo_sekolah_file']['name'])){
+				$conf_sek['upload_path'] = './public/images/';
+				$conf_sek['allowed_types'] = 'png|jpg|jpeg';
+				$conf_sek['max_size'] = 3072;
+				$conf_sek['file_name'] = 'logo_sekolah_custom_'.time();
+				$conf_sek['overwrite'] = TRUE;
+				$this->upload->initialize($conf_sek);
+				if($this->upload->do_upload('logo_sekolah_file')){
+					$up = $this->upload->data();
+					$this->update_or_insert_config('sekolah_logo_sekolah', base_url('public/images/'.$up['file_name']), 'Logo Sekolah Kop');
+				}
+			}
+
+			// Upload TTD & Stempel Kepala Sekolah
+			if(!empty($_FILES['ttd_kepsek_file']['name'])){
+				$conf_ttd['upload_path'] = './public/images/';
+				$conf_ttd['allowed_types'] = 'png|jpg|jpeg';
+				$conf_ttd['max_size'] = 3072;
+				$conf_ttd['file_name'] = 'ttd_kepsek_custom_'.time();
+				$conf_ttd['overwrite'] = TRUE;
+				$this->upload->initialize($conf_ttd);
+				if($this->upload->do_upload('ttd_kepsek_file')){
+					$up = $this->upload->data();
+					$this->update_or_insert_config('sekolah_ttd_kepsek', base_url('public/images/'.$up['file_name']), 'TTD dan Stempel Kepala Sekolah');
+				}
+			}
+
 			// Simpan Pengaturan Slideshow
 			if(!is_dir('./public/images/slides/')){
 				@mkdir('./public/images/slides/', 0777, true);
 			}
-
-			$this->load->library('upload');
 
 			for($i = 1; $i <= 3; $i++){
 				$file_key = 'slide'.$i.'_file';
@@ -97,7 +156,7 @@ class Pengaturan_zyacbt extends Member_Controller {
 			}
 
             $status['status'] = 1;
-			$status['pesan'] = 'Pengaturan CBT dan Slideshow berhasil disimpan!';
+			$status['pesan'] = 'Pengaturan Sekolah, Kepala Sekolah, dan CBT berhasil disimpan secara terintegrasi!';
         }else{
             $status['status'] = 0;
             $status['pesan'] = validation_errors();
@@ -114,6 +173,23 @@ class Pengaturan_zyacbt extends Member_Controller {
 		$data['cbt_informasi'] = $this->get_config_val('cbt_informasi', 'Silahkan pilih Tes yang diikuti dari daftar tes yang tersedia dibawah ini. Apabila tes tidak muncul, silahkan menghubungi Operator yang bertugas.');
 		$data['mobile_lock_xambro'] = $this->get_config_val('cbt_mobile_lock_xambro', 'tidak');
 
+		// Sekolah & Kop
+		$data['sekolah_provinsi'] = $this->get_config_val('sekolah_provinsi', 'PEMERINTAH PROVINSI NUSA TENGGARA TIMUR');
+		$data['sekolah_dinas'] = $this->get_config_val('sekolah_dinas', 'DINAS PENDIDIKAN DAN KEBUDAYAAN');
+		$data['sekolah_nama'] = $this->get_config_val('sekolah_nama', 'SMK NEGERI 1 KUPANG BARAT');
+		$data['sekolah_alamat'] = $this->get_config_val('sekolah_alamat', 'Jln. Jurusan Batakte - Kuanheun, Desa Kuanheun');
+		$data['sekolah_kecamatan'] = $this->get_config_val('sekolah_kecamatan', 'Kec. Kupang Barat');
+		$data['sekolah_kota'] = $this->get_config_val('sekolah_kota', 'Kab. Kupang');
+		$data['sekolah_titimangsa'] = $this->get_config_val('sekolah_titimangsa', 'Kuanheun');
+		$data['sekolah_telepon'] = $this->get_config_val('sekolah_telepon', '-');
+		$data['sekolah_email'] = $this->get_config_val('sekolah_email', 'smkn1kupangbarat@gmail.com');
+		$data['sekolah_website'] = $this->get_config_val('sekolah_website', 'https://bikinaplikasi.my.id');
+		$data['sekolah_kepsek_nama'] = $this->get_config_val('sekolah_kepsek_nama', 'Vicky Koroh, S.Pd., M.Kom');
+		$data['sekolah_kepsek_nip'] = $this->get_config_val('sekolah_kepsek_nip', '-');
+		$data['sekolah_logo_provinsi'] = $this->get_config_val('sekolah_logo_provinsi', base_url('public/images/logo_pemprov_ntt.svg'));
+		$data['sekolah_logo_sekolah'] = $this->get_config_val('sekolah_logo_sekolah', base_url('public/images/logo_smk.png'));
+		$data['sekolah_ttd_kepsek'] = $this->get_config_val('sekolah_ttd_kepsek', base_url('public/images/ttd_kepsek.png'));
+
 		// Slideshow data
 		$data['slide1_gambar'] = $this->get_config_val('slide1_gambar', base_url('public/images/slides/slide1.jpg'));
 		$data['slide1_judul'] = $this->get_config_val('slide1_judul', 'Sistem Asesmen Berbasis Komputer');
@@ -124,8 +200,8 @@ class Pengaturan_zyacbt extends Member_Controller {
 		$data['slide2_deskripsi'] = $this->get_config_val('slide2_deskripsi', 'Mendukung tipe soal Pilihan Ganda, Benar/Salah, Uraian, serta formula matematika KaTeX offline dan gambar berkualitas.');
 
 		$data['slide3_gambar'] = $this->get_config_val('slide3_gambar', base_url('public/images/slides/slide3.jpg'));
-		$data['slide3_judul'] = $this->get_config_val('slide3_judul', 'SMKN 1 Kupang Barat - Nekamese');
-		$data['slide3_deskripsi'] = $this->get_config_val('slide3_deskripsi', 'Maju bersama menuju pendidikan vokasi unggul, kompeten, berkarakter, dan berdaya saing global.');
+		$data['slide3_judul'] = $this->get_config_val('slide3_judul', 'SMKN 1 Kupang Barat - Kuanheun');
+		$data['slide3_deskripsi'] = $this->get_config_val('slide3_deskripsi', 'Maju bersama menuju pendidikan vokasi unggul, kompeten, berkarakter, dan berdaya saing global di Kuanheun, Kupang Barat.');
 		
 		echo json_encode($data);
     }

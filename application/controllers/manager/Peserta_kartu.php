@@ -19,86 +19,49 @@ class Peserta_kartu extends Member_Controller {
         $data['url'] = $this->url;
 		
 		$query_group = $this->cbt_user_grup_model->get_group();
+        $select = '<option value="semua">Semua Group / Kelas</option>';
 
-        if($query_group->num_rows()>0){
-        	$select = '';
-        	$query_group = $query_group->result();
-        	foreach ($query_group as $temp) {
-        		$select = $select.'<option value="'.$temp->grup_id.'">'.$temp->grup_nama.'</option>';
+        if($query_group->num_rows() > 0){
+        	foreach ($query_group->result() as $temp) {
+        		$select .= '<option value="'.$temp->grup_id.'">'.$temp->grup_nama.'</option>';
         	}
-
-        }else{
-        	$select = '<option value="0">KOSONG</option>';
         }
         $data['select_group'] = $select;
+		$data['sekolah'] = $this->template->get_sekolah_info();
 		
         $this->template->display_admin($this->kelompok.'/peserta_kartu_view', 'Cetak Kartu Peserta', $data);
     }
 
 	/**
-	* Cetak kartu hanya untuk satu grup saja
+	* Cetak kartu login peserta dengan kop resmi sekolah, logo pemprov, logo sekolah, foto siswa, dan ttd kepsek
 	*/
-    public function cetak_kartu($grup_id=null){
+    public function cetak_kartu($grup_id = null){
 		$data['kode_menu'] = $this->kode_menu;
+		$data['sekolah'] = $this->template->get_sekolah_info();
 		
-		$kartu = '<h3>Data Peserta Kosong</h3>';
-		if(!empty($grup_id)){
-			$query_user = $this->cbt_user_model->get_by_kolom('user_grup_id', $grup_id);
-			if($query_user->num_rows()>0){
-				$kartu = '';
-				$query_user = $query_user->result();
-				
-				$query_konfig = $this->cbt_konfigurasi_model->get_by_kolom_limit('konfigurasi_kode', 'cbt_nama', 1);
-				$cbt_nama = 'Computer Based-Test';
-				if($query_konfig->num_rows()>0){
-					$cbt_nama = $query_konfig->row()->konfigurasi_isi;
-				}
-				
-				$query_group = $this->cbt_user_grup_model->get_by_kolom_limit('grup_id', $grup_id, 1);
-				$group = 'NULL';
-				if($query_group->num_rows()>0){
-					$group = $query_group->row()->grup_nama;
-				}
-				
-				foreach($query_user AS $temp){
-					$kartu = $kartu.'
-						<div class="kartu">
-							<div class="header">'.$cbt_nama.'</div>
-							<hr />
-							<table>
-								<tr>
-									<td width="95px">Nama</td>
-									<td width="5px">:</td>
-									<td width="210px">'.$temp->user_firstname.'</td>
-								</tr>
-								<tr>
-									<td>Username</td>
-									<td>:</td>
-									<td>'.$temp->user_name.'</td>
-								</tr>
-								<tr>
-									<td>Password</td>
-									<td>:</td>
-									<td>'.$temp->user_password.'</td>
-								</tr>
-								<tr>
-									<td>Grup</td>
-									<td>:</td>
-									<td>'.$group.'</td>
-								</tr>
-								<tr>
-									<td>Keterangan</td>
-									<td>:</td>
-									<td>'.$temp->user_detail.'</td>
-								</tr>
-							</table>
-						</div>
-					';
-				}
+		$group_name = 'Semua Group / Kelas';
+		if(!empty($grup_id) && $grup_id != 'semua'){
+			$query_group = $this->cbt_user_grup_model->get_by_kolom_limit('grup_id', $grup_id, 1);
+			if($query_group->num_rows() > 0){
+				$group_name = $query_group->row()->grup_nama;
 			}
+			$query_user = $this->cbt_user_model->get_by_kolom('user_grup_id', $grup_id);
+		}else{
+			$query_user = $this->cbt_user_model->get_all();
 		}
 		
-		$data['kartu'] = $kartu;
+		$data['group_nama'] = $group_name;
+		$data['users'] = ($query_user->num_rows() > 0) ? $query_user->result() : array();
+
+		// Helper map untuk nama grup jika cetak semua
+		$grup_map = array();
+		$all_groups = $this->cbt_user_grup_model->get_group();
+		if($all_groups->num_rows() > 0){
+			foreach($all_groups->result() as $g){
+				$grup_map[$g->grup_id] = $g->grup_nama;
+			}
+		}
+		$data['grup_map'] = $grup_map;
 		
 		$this->load->view($this->kelompok.'/peserta_cetak_kartu_view', $data);
 	}

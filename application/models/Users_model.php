@@ -63,9 +63,10 @@ class Users_model extends CI_Model{
     }
     
     /*
-	 * mendapatkan hak akses suatu menu
+	 * Mendapatkan hak akses suatu menu
 	 */
 	function cek_akses($kode_menu, $level){
+		if($level === 'admin') return 1;
 		$sql='SELECT COUNT(*) AS hasil FROM user_akses WHERE user_akses.kode_menu="'.$kode_menu.'" AND user_akses.level="'.$level.'"';
 		$hasil=$this->db->query($sql)->row()->hasil;
 
@@ -73,9 +74,10 @@ class Users_model extends CI_Model{
 	}
     
     /*
-	 * mendapatkan hak akses crud menu
+	 * Mendapatkan hak akses crud menu
 	 */
 	function cek_akses_crud($kode_menu, $level, $tipe){
+		if($level === 'admin') return 1;
         if($tipe==0){
             $sql='SELECT COUNT(*) AS hasil FROM user_akses WHERE user_akses.kode_menu="'.$kode_menu.'" AND user_akses.level="'.$level.'" AND user_akses.add=1';
         }else{
@@ -120,11 +122,68 @@ class Users_model extends CI_Model{
         $sql = 'SELECT `user_menu`.* FROM user_menu WHERE `user_menu`.`kode_menu`="'.$kode_menu.'" LIMIT 1';
         return $this->db->query($sql);
     }
+
+	/**
+	 * Otomatis sinkronisasi menu-menu penting yang baru ditambahkan
+	 */
+	function sync_default_menus(){
+		// Pastikan menu peserta-foto terdaftar
+		$q1 = $this->db->get_where('user_menu', array('kode_menu' => 'peserta-foto'));
+		if($q1->num_rows() == 0){
+			$this->db->insert('user_menu', array(
+				'tipe' => 1,
+				'parent' => 'peserta',
+				'kode_menu' => 'peserta-foto',
+				'nama_menu' => 'Upload Foto Siswa',
+				'url' => 'manager/peserta_foto',
+				'icon' => 'fa fa-camera',
+				'urutan' => 4
+			));
+		}
+
+		// Pastikan hak akses admin untuk peserta-foto ada
+		$qa1 = $this->db->get_where('user_akses', array('kode_menu' => 'peserta-foto', 'level' => 'admin'));
+		if($qa1->num_rows() == 0){
+			$this->db->insert('user_akses', array(
+				'level' => 'admin',
+				'kode_menu' => 'peserta-foto',
+				'add' => 1,
+				'edit' => 1
+			));
+		}
+
+		// Pastikan menu peserta-online terdaftar
+		$q2 = $this->db->get_where('user_menu', array('kode_menu' => 'peserta-online'));
+		if($q2->num_rows() == 0){
+			$this->db->insert('user_menu', array(
+				'tipe' => 1,
+				'parent' => 'peserta',
+				'kode_menu' => 'peserta-online',
+				'nama_menu' => 'Peserta Online Realtime',
+				'url' => 'manager/peserta_online',
+				'icon' => 'fa fa-circle-o',
+				'urutan' => 6
+			));
+		}
+
+		$qa2 = $this->db->get_where('user_akses', array('kode_menu' => 'peserta-online', 'level' => 'admin'));
+		if($qa2->num_rows() == 0){
+			$this->db->insert('user_akses', array(
+				'level' => 'admin',
+				'kode_menu' => 'peserta-online',
+				'add' => 1,
+				'edit' => 1
+			));
+		}
+	}
     
     /**
      * Mendapatkan menu dashboard secara dynamic 
      */ 
     function get_menu($kode_menu, $level){
+		// Sinkronisasi menu otomatis
+		$this->sync_default_menus();
+
         $sql = 'SELECT user_menu.* FROM `user_akses` INNER JOIN `user_level` ON (`user_akses`.`level` = `user_level`.`level`) 
             INNER JOIN `user_menu` ON (`user_akses`.`kode_menu` = `user_menu`.`kode_menu`) WHERE user_akses.`level`="'.$level.'"
             GROUP BY `user_menu`.`parent` ORDER BY user_menu.parent ASC';
@@ -166,7 +225,7 @@ class Users_model extends CI_Model{
                             $child_active='active';
                         }
                         $menu_child = $menu_child.'
-                            <li class="'.$child_active.'"><a href="'.site_url().'/'.$child->url.'"><i class="fa fa-circle-o"></i> '.$child->nama_menu.'</a></li>
+                            <li class="'.$child_active.'"><a href="'.site_url().'/'.$child->url.'"><i class="'.$child->icon.'"></i> '.$child->nama_menu.'</a></li>
                         ';
                         
                         $menu_child_count++;
