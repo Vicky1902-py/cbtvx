@@ -55,22 +55,11 @@ class Tes_kerjakan extends Tes_Controller {
                     $data['tes_dibuat'] = $query_tes->tesuser_creation_time;
                     $data['tanggal'] = $tanggal->format('Y-m-d H:i:s');
 
-                    // Mengambil selisih jam
+                    // Mengambil selisih detik dengan presisi timestamp (PHP 8.2 Safe)
                     $tanggal_tes = new DateTime($query_tes->tesuser_creation_time);
-                    $tanggal_diff = $tanggal_tes->diff($tanggal);
-
-                    $detik_berjalan = ($tanggal_diff->h*60*60)+($tanggal_diff->i*60)+$tanggal_diff->s;
-                    $detik_total = $query_tes->tes_duration_time*60;
-
-                    // untuk menangani Jika tes setelah ditambah waktunya melebihi jam saat itu
-                    // jika time saat ini lebih besar dari time creation
-                    if($tanggal>=$tanggal_tes){
-                        $detik_sisa = $detik_total-$detik_berjalan;
-                    
-                    // jika time creation lebih besar dari tanggal saat ini
-                    }else{
-                        $detik_sisa = $detik_total+$detik_berjalan;
-                    }
+                    $detik_berjalan = max(0, $tanggal->getTimestamp() - $tanggal_tes->getTimestamp());
+                    $detik_total = (int)$query_tes->tes_duration_time * 60;
+                    $detik_sisa = max(0, $detik_total - $detik_berjalan);
 
                     $data['detik_berjalan'] = $detik_berjalan;
                     $data['detik_total'] = $detik_total;
@@ -189,8 +178,8 @@ class Tes_kerjakan extends Tes_Controller {
                         $data_jawaban['soaljawaban_selected']=0;
                         $this->cbt_tes_soal_jawaban_model->update_by_tessoal_answer_salah($tes_soal_id, $jawaban, $data_jawaban);
 
-                        // Mengupdate score, change time jika pilihan benar
-                        if($query_jawaban->jawaban_benar==1){
+                        // Mengupdate score, change time jika pilihan benar (Null check safe)
+                        if(!empty($query_jawaban) && isset($query_jawaban->jawaban_benar) && $query_jawaban->jawaban_benar == 1){
                             $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_right;
                         }else{
                             $data_tes_soal['tessoal_nilai'] = $query_tes->tes_score_wrong;
@@ -466,7 +455,6 @@ class Tes_kerjakan extends Tes_Controller {
 
                     $data['tes_soal_nomor'] = $query_soal->tessoal_order;
 
-                    $soal = $soal.'<div class="form-group">';
                     $tipe_label = 'Pilihan Ganda';
                     if($query_soal->soal_tipe == 4) { $tipe_label = 'Benar / Salah'; }
                     else if($query_soal->soal_tipe == 2) { $tipe_label = 'Uraian / Esai'; }

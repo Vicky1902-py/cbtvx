@@ -114,22 +114,34 @@
 		$( document ).ready(function() {
 			$('#waktu').daterangepicker({timePicker: true, timePickerIncrement: 10, format: 'YYYY-MM-DD H:mm'});
 			
-            $('#table-soal').DataTable({
+            $('#table-peserta').DataTable({
                   "paging": true,
-                  "iDisplayLength":10,
+                  "iDisplayLength": 25,
                   "bProcessing": false,
                   "bServerSide": true, 
                   "searching": true,
                   "aoColumns": [
-                        {"bSearchable": false, "bSortable": false, "sWidth":"20px"},
-                        {"bSearchable": false, "bSortable": false},
-                        {"bSearchable": false, "bSortable": false, "sWidth":"50px"},
-                        {"bSearchable": false, "bSortable": false, "sWidth":"50px"}],
+                        {"bSearchable": false, "bSortable": false, "sWidth":"35px"},
+                        {"bSearchable": true, "bSortable": false},
+                        {"bSearchable": true, "bSortable": false, "sWidth":"140px"},
+                        {"bSearchable": true, "bSortable": false},
+                        {"bSearchable": false, "bSortable": false, "sWidth":"200px"}],
                   "sAjaxSource": "<?php echo site_url().'/'.$url; ?>/get_datatable/",
                   "autoWidth": false,
                   "fnServerParams": function ( aoData ) {
-                    aoData.push( { "name": "topik", "value": $('#topik').val()} );
+                    aoData.push( { "name": "group", "value": $('#group').val()} );
+                    aoData.push( { "name": "keterangan", "value": $('#keterangan').val()} );
+                    aoData.push( { "name": "status", "value": $('#status').val()} );
                   }
+            });
+
+            $('#btn-kartu').click(function(e){
+                e.preventDefault();
+                refresh_table();
+            });
+
+            $('#group, #status').change(function(){
+                refresh_table();
             });
 		});
     });

@@ -1,28 +1,30 @@
 <style type="text/css">
   /* Split Screen Architecture - Fully Responsive & Centered */
   .cbt-split-wrapper {
-    max-width: 1040px;
-    width: min(1040px, 94vw);
-    margin: 20px auto 35px auto;
+    max-width: 960px;
+    width: min(960px, 94vw);
+    margin: 20px auto 30px auto;
     background: #ffffff;
-    border-radius: 20px;
+    border-radius: 18px;
     overflow: hidden;
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 180, 216, 0.25);
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(0, 180, 216, 0.25);
     display: flex;
     flex-direction: row;
-    min-height: 520px;
+    min-height: 480px;
+    box-sizing: border-box;
   }
 
   /* Left Column: Slideshow Showcase */
   .cbt-slide-col {
-    flex: 1.15;
+    flex: 1.1;
     position: relative;
     background: #020c22;
     overflow: hidden;
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    min-height: 520px;
+    min-height: 480px;
+    box-sizing: border-box;
   }
 
   .cbt-carousel-track {
@@ -244,16 +246,16 @@
   }
 
   /* Responsive Rules for Tablets and Phones */
-  @media (max-width: 960px) {
+  @media (max-width: 900px) {
     .cbt-split-wrapper {
       flex-direction: column;
       border-radius: 16px;
-      margin: 12px auto 25px auto;
-      width: 95%;
+      margin: 10px auto 20px auto;
+      width: 94%;
       min-height: auto;
     }
     .cbt-slide-col {
-      min-height: 240px;
+      min-height: 220px;
       flex: none;
     }
     .cbt-slide-caption {

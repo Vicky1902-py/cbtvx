@@ -27,7 +27,8 @@ class Laporan_analisis_butir_soal extends Member_Controller {
         $data['url'] = $this->url;
 
         $username = $this->access->get_username();
-		$user_id = $this->users_model->get_login_info($username)->id;
+		$user_info = $this->users_model->get_login_info($username);
+		$user_id = !empty($user_info) ? $user_info->id : 0;
 
         $query_group = $this->cbt_user_grup_model->get_group();
         $select = '';

@@ -24,7 +24,8 @@ class Tes_token extends Member_Controller {
         $data['url'] = $this->url;
 
         $username = $this->access->get_username();
-		$user_id = $this->users_model->get_login_info($username)->id;
+		$user_info = $this->users_model->get_login_info($username);
+		$user_id = !empty($user_info) ? $user_info->id : 0;
 
         $this->cbt_tes_token_model->delete_by_user_date($user_id);
 		
@@ -45,7 +46,8 @@ class Tes_token extends Member_Controller {
         $token = substr(uniqid(), 7);
 
         $username = $this->access->get_username();
-        $user_id = $this->users_model->get_login_info($username)->id;
+        $user_info = $this->users_model->get_login_info($username);
+		$user_id = !empty($user_info) ? $user_info->id : 0;
         $aktif = $this->input->post('token-aktif', TRUE);
 		$tes_id = $this->input->post('token-tes', TRUE);
 
@@ -78,7 +80,8 @@ class Tes_token extends Member_Controller {
         
         if($this->form_validation->run() == TRUE){
             $username = $this->access->get_username();
-			$user_id = $this->users_model->get_login_info($username)->id;
+			$user_info = $this->users_model->get_login_info($username);
+		$user_id = !empty($user_info) ? $user_info->id : 0;
 			$aktif = $this->input->post('manual-aktif', TRUE);
 			$token = $this->input->post('manual-token', TRUE);
 			$tes_id = $this->input->post('manual-tes', TRUE);

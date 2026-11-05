@@ -102,7 +102,9 @@ class Modul_jawaban extends Member_Controller {
 	        $posisi = $this->config->item('upload_path').'/topik_'.$id_topik.'';
 
 	        $doc = new DOMDocument();
-			$doc->loadHTML($jawaban);
+			@libxml_use_internal_errors(true);
+			@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $jawaban);
+			@libxml_clear_errors();
 			$tags = $doc->getElementsByTagName('img');
 			foreach ($tags as $tag) {
 				$jawaban_image = $tag->getAttribute('src');

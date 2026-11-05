@@ -23,6 +23,7 @@ class Tes_evaluasi extends Member_Controller {
 		$this->load->model('cbt_jawaban_model');
 		$this->load->model('cbt_tes_soal_model');
 		$this->load->model('cbt_tes_soal_jawaban_model');
+		$this->load->model('cbt_modul_model');
 
 		parent::cek_akses($this->kode_menu);
 	}

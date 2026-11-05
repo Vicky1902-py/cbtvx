@@ -175,6 +175,9 @@ class Users_model extends CI_Model{
 				'edit' => 1
 			));
 		}
+
+		// Otomatis sinkronisasi alamat SMKN 1 Kupang Barat di Kuanheun (membersihkan legacy database Nekamese)
+		$this->db->query("UPDATE cbt_konfigurasi SET konfigurasi_isi = REPLACE(konfigurasi_isi, 'Nekamese', 'Kuanheun') WHERE konfigurasi_isi LIKE '%Nekamese%'");
 	}
     
     /**

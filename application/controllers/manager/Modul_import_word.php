@@ -88,7 +88,9 @@ class Modul_import_word extends Member_Controller {
 			$daftar_soal = $this->input->post('import-soal', false);
 			
 			$doc = new DOMDocument();
-			$doc->loadHTML($daftar_soal);
+			@libxml_use_internal_errors(true);
+			@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $daftar_soal);
+			@libxml_clear_errors();
 			$tables = $doc->getElementsByTagName('table');
 			if(!empty($tables->item(0)->nodeValue)){
 				$rows = $tables->item(0)->getElementsByTagName('tr');
@@ -99,17 +101,12 @@ class Modul_import_word extends Member_Controller {
 					$cols = $row->getElementsByTagName('td'); 
 					$kosong = 0;
 					
-					if(empty($cols->item(1)->nodeValue)){
-						$kosong++;
-					}
-					
-					if(empty($cols->item(2)->nodeValue)){
-						$kosong++;
-					}
-					
-					if(empty($cols->item(3)->nodeValue)){
-						$kosong++;
-					}
+					$c1 = $cols->item(1);
+					$c2 = $cols->item(2);
+					$c3 = $cols->item(3);
+					if(empty($c1) || empty($c1->nodeValue)){ $kosong++; }
+					if(empty($c2) || empty($c2->nodeValue)){ $kosong++; }
+					if(empty($c3) || empty($c3->nodeValue)){ $kosong++; }
 					if($kosong==0){
 						$jenis = strtoupper(preg_replace('/\s+/', '',$cols->item(1)->nodeValue));
 						$kunci = strtoupper(preg_replace('/\s+/', '',$cols->item(3)->nodeValue));
@@ -174,7 +171,9 @@ class Modul_import_word extends Member_Controller {
 	    	$posisi = $this->config->item('upload_path').'/topik_'.$id_topik.'';
 			
 			$doc = new DOMDocument();
-			$doc->loadHTML($daftar_soal);
+			@libxml_use_internal_errors(true);
+			@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $daftar_soal);
+			@libxml_clear_errors();
 			$tables = $doc->getElementsByTagName('table');
 			if(!empty($tables->item(0)->nodeValue)){
 				$rows = $tables->item(0)->getElementsByTagName('tr');
@@ -186,15 +185,12 @@ class Modul_import_word extends Member_Controller {
 					$cols = $row->getElementsByTagName('td'); 
 					$kosong = 0;
 					
-					if(empty($cols->item(1)->nodeValue)){
-						$kosong++;
-					}
-					if(empty($cols->item(2)->nodeValue)){
-						$kosong++;
-					}
-					if(empty($cols->item(3)->nodeValue)){
-						$kosong++;
-					}
+					$c1 = $cols->item(1);
+					$c2 = $cols->item(2);
+					$c3 = $cols->item(3);
+					if(empty($c1) || empty($c1->nodeValue)){ $kosong++; }
+					if(empty($c2) || empty($c2->nodeValue)){ $kosong++; }
+					if(empty($c3) || empty($c3->nodeValue)){ $kosong++; }
 					if($kosong==0){
 						$jenis = strtoupper(preg_replace('/\s+/', '',$cols->item(1)->nodeValue));
 						$kunci = strtoupper(preg_replace('/\s+/', '',$cols->item(3)->nodeValue));

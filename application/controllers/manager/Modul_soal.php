@@ -134,7 +134,9 @@ class Modul_soal extends Member_Controller {
         	$posisi = $this->config->item('upload_path').'/topik_'.$id_topik.'';
 
         	$doc = new DOMDocument();
-			$doc->loadHTML($soal);
+			@libxml_use_internal_errors(true);
+			@$doc->loadHTML('<?xml encoding="utf-8" ?>' . $soal);
+			@libxml_clear_errors();
 			$tags = $doc->getElementsByTagName('img');
 			foreach ($tags as $tag) {
 				$soal_image = $tag->getAttribute('src');

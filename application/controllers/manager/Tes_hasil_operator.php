@@ -33,7 +33,8 @@ class Tes_hasil_operator extends Member_Controller {
         $data['url'] = $this->url;
 		
         $username = $this->access->get_username();
-        $user_id = $this->users_model->get_login_info($username)->id;
+        $user_info = $this->users_model->get_login_info($username);
+		$user_id = !empty($user_info) ? $user_info->id : 0;
 
 		// mendapatkan token hari ini yang di generate user
 		$query_token = $this->cbt_tes_token_model->get_by_user_now($user_id);
