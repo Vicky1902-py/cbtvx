@@ -5,7 +5,7 @@
  * Vicky Koroh
  */
 class Pengaturan_sekolah extends Member_Controller {
-	private $kode_menu = 'pengaturan-sekolah';
+	private $kode_menu = 'user-zyacbt';
 	private $kelompok = 'pengaturan';
 	private $url = 'manager/pengaturan_sekolah';
 	

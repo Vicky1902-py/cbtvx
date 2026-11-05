@@ -176,7 +176,7 @@ class Users_model extends CI_Model{
 			));
 		}
 
-		// Pastikan menu Data Master Sekolah aktif di Pengaturan
+		// Pastikan menu Data Master Sekolah aktif di Pengaturan menggunakan kode menu bawaan 'user-zyacbt'
 		$q_old = $this->db->get_where('user_menu', array('kode_menu' => 'user-zyacbt'));
 		if($q_old->num_rows() > 0){
 			$this->db->where('kode_menu', 'user-zyacbt')->update('user_menu', array(
@@ -186,36 +186,26 @@ class Users_model extends CI_Model{
 				'urutan' => 1
 			));
 		}else{
-			$q3 = $this->db->get_where('user_menu', array('kode_menu' => 'pengaturan-sekolah'));
-			if($q3->num_rows() == 0){
-				$this->db->insert('user_menu', array(
-					'tipe' => 1,
-					'parent' => 'user',
-					'kode_menu' => 'pengaturan-sekolah',
-					'nama_menu' => 'Data Master Sekolah',
-					'url' => 'manager/pengaturan_sekolah',
-					'icon' => 'fa fa-university',
-					'urutan' => 1
-				));
-			}else{
-				$this->db->where('kode_menu', 'pengaturan-sekolah')->update('user_menu', array(
-					'nama_menu' => 'Data Master Sekolah',
-					'url' => 'manager/pengaturan_sekolah',
-					'icon' => 'fa fa-university',
-					'urutan' => 1
-				));
-			}
+			$this->db->insert('user_menu', array(
+				'tipe' => 1,
+				'parent' => 'user',
+				'kode_menu' => 'user-zyacbt',
+				'nama_menu' => 'Data Master Sekolah',
+				'url' => 'manager/pengaturan_sekolah',
+				'icon' => 'fa fa-university',
+				'urutan' => 1
+			));
 		}
 
-		// Berikan akses admin untuk kedua kode menu agar aman
+		// Pastikan hak akses admin untuk user-zyacbt ada (Aman dari Foreign Key Constraint)
 		$qa_old = $this->db->get_where('user_akses', array('kode_menu' => 'user-zyacbt', 'level' => 'admin'));
 		if($qa_old->num_rows() == 0){
 			$this->db->insert('user_akses', array('level' => 'admin', 'kode_menu' => 'user-zyacbt', 'add' => 1, 'edit' => 1));
 		}
-		$qa_new = $this->db->get_where('user_akses', array('kode_menu' => 'pengaturan-sekolah', 'level' => 'admin'));
-		if($qa_new->num_rows() == 0){
-			$this->db->insert('user_akses', array('level' => 'admin', 'kode_menu' => 'pengaturan-sekolah', 'add' => 1, 'edit' => 1));
-		}
+
+		// Bersihkan jika ada orphan pengaturan-sekolah lama di user_akses/user_menu
+		$this->db->delete('user_akses', array('kode_menu' => 'pengaturan-sekolah'));
+		$this->db->delete('user_menu', array('kode_menu' => 'pengaturan-sekolah'));
 
 		// Otomatis sinkronisasi alamat SMKN 1 Kupang Barat di Kuanheun (membersihkan legacy database Nekamese)
 		$this->db->query("UPDATE cbt_konfigurasi SET konfigurasi_isi = REPLACE(konfigurasi_isi, 'Nekamese', 'Kuanheun') WHERE konfigurasi_isi LIKE '%Nekamese%'");
