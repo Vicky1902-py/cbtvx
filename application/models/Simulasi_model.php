@@ -77,23 +77,17 @@ class Simulasi_model extends CI_Model {
             ));
         }
 
-        // 5. Pastikan Waktu Ujian Simulasi selalu aktif dan terbuka
-        $this->db->where('tes_nama LIKE "%SIMULASI%"')->update('cbt_tes', array(
-            'tes_begin_time' => '2025-01-01 00:00:00',
-            'tes_end_time' => '2030-12-31 23:59:59',
-            'tes_token' => 1
-        ));
+        // 5. Pastikan Waktu Ujian selalu aktif dan terbuka
+        $this->db->query("UPDATE cbt_tes SET tes_begin_time = '2020-01-01 00:00:00', tes_end_time = '2035-12-31 23:59:59', tes_token = 1");
 
-        // 6. Hubungkan semua tes simulasi ke semua grup siswa yang ada di sistem
-        $q_tests = $this->db->like('tes_nama', 'SIMULASI')->get('cbt_tes');
-        if($q_tests->num_rows() > 0){
-            $all_groups = $this->db->get('cbt_user_grup')->result();
-            foreach($q_tests->result() as $t){
-                foreach($all_groups as $g){
-                    $cek_grup = $this->db->get_where('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $g->grup_id));
-                    if($cek_grup->num_rows() == 0){
-                        $this->db->insert('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $g->grup_id));
-                    }
+        // 6. Hubungkan semua tes ke semua grup siswa yang ada di sistem
+        $all_tests = $this->db->get('cbt_tes')->result();
+        $all_groups = $this->db->get('cbt_user_grup')->result();
+        foreach($all_tests as $t){
+            foreach($all_groups as $g){
+                $cek_grup = $this->db->get_where('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $g->grup_id));
+                if($cek_grup->num_rows() == 0){
+                    $this->db->insert('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $g->grup_id));
                 }
             }
         }

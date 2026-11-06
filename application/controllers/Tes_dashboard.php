@@ -40,6 +40,19 @@ class Tes_dashboard extends Tes_Controller {
 		$query_user = $this->cbt_user_model->get_by_kolom_limit('user_name', $username, 1);
 		if($query_user->num_rows()>0){
 			$user_id = $query_user->row()->user_id;
+			$grup_id = $query_user->row()->user_grup_id;
+
+		// Pastikan tes selalu aktif dan terhubung ke grup siswa
+		$this->db->query("UPDATE cbt_tes SET tes_begin_time = '2020-01-01 00:00:00', tes_end_time = '2035-12-31 23:59:59'");
+		if($grup_id > 0){
+			$cek_link = $this->db->get_where('cbt_tesgrup', array('tstgrp_grup_id' => $grup_id));
+			if($cek_link->num_rows() == 0){
+				$all_t = $this->db->get('cbt_tes')->result();
+				foreach($all_t as $t){
+					$this->db->insert('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $grup_id));
+				}
+			}
+		}
 			$query_tes = $this->cbt_tes_user_model->get_by_user_status($user_id);
 			if($query_tes->num_rows()>0){
 				$query_tes = $query_tes->result();
@@ -372,6 +385,12 @@ class Tes_dashboard extends Tes_Controller {
 		$start = 0;
 		$rows = 10;
 
+		// Auto seed simulasi jika belum ada
+		try {
+			$this->load->model('simulasi_model');
+			$this->simulasi_model->seed_simulasi();
+		} catch(Exception $e) {}
+
 		$group = $this->access_tes->get_group();
 		$query_grup = $this->cbt_user_grup_model->get_by_kolom_limit('grup_nama', $group, 1);
 		$grup_id = 0;
@@ -384,6 +403,19 @@ class Tes_dashboard extends Tes_Controller {
 		$user_id = 0;
 		if($query_user->num_rows()>0){
 			$user_id = $query_user->row()->user_id;
+			$grup_id = $query_user->row()->user_grup_id;
+
+		// Pastikan tes selalu aktif dan terhubung ke grup siswa
+		$this->db->query("UPDATE cbt_tes SET tes_begin_time = '2020-01-01 00:00:00', tes_end_time = '2035-12-31 23:59:59'");
+		if($grup_id > 0){
+			$cek_link = $this->db->get_where('cbt_tesgrup', array('tstgrp_grup_id' => $grup_id));
+			if($cek_link->num_rows() == 0){
+				$all_t = $this->db->get('cbt_tes')->result();
+				foreach($all_t as $t){
+					$this->db->insert('cbt_tesgrup', array('tstgrp_tes_id' => $t->tes_id, 'tstgrp_grup_id' => $grup_id));
+				}
+			}
+		}
 		}
 
 		// get search value (if any)

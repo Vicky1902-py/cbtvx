@@ -87,14 +87,6 @@
                         </tr>
                     </thead>
                     <tbody style="font-size: 13px; color: #1e293b;">
-                        <tr>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                            <td></td>
-                        </tr>
                     </tbody>
                 </table>
             </div>
