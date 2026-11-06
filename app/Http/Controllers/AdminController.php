@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use App\Models\User;
 use App\Models\MasterSekolah;
 use App\Models\Kelas;
@@ -28,8 +30,76 @@ class AdminController extends Controller
         // Peserta Ujian Aktif Realtime
         $pesertaAktif = UjianPeserta::with(['siswa.kelas', 'jadwalUjian.bankSoal.mataPelajaran'])
             ->orderBy('updated_at', 'desc')
-            ->take(20)
+            ->take(25)
             ->get();
+
+        // Data Grafik Donat: Status Peserta Ujian
+        $countSelesai = UjianPeserta::where('status', 'selesai')->count();
+        $countBerlangsung = UjianPeserta::where('status', 'berlangsung')->count();
+        $countBelum = max(0, $totalSiswa - ($countSelesai + $countBerlangsung));
+
+        // Data Grafik Batang: Rata-Rata Nilai per Kelas
+        $kelasList = Kelas::with(['siswa.ujianPeserta'])->get();
+        $chartKelasLabels = [];
+        $chartKelasAvg = [];
+        $chartKelasHighest = [];
+
+        foreach ($kelasList as $kelas) {
+            $chartKelasLabels[] = $kelas->nama_kelas;
+            $allScores = [];
+
+            foreach ($kelas->siswa as $s) {
+                foreach ($s->ujianPeserta as $up) {
+                    if ($up->status === 'selesai') {
+                        $allScores[] = (float) $up->total_nilai;
+                    }
+                }
+            }
+
+            if (count($allScores) > 0) {
+                $chartKelasAvg[] = round(array_sum($allScores) / count($allScores), 1);
+                $chartKelasHighest[] = round(max($allScores), 1);
+            } else {
+                $chartKelasAvg[] = 0;
+                $chartKelasHighest[] = 0;
+            }
+        }
+
+        // Metrik Pemantau Server Realtime
+        $memUsage = memory_get_usage(true);
+        $memUsageMB = round($memUsage / 1024 / 1024, 2);
+        $memLimit = ini_get('memory_limit') ?: '512M';
+
+        $basePath = base_path();
+        $diskFree = @disk_free_space($basePath) ?: (50 * 1024 * 1024 * 1024);
+        $diskTotal = @disk_total_space($basePath) ?: (100 * 1024 * 1024 * 1024);
+        $diskUsed = max(0, $diskTotal - $diskFree);
+        $diskPercent = $diskTotal > 0 ? round(($diskUsed / $diskTotal) * 100, 1) : 0;
+        $diskFreeGB = round($diskFree / 1024 / 1024 / 1024, 1);
+        $diskTotalGB = round($diskTotal / 1024 / 1024 / 1024, 1);
+
+        // Pengukuran Latensi Database & Respon Server (ms)
+        $startDb = microtime(true);
+        try {
+            DB::select('SELECT 1');
+            $dbLatencyMs = round((microtime(true) - $startDb) * 1000, 2);
+            $dbStatus = 'Online (Koneksi Optimal)';
+        } catch (\Throwable $e) {
+            $dbLatencyMs = 999;
+            $dbStatus = 'Gangguan Koneksi';
+        }
+
+        $serverStats = [
+            'ram_used_mb' => $memUsageMB,
+            'ram_limit' => $memLimit,
+            'disk_percent' => $diskPercent,
+            'disk_free_gb' => $diskFreeGB,
+            'disk_total_gb' => $diskTotalGB,
+            'db_latency_ms' => $dbLatencyMs,
+            'db_status' => $dbStatus,
+            'php_version' => PHP_VERSION,
+            'server_software' => $_SERVER['SERVER_SOFTWARE'] ?? 'LiteSpeed / Apache Web Server',
+        ];
 
         return view('admin.dashboard', compact(
             'sekolah',
@@ -37,7 +107,14 @@ class AdminController extends Controller
             'totalKelas',
             'totalBankSoal',
             'totalJadwal',
-            'pesertaAktif'
+            'pesertaAktif',
+            'countSelesai',
+            'countBerlangsung',
+            'countBelum',
+            'chartKelasLabels',
+            'chartKelasAvg',
+            'chartKelasHighest',
+            'serverStats'
         ));
     }
 
@@ -46,7 +123,7 @@ class AdminController extends Controller
      */
     public function siswa()
     {
-        $sekolah = MasterSekolah::first();
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
         $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
         $siswaList = Siswa::with('kelas', 'user')->orderBy('nama_lengkap')->paginate(25);
 
@@ -54,11 +131,27 @@ class AdminController extends Controller
     }
 
     /**
+     * Download Template Siswa CSV
+     */
+    public function downloadTemplateSiswa()
+    {
+        $csvHeader = "nis,nisn,nama_lengkap,jenis_kelamin,kode_kelas,sesi_ujian,ruangan_ujian,nomor_peserta\n";
+        $csvContent = "22101,0054819201,Joko Susanto,L,XI-MM,Sesi 1,Lab Komputer 1,26-24-05-01-001-8\n" .
+                      "22102,0054819202,Maria Fatima Berek,P,XI-MM,Sesi 1,Lab Komputer 1,26-24-05-01-002-7\n" .
+                      "21101,0054819203,Yehezkiel Nalle,L,XII-TKJ,Sesi 2,Lab Komputer 2,26-24-05-01-003-6\n";
+
+        return response($csvHeader . $csvContent, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="template_data_siswa_cbt.csv"',
+        ]);
+    }
+
+    /**
      * Bank Soal
      */
     public function bankSoal()
     {
-        $sekolah = MasterSekolah::first();
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
         $bankList = BankSoal::with(['mataPelajaran', 'butirSoal'])->latest()->get();
 
         return view('admin.bank_soal', compact('sekolah', 'bankList'));
@@ -69,10 +162,75 @@ class AdminController extends Controller
      */
     public function jadwal()
     {
-        $sekolah = MasterSekolah::first();
-        $jadwalList = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas'])->latest()->get();
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalList = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas', 'peserta'])->latest()->get();
 
         return view('admin.jadwal', compact('sekolah', 'jadwalList'));
+    }
+
+    /**
+     * Generate Token Baru Otomatis
+     */
+    public function generateToken($jadwalId)
+    {
+        $jadwal = JadwalUjian::findOrFail($jadwalId);
+        $characters = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+        $newToken = substr(str_shuffle($characters), 0, 5);
+
+        $jadwal->update(['token_ujian' => $newToken]);
+
+        return back()->with('success', 'Token asesmen berhasil diperbarui menjadi: ' . $newToken);
+    }
+
+    /**
+     * Paksa Selesai Semua Peserta Ujian (Force Finish)
+     */
+    public function forceFinishAll($jadwalId)
+    {
+        $jadwal = JadwalUjian::with('bankSoal.butirSoal')->findOrFail($jadwalId);
+        $pesertaList = UjianPeserta::where('jadwal_ujian_id', $jadwalId)
+            ->where('status', 'berlangsung')
+            ->get();
+
+        $daftarSoal = $jadwal->bankSoal->butirSoal;
+
+        foreach ($pesertaList as $p) {
+            $totalNilai = 0.0;
+            $totalBenar = 0;
+            $totalSalah = 0;
+            $totalKosong = 0;
+
+            foreach ($daftarSoal as $soal) {
+                $jwb = \App\Models\UjianJawaban::where('ujian_peserta_id', $p->id)
+                    ->where('soal_butir_id', $soal->id)
+                    ->first();
+
+                if (!$jwb || empty($jwb->jawaban_siswa)) {
+                    $totalKosong++;
+                } elseif (strtoupper(trim($jwb->jawaban_siswa)) === strtoupper(trim($soal->kunci_jawaban))) {
+                    $totalBenar++;
+                    $totalNilai += (float) $soal->bobot;
+                } else {
+                    $totalSalah++;
+                }
+            }
+
+            $p->update([
+                'status' => 'selesai',
+                'waktu_selesai' => now(),
+                'sisa_detik' => 0,
+                'jawaban_benar' => $totalBenar,
+                'jawaban_salah' => $totalSalah,
+                'jawaban_kosong' => $totalKosong,
+                'total_nilai' => min(100.0, $totalNilai),
+            ]);
+
+            if ($p->siswa) {
+                $p->siswa->update(['status_login' => 'selesai']);
+            }
+        }
+
+        return back()->with('success', 'Berhasil memaksa selesai ' . $pesertaList->count() . ' peserta ujian.');
     }
 
     /**
@@ -86,7 +244,6 @@ class AdminController extends Controller
             'ip_address' => null,
         ]);
 
-        // Jika ada sesi ujian yang terkunci, reset agar bisa masuk kembali
         $peserta = UjianPeserta::where('siswa_id', $siswaId)
             ->where('status', 'berlangsung')
             ->first();
@@ -96,6 +253,21 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Sesi login siswa ' . $siswa->nama_lengkap . ' berhasil direset.');
+    }
+
+    /**
+     * Reset Semua Siswa Terkunci
+     */
+    public function resetAllLogins()
+    {
+        Siswa::whereIn('status_login', ['online', 'sedang_tes'])->update([
+            'status_login' => 'offline',
+            'ip_address' => null,
+        ]);
+
+        UjianPeserta::where('status', 'berlangsung')->update(['ip_pengerjaan' => null]);
+
+        return back()->with('success', 'Seluruh sesi siswa yang terkunci berhasil direset.');
     }
 
     /**

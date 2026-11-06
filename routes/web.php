@@ -27,9 +27,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.index');
     Route::get('/siswa', [AdminController::class, 'siswa'])->name('siswa');
+    Route::get('/template-siswa', [AdminController::class, 'downloadTemplateSiswa'])->name('template_siswa');
     Route::get('/bank-soal', [AdminController::class, 'bankSoal'])->name('bank_soal');
     Route::get('/jadwal', [AdminController::class, 'jadwal'])->name('jadwal');
+    Route::post('/jadwal/{id}/generate-token', [AdminController::class, 'generateToken'])->name('generate_token');
+    Route::post('/jadwal/{id}/force-finish', [AdminController::class, 'forceFinishAll'])->name('force_finish');
     Route::post('/reset-login/{id}', [AdminController::class, 'resetLogin'])->name('reset_login');
+    Route::post('/reset-all-logins', [AdminController::class, 'resetAllLogins'])->name('reset_all_logins');
     Route::get('/cetak-kartu', [AdminController::class, 'cetakKartu'])->name('cetak_kartu');
     Route::get('/cetak-berita-acara/{id}', [AdminController::class, 'cetakBeritaAcara'])->name('cetak_berita_acara');
     Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');

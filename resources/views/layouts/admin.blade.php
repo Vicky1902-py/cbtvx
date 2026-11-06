@@ -5,17 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('title', 'Panel Administrator') &bull; CBT SMKN 1 Kupang Barat</title>
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+    
+    <!-- Chart.js Offline Lokal -->
+    <script src="{{ asset('js/chart.min.js') }}"></script>
+
     <style>
         :root {
             --primary: #0f2b48;
             --primary-dark: #07172c;
+            --primary-gradient: linear-gradient(180deg, #0f2b48 0%, #091a2e 100%);
             --accent: #0077b6;
             --accent-hover: #005b8c;
+            --accent-light: #38bdf8;
             --bg-page: #f1f5f9;
             --surface: #ffffff;
             --border: #cbd5e1;
             --border-light: #e2e8f0;
             --text-main: #0f172a;
+            --text-body: #334155;
             --text-muted: #64748b;
             --success: #15803d;
             --success-bg: #dcfce7;
@@ -23,7 +30,11 @@
             --warning-bg: #fef3c7;
             --danger: #b91c1c;
             --danger-bg: #fee2e2;
-            --radius: 4px;
+            --radius-sm: 4px;
+            --radius: 6px;
+            --sidebar-width: 250px;
+            --sidebar-collapsed-width: 68px;
+            --transition-speed: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         * {
@@ -35,58 +46,83 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
             background: var(--bg-page);
-            color: var(--text-main);
-            font-size: 14px;
+            color: var(--text-body);
+            font-size: 13.5px;
             line-height: 1.5;
             display: flex;
             min-height: 100vh;
         }
 
-        /* Sidebar Kiri Tetap */
+        /* Sidebar Kiri Tetap / Collapsible */
         .sidebar {
-            width: 250px;
-            background: var(--primary);
+            width: var(--sidebar-width);
+            background: var(--primary-gradient);
             color: #ffffff;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
-            border-right: 1px solid rgba(0,0,0,0.15);
+            border-right: 1px solid rgba(0,0,0,0.2);
+            transition: width var(--transition-speed);
+            overflow-x: hidden;
+            position: relative;
+            z-index: 100;
+        }
+
+        body.sidebar-collapsed .sidebar {
+            width: var(--sidebar-collapsed-width);
         }
 
         .sidebar-brand {
-            padding: 16px;
+            padding: 14px 16px;
             display: flex;
             align-items: center;
             gap: 12px;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             background: var(--primary-dark);
+            height: 56px;
+            white-space: nowrap;
         }
 
         .sidebar-brand img {
-            width: 36px;
-            height: 36px;
+            width: 32px;
+            height: 32px;
             object-fit: contain;
+            flex-shrink: 0;
+        }
+
+        .sidebar-brand-text {
+            transition: opacity var(--transition-speed);
+        }
+
+        body.sidebar-collapsed .sidebar-brand-text {
+            display: none;
         }
 
         .sidebar-brand h1 {
             font-size: 13px;
             font-weight: 700;
-            letter-spacing: 0.3px;
             line-height: 1.2;
+            color: #ffffff;
         }
 
         .sidebar-brand p {
             font-size: 10px;
-            color: #94a3b8;
+            color: var(--accent-light);
         }
 
         .nav-group-title {
-            padding: 16px 16px 6px;
+            padding: 14px 16px 4px;
             font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.8px;
             color: #94a3b8;
+            white-space: nowrap;
+            transition: opacity var(--transition-speed);
+        }
+
+        body.sidebar-collapsed .nav-group-title {
+            display: none;
         }
 
         .nav-menu {
@@ -98,40 +134,56 @@
         .nav-item a {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             padding: 10px 16px;
             color: #cbd5e1;
             text-decoration: none;
             font-weight: 500;
             border-left: 3px solid transparent;
             transition: all 0.15s ease;
+            white-space: nowrap;
         }
 
         .nav-item a:hover {
-            background: rgba(255,255,255,0.06);
+            background: rgba(255,255,255,0.07);
             color: #ffffff;
         }
 
         .nav-item.active a {
             background: rgba(255,255,255,0.12);
             color: #ffffff;
-            border-left-color: #38bdf8;
+            border-left-color: var(--accent-light);
             font-weight: 600;
         }
 
         .nav-item svg {
-            width: 18px;
-            height: 18px;
-            opacity: 0.85;
+            width: 19px;
+            height: 19px;
+            flex-shrink: 0;
+            opacity: 0.9;
+        }
+
+        body.sidebar-collapsed .nav-item a {
+            padding: 12px 0;
+            justify-content: center;
+        }
+
+        body.sidebar-collapsed .nav-item span {
+            display: none;
         }
 
         .sidebar-footer {
             margin-top: auto;
-            padding: 14px 16px;
-            border-top: 1px solid rgba(255,255,255,0.1);
+            padding: 12px 16px;
+            border-top: 1px solid rgba(255,255,255,0.08);
             font-size: 11px;
             color: #94a3b8;
             background: var(--primary-dark);
+            white-space: nowrap;
+        }
+
+        body.sidebar-collapsed .sidebar-footer {
+            display: none;
         }
 
         /* Konten Kanan */
@@ -140,30 +192,60 @@
             display: flex;
             flex-direction: column;
             min-width: 0;
+            transition: all var(--transition-speed);
         }
 
         /* Bilah Atas Sederhana */
         .topbar {
-            height: 54px;
+            height: 56px;
             background: var(--surface);
             border-bottom: 1px solid var(--border-light);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 0 24px;
+            padding: 0 20px;
+            position: sticky;
+            top: 0;
+            z-index: 90;
+        }
+
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* Tombol Toggle Auxiliary Pane (Sidebar Collapse) */
+        .btn-toggle-sidebar {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-body);
+            transition: all 0.15s ease;
+        }
+
+        .btn-toggle-sidebar:hover {
+            background: #e2e8f0;
+            color: var(--primary);
         }
 
         .topbar-info {
             display: flex;
             align-items: center;
-            gap: 16px;
+            gap: 12px;
             font-size: 13px;
         }
 
         .badge-academic {
             background: #e2e8f0;
             padding: 3px 8px;
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             font-weight: 600;
             color: #334155;
             font-size: 11px;
@@ -186,7 +268,7 @@
             color: #b91c1c;
             border: 1px solid #fecaca;
             padding: 6px 12px;
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             font-size: 12px;
             font-weight: 600;
             cursor: pointer;
@@ -198,12 +280,11 @@
 
         .btn-logout:hover {
             background: #fca5a5;
-            color: #7f1d1d;
         }
 
         /* Konten Halaman */
         .content-area {
-            padding: 24px;
+            padding: 20px;
             flex: 1;
         }
 
@@ -231,13 +312,14 @@
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            padding: 8px 14px;
+            padding: 7px 14px;
             font-size: 13px;
             font-weight: 600;
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             border: 1px solid transparent;
             cursor: pointer;
             text-decoration: none;
+            transition: all 0.15s ease;
         }
 
         .btn-primary {
@@ -260,9 +342,19 @@
             background: #f8fafc;
         }
 
+        .btn-danger {
+            background: #dc2626;
+            color: #ffffff;
+            border-color: #b91c1c;
+        }
+
+        .btn-danger:hover {
+            background: #b91c1c;
+        }
+
         .btn-sm {
             padding: 4px 8px;
-            font-size: 11px;
+            font-size: 11.5px;
         }
 
         /* Standar Tabel Padat */
@@ -321,7 +413,7 @@
         /* Notifikasi */
         .alert {
             padding: 12px 16px;
-            border-radius: var(--radius);
+            border-radius: var(--radius-sm);
             font-size: 13px;
             margin-bottom: 20px;
             border: 1px solid transparent;
@@ -331,7 +423,7 @@
 
         /* Footer */
         .footer-copyright {
-            padding: 16px 24px;
+            padding: 14px 20px;
             border-top: 1px solid var(--border-light);
             background: var(--surface);
             font-size: 12px;
@@ -345,11 +437,11 @@
 </head>
 <body>
 
-    <!-- Sidebar Kiri Tetap -->
-    <aside class="sidebar">
+    <!-- Sidebar Kiri Tetap / Toggleable -->
+    <aside class="sidebar" id="mainSidebar">
         <div class="sidebar-brand">
             <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
-            <div>
+            <div class="sidebar-brand-text">
                 <h1>SMKN 1 KUPANG BARAT</h1>
                 <p>CBT Asesmen Terstandar</p>
             </div>
@@ -357,7 +449,7 @@
 
         <div class="nav-group-title">Utama</div>
         <ul class="nav-menu">
-            <li class="nav-item {{ request()->routeIs('admin.dashboard*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.dashboard*') ? 'active' : '' }}" title="Dashboard & Monitoring">
                 <a href="{{ route('admin.dashboard') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                     <span>Dashboard & Monitoring</span>
@@ -367,19 +459,19 @@
 
         <div class="nav-group-title">Data Master</div>
         <ul class="nav-menu">
-            <li class="nav-item {{ request()->routeIs('admin.siswa*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.siswa*') ? 'active' : '' }}" title="Data Siswa">
                 <a href="{{ route('admin.siswa') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
                     <span>Data Siswa</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('admin.bank_soal*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.bank_soal*') ? 'active' : '' }}" title="Bank Soal">
                 <a href="{{ route('admin.bank_soal') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span>Bank Soal (25/40 Soal)</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}" title="Jadwal & Token Ujian">
                 <a href="{{ route('admin.jadwal') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     <span>Jadwal & Token Ujian</span>
@@ -389,7 +481,7 @@
 
         <div class="nav-group-title">Laporan & Cetak</div>
         <ul class="nav-menu">
-            <li class="nav-item {{ request()->routeIs('admin.cetak_kartu*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.cetak_kartu*') ? 'active' : '' }}" title="Cetak Kartu Ujian A4">
                 <a href="{{ route('admin.cetak_kartu') }}" target="_blank">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     <span>Cetak Kartu Ujian A4</span>
@@ -399,7 +491,7 @@
 
         <div class="nav-group-title">Sistem</div>
         <ul class="nav-menu">
-            <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}">
+            <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}" title="Pengaturan & TTD Kepsek">
                 <a href="{{ route('admin.pengaturan') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <span>Pengaturan & TTD Kepsek</span>
@@ -417,9 +509,16 @@
     <!-- Konten Kanan -->
     <div class="main-wrapper">
         <header class="topbar">
-            <div class="topbar-info">
-                <strong>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</strong>
-                <span class="badge-academic">TP: {{ $sekolah->tahun_ajaran_aktif ?? '2026/2027' }} - {{ $sekolah->semester_aktif ?? 'Genap' }}</span>
+            <div class="topbar-left">
+                <!-- Tombol Toggle Auxiliary Pane -->
+                <button type="button" class="btn-toggle-sidebar" id="btnToggleSidebar" title="Kecilkan / Besarkan Menu Sidebar (Auxiliary Pane)">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+
+                <div class="topbar-info">
+                    <strong>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</strong>
+                    <span class="badge-academic">TP: {{ $sekolah->tahun_ajaran_aktif ?? '2026/2027' }} - {{ $sekolah->semester_aktif ?? 'Genap' }}</span>
+                </div>
             </div>
 
             <div class="topbar-user">
@@ -455,6 +554,26 @@
             <div style="font-size: 11px;">Versi Arsitektur Bersih &bull; Berstandar ANBK / TKA Pusmendik Kemdikbud</div>
         </footer>
     </div>
+
+    <!-- Script Pengendali Toggle Sidebar & State Persistence -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const btnToggle = document.getElementById('btnToggleSidebar');
+            const isCollapsed = localStorage.getItem('cbt_sidebar_collapsed') === 'true';
+
+            if (isCollapsed) {
+                document.body.classList.add('sidebar-collapsed');
+            }
+
+            if (btnToggle) {
+                btnToggle.addEventListener('click', function () {
+                    document.body.classList.toggle('sidebar-collapsed');
+                    const currentState = document.body.classList.contains('sidebar-collapsed');
+                    localStorage.setItem('cbt_sidebar_collapsed', currentState);
+                });
+            }
+        });
+    </script>
 
     @yield('scripts')
 </body>
