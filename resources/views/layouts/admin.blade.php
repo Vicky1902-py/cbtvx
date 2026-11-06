@@ -459,42 +459,64 @@
 
         <div class="nav-group-title">Data Master</div>
         <ul class="nav-menu">
+            <li class="nav-item {{ request()->routeIs('admin.kelas*') ? 'active' : '' }}" title="Data Kelas">
+                <a href="{{ route('admin.kelas') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                    <span>Data Kelas & Rombel</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.mapel*') ? 'active' : '' }}" title="Mata Pelajaran">
+                <a href="{{ route('admin.mapel') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
+                    <span>Mata Pelajaran</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('admin.siswa*') ? 'active' : '' }}" title="Data Siswa">
                 <a href="{{ route('admin.siswa') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
-                    <span>Data Siswa</span>
+                    <span>Data Siswa (Impor XLSX)</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('admin.users*') ? 'active' : '' }}" title="Guru & Pengguna">
+                <a href="{{ route('admin.users') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+                    <span>Guru & Pengguna</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="nav-group-title">Bank Soal & Penilaian</div>
+        <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.bank_soal*') ? 'active' : '' }}" title="Bank Soal">
                 <a href="{{ route('admin.bank_soal') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
                     <span>Bank Soal (25/40 Soal)</span>
                 </a>
             </li>
+        </ul>
+
+        <div class="nav-group-title">Pelaksanaan Ujian</div>
+        <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}" title="Jadwal & Token Ujian">
                 <a href="{{ route('admin.jadwal') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                     <span>Jadwal & Token Ujian</span>
                 </a>
             </li>
-        </ul>
-
-        <div class="nav-group-title">Laporan & Cetak</div>
-        <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.cetak_kartu*') ? 'active' : '' }}" title="Cetak Kartu Ujian A4">
                 <a href="{{ route('admin.cetak_kartu') }}" target="_blank">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
-                    <span>Cetak Kartu Ujian A4</span>
+                    <span>Cetak Kartu Login A4</span>
                 </a>
             </li>
         </ul>
 
-        <div class="nav-group-title">Sistem</div>
+        <div class="nav-group-title">Sistem & Profil</div>
         <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}" title="Pengaturan & TTD Kepsek">
                 <a href="{{ route('admin.pengaturan') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    <span>Pengaturan & TTD Kepsek</span>
+                    <span>Data Sekolah & TTD Kepsek</span>
                 </a>
             </li>
         </ul>

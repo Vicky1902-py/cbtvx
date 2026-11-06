@@ -9,6 +9,11 @@ class UjianPeserta extends Model
     protected $table = 'ujian_peserta';
     protected $guarded = ['id'];
 
+    protected $casts = [
+        'waktu_mulai' => 'datetime',
+        'waktu_selesai' => 'datetime',
+    ];
+
     public function jadwalUjian()
     {
         return $this->belongsTo(JadwalUjian::class);

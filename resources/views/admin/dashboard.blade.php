@@ -194,7 +194,7 @@
                         <strong>{{ $p->jadwalUjian->bankSoal->mataPelajaran->nama_mapel ?? '-' }}</strong><br>
                         <span style="font-size: 11px; color: #64748b;">{{ $p->jadwalUjian->nama_ujian ?? '-' }}</span>
                     </td>
-                    <td>{{ $p->waktu_mulai ? $p->waktu_mulai->format('H:i:s') : '-' }}</td>
+                    <td>{{ $p->waktu_mulai ? \Carbon\Carbon::parse($p->waktu_mulai)->format('H:i:s') : '-' }}</td>
                     <td>
                         @if ($p->status === 'berlangsung')
                             <strong style="color: #0369a1;">{{ ceil($p->sisa_detik / 60) }} Menit</strong>

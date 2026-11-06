@@ -26,16 +26,64 @@ Route::middleware(['auth'])->prefix('siswa')->name('siswa.')->group(function () 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.index');
+
+    // Siswa CRUD & Import/Export
     Route::get('/siswa', [AdminController::class, 'siswa'])->name('siswa');
-    Route::get('/template-siswa', [AdminController::class, 'downloadTemplateSiswa'])->name('template_siswa');
+    Route::post('/siswa', [AdminController::class, 'simpanSiswa'])->name('siswa.simpan');
+    Route::post('/siswa/{id}/update', [AdminController::class, 'updateSiswa'])->name('siswa.update');
+    Route::post('/siswa/{id}/hapus', [AdminController::class, 'hapusSiswa'])->name('siswa.hapus');
+    Route::post('/siswa/import-xlsx', [AdminController::class, 'importSiswaXlsx'])->name('siswa.import_xlsx');
+    Route::get('/siswa/export-xlsx', [AdminController::class, 'exportSiswaXlsx'])->name('siswa.export_xlsx');
+    Route::get('/siswa/template-xlsx', [AdminController::class, 'downloadTemplateSiswaXlsx'])->name('siswa.template_xlsx');
+
+    // Kelas CRUD
+    Route::get('/kelas', [AdminController::class, 'kelas'])->name('kelas');
+    Route::post('/kelas', [AdminController::class, 'simpanKelas'])->name('kelas.simpan');
+    Route::post('/kelas/{id}/update', [AdminController::class, 'updateKelas'])->name('kelas.update');
+    Route::post('/kelas/{id}/hapus', [AdminController::class, 'hapusKelas'])->name('kelas.hapus');
+
+    // Mata Pelajaran CRUD
+    Route::get('/mapel', [AdminController::class, 'mapel'])->name('mapel');
+    Route::post('/mapel', [AdminController::class, 'simpanMapel'])->name('mapel.simpan');
+    Route::post('/mapel/{id}/update', [AdminController::class, 'updateMapel'])->name('mapel.update');
+    Route::post('/mapel/{id}/hapus', [AdminController::class, 'hapusMapel'])->name('mapel.hapus');
+
+    // User CRUD
+    Route::get('/users', [AdminController::class, 'users'])->name('users');
+    Route::post('/users', [AdminController::class, 'simpanUser'])->name('users.simpan');
+    Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::post('/users/{id}/hapus', [AdminController::class, 'hapusUser'])->name('users.hapus');
+
+    // Bank Soal & Butir Soal
     Route::get('/bank-soal', [AdminController::class, 'bankSoal'])->name('bank_soal');
+    Route::post('/bank-soal', [AdminController::class, 'simpanBankSoal'])->name('bank_soal.simpan');
+    Route::get('/bank-soal/{id}', [AdminController::class, 'detailBankSoal'])->name('bank_soal.detail');
+    Route::post('/bank-soal/{id}/butir', [AdminController::class, 'simpanButirSoal'])->name('bank_soal.butir.simpan');
+    Route::post('/butir-soal/{id}/hapus', [AdminController::class, 'hapusButirSoal'])->name('bank_soal.butir.hapus');
+    Route::post('/bank-soal/{id}/hapus', [AdminController::class, 'hapusBankSoal'])->name('bank_soal.hapus');
+
+    // Jadwal Ujian CRUD & Kontrol Proktor
     Route::get('/jadwal', [AdminController::class, 'jadwal'])->name('jadwal');
+    Route::post('/jadwal', [AdminController::class, 'simpanJadwal'])->name('jadwal.simpan');
+    Route::post('/jadwal/{id}/update', [AdminController::class, 'updateJadwal'])->name('jadwal.update');
+    Route::post('/jadwal/{id}/hapus', [AdminController::class, 'hapusJadwal'])->name('jadwal.hapus');
     Route::post('/jadwal/{id}/generate-token', [AdminController::class, 'generateToken'])->name('generate_token');
     Route::post('/jadwal/{id}/force-finish', [AdminController::class, 'forceFinishAll'])->name('force_finish');
+
+    // Reset Sesi
     Route::post('/reset-login/{id}', [AdminController::class, 'resetLogin'])->name('reset_login');
     Route::post('/reset-all-logins', [AdminController::class, 'resetAllLogins'])->name('reset_all_logins');
+
+    // Rekap Nilai
+    Route::get('/jadwal/{id}/rekap-nilai', [AdminController::class, 'rekapNilai'])->name('rekap_nilai');
+    Route::get('/jadwal/{id}/export-nilai', [AdminController::class, 'exportRekapNilaiXlsx'])->name('export_nilai');
+
+    // Dokumen Cetak
     Route::get('/cetak-kartu', [AdminController::class, 'cetakKartu'])->name('cetak_kartu');
     Route::get('/cetak-berita-acara/{id}', [AdminController::class, 'cetakBeritaAcara'])->name('cetak_berita_acara');
+    Route::get('/cetak-daftar-hadir/{id}', [AdminController::class, 'cetakDaftarHadir'])->name('cetak_daftar_hadir');
+
+    // Pengaturan
     Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
     Route::post('/pengaturan', [AdminController::class, 'simpanPengaturan'])->name('pengaturan.simpan');
 });
