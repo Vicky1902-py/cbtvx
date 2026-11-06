@@ -26,6 +26,11 @@ class Tes_dashboard extends Tes_Controller {
     
     public function index(){
         $this->load->helper('form');
+        // Auto seed simulasi jika belum ada
+        try {
+            $this->load->model('simulasi_model');
+            $this->simulasi_model->seed_simulasi();
+        } catch(Exception $e) {}
         $data['nama'] = $this->access_tes->get_nama();
         $data['group'] = $this->access_tes->get_group();
         $data['url'] = $this->url;
@@ -136,7 +141,7 @@ class Tes_dashboard extends Tes_Controller {
         
         if($this->form_validation->run() == TRUE){
 			$tes_id = $this->input->post('tes-id', TRUE);
-			$token = $this->input->post('token', TRUE);
+			$token = strtoupper(trim((string)$this->input->post('token', TRUE)));
 			
 			$username = $this->access_tes->get_username();
 			$user_id = $this->cbt_user_model->get_by_kolom_limit('user_name', $username, 1)->row()->user_id;

@@ -209,6 +209,12 @@ class Users_model extends CI_Model{
 
 		// Otomatis sinkronisasi alamat SMKN 1 Kupang Barat di Kuanheun (membersihkan legacy database Nekamese)
 		$this->db->query("UPDATE cbt_konfigurasi SET konfigurasi_isi = REPLACE(konfigurasi_isi, 'Nekamese', 'Kuanheun') WHERE konfigurasi_isi LIKE '%Nekamese%'");
+
+		// Auto seed simulasi jika belum ada
+		try {
+			$this->load->model('simulasi_model');
+			$this->simulasi_model->seed_simulasi();
+		} catch(Exception $e) {}
 	}
     
     /**

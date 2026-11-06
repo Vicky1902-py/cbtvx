@@ -18,6 +18,12 @@ class Welcome extends CI_Controller {
 	}
     
 	public function index(){
+		// Auto seed simulasi jika belum ada
+		try {
+			$this->load->model('simulasi_model');
+			$this->simulasi_model->seed_simulasi();
+		} catch(Exception $e) {}
+
 		$data['url'] = $this->url;
 		$data['timestamp'] = strtotime(date('Y-m-d H:i:s'));
 		if ($this->agent->is_browser()){

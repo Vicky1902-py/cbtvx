@@ -51,7 +51,7 @@ class Cbt_tes_token_model extends CI_Model{
      */
     function get_by_token_now_limit($token, $limit){
         $this->db->select('token_id,token_isi,token_user_id,token_ts,token_aktif,token_tes_id')
-                 ->where('(token_isi="'.$token.'" AND DATE(token_ts)=DATE(NOW()))')
+                 ->where('(token_isi="'.$token.'" AND (token_aktif=1 OR DATE(token_ts)=DATE(NOW())))')
                  ->from($this->table)
 				 ->limit($limit);
         return $this->db->get();

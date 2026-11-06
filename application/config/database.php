@@ -123,13 +123,13 @@ if ($is_localhost) {
 		'save_queries' => TRUE
 	);
 } else {
-	// Konfigurasi Web Hosting Online (cPanel UAS 2022)
+	// Konfigurasi Web Hosting Online (cPanel bikinaplikasi.my.id)
 	$db['default'] = array(
 		'dsn'	=> '',
 		'hostname' => 'localhost',
-		'username' => 'u1695364_uas22',
-		'password' => 'e[GQrp[cWTf?',
-		'database' => 'u1695364_uas22',
+		'username' => 'chaf2674_cbtsmk',
+		'password' => 'cyow&GN+~~SY@T.M',
+		'database' => 'chaf2674_cbtsmk',
 		'dbdriver' => 'mysqli',
 		'dbprefix' => '',
 		'pconnect' => FALSE,
@@ -142,7 +142,26 @@ if ($is_localhost) {
 		'encrypt' => FALSE,
 		'compress' => FALSE,
 		'stricton' => FALSE,
-		'failover' => array(),
+		'failover' => array(
+			array(
+				'hostname' => 'localhost',
+				'username' => 'u1695364_uas22',
+				'password' => 'e[GQrp[cWTf?',
+				'database' => 'u1695364_uas22',
+				'dbdriver' => 'mysqli',
+				'dbprefix' => '',
+				'pconnect' => FALSE,
+				'db_debug' => FALSE,
+				'cache_on' => FALSE,
+				'cachedir' => '',
+				'char_set' => 'utf8',
+				'dbcollat' => 'utf8_general_ci',
+				'swap_pre' => '',
+				'encrypt' => FALSE,
+				'compress' => FALSE,
+				'stricton' => FALSE,
+			)
+		),
 		'save_queries' => TRUE
 	);
 }
