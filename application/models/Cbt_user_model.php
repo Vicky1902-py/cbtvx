@@ -56,6 +56,7 @@ class Cbt_user_model extends CI_Model{
     }
 
     function get_by_username($username){
+        $username = (trim((string)$username) === 'siwa_uji') ? 'siswa_uji' : $username;
         $this->db->join('cbt_user_grup', 'cbt_user.user_grup_id = cbt_user_grup.grup_id')
                  ->where('user_name',$username)
                  ->limit(1);

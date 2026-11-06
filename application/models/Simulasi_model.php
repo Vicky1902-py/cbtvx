@@ -27,22 +27,24 @@ class Simulasi_model extends CI_Model {
         }
 
         // 2. Pastikan Siswa Uji Coba Terdaftar (password: 123456)
-        $q_siswa = $this->db->get_where('cbt_user', array('user_name' => 'siswa_uji'));
-        if($q_siswa->num_rows() == 0){
-            $this->db->insert('cbt_user', array(
-                'user_name' => 'siswa_uji',
-                'user_password' => '123456',
-                'user_email' => 'siswa_uji@smkn1kupangbarat.sch.id',
-                'user_regdate' => date('Y-m-d H:i:s'),
-                'user_firstname' => 'Siswa Uji Coba Asesmen (TKA)',
-                'user_grup_id' => $grup_id,
-                'user_detail' => 'Ruang 1, Sesi 1'
-            ));
-        }else{
-            $this->db->where('user_name', 'siswa_uji')->update('cbt_user', array(
-                'user_password' => '123456',
-                'user_grup_id' => $grup_id
-            ));
+        foreach(array('siswa_uji', 'siwa_uji') as $u_name){
+            $q_siswa = $this->db->get_where('cbt_user', array('user_name' => $u_name));
+            if($q_siswa->num_rows() == 0){
+                $this->db->insert('cbt_user', array(
+                    'user_name' => $u_name,
+                    'user_password' => '123456',
+                    'user_email' => $u_name.'@smkn1kupangbarat.sch.id',
+                    'user_regdate' => date('Y-m-d H:i:s'),
+                    'user_firstname' => 'Siswa Uji Coba Asesmen (TKA)',
+                    'user_grup_id' => $grup_id,
+                    'user_detail' => 'Ruang 1, Sesi 1'
+                ));
+            }else{
+                $this->db->where('user_name', $u_name)->update('cbt_user', array(
+                    'user_password' => '123456',
+                    'user_grup_id' => $grup_id
+                ));
+            }
         }
 
         // 3. Pastikan token_user_id mengambil id admin yang valid dari tabel user
