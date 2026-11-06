@@ -444,6 +444,20 @@
                 <button type="button" class="role-tab" onclick="setRole('proktor', this)">Proktor / Pengawas / Guru</button>
             </div>
 
+            @if ($errors->any())
+                <div style="background: #fef2f2; border: 1px solid #fecaca; color: #b91c1c; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    <span>{{ $errors->first() }}</span>
+                </div>
+            @endif
+
+            @if (session('success'))
+                <div style="background: #f0fdf4; border: 1px solid #bbf7d0; color: #15803d; padding: 10px 14px; border-radius: var(--radius-sm); font-size: 13px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    <span>{{ session('success') }}</span>
+                </div>
+            @endif
+
             <form action="{{ url('/login') }}" method="POST" id="form-login">
                 @csrf
                 <input type="hidden" name="role_type" id="role_type" value="siswa">
