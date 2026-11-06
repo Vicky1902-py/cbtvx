@@ -432,6 +432,79 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        /* Compact & Sleek Modern Pagination */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 18px;
+            background: #ffffff;
+            border-top: 1px solid var(--border-light);
+            border-radius: 0 0 var(--radius) var(--radius);
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .pagination-info {
+            font-size: 12.5px;
+            color: var(--text-muted);
+        }
+        .pagination-info strong {
+            color: var(--text-main);
+        }
+        .pagination-list {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            gap: 5px;
+            align-items: center;
+        }
+        .pagination-list .page-item a,
+        .pagination-list .page-item span {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 32px;
+            height: 32px;
+            padding: 0 10px;
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            background: #ffffff;
+            color: var(--text-body);
+            text-decoration: none;
+            transition: all 0.15s ease;
+        }
+        .pagination-list .page-item a:hover {
+            background: #f1f5f9;
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .pagination-list .page-item.active span {
+            background: var(--accent);
+            color: #ffffff;
+            border-color: var(--accent);
+        }
+        .pagination-list .page-item.disabled span {
+            color: #94a3b8;
+            background: #f8fafc;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+        }
+        /* Fallback if default tailwind SVG pagination is invoked */
+        nav[role="navigation"] svg {
+            width: 14px !important;
+            height: 14px !important;
+            display: inline-block !important;
+        }
+        nav[role="navigation"] .relative.inline-flex {
+            font-size: 12px !important;
+            padding: 5px 10px !important;
+            border-radius: 4px !important;
+        }
     </style>
     @yield('styles')
 </head>
@@ -503,10 +576,22 @@
                     <span>Jadwal & Token Ujian</span>
                 </a>
             </li>
-            <li class="nav-item {{ request()->routeIs('admin.cetak_kartu*') ? 'active' : '' }}" title="Cetak Kartu Ujian A4">
+            <li class="nav-item {{ request()->routeIs('admin.petugas_ujian*') ? 'active' : '' }}" title="Petugas & Pengawas">
+                <a href="{{ route('admin.petugas_ujian') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    <span>Petugas & Pengawas</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.cetak_kartu') ? 'active' : '' }}" title="Cetak Kartu Ujian A4">
                 <a href="{{ route('admin.cetak_kartu') }}" target="_blank">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
                     <span>Cetak Kartu Login A4</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.cetak_kartu_petugas*') ? 'active' : '' }}" title="Cetak Kartu Petugas A4">
+                <a href="{{ route('admin.cetak_kartu_petugas') }}" target="_blank">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    <span>Cetak Kartu Petugas A4</span>
                 </a>
             </li>
         </ul>

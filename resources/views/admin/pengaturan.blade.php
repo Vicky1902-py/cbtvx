@@ -30,7 +30,7 @@
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
             <div>
                 <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Kecamatan</label>
                 <input type="text" name="kecamatan" value="{{ old('kecamatan', $sekolah->kecamatan ?? 'Kupang Barat') }}" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;">
@@ -39,9 +39,16 @@
                 <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Kabupaten</label>
                 <input type="text" name="kabupaten" value="{{ old('kabupaten', $sekolah->kabupaten ?? 'Kabupaten Kupang') }}" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;">
             </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
             <div>
-                <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Provinsi</label>
+                <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Pemerintah Provinsi (Kop Baris 1)</label>
                 <input type="text" name="provinsi" value="{{ old('provinsi', $sekolah->provinsi ?? 'Nusa Tenggara Timur') }}" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;">
+            </div>
+            <div>
+                <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Dinas Pendidikan (Kop Baris 2)</label>
+                <input type="text" name="dinas_pendidikan" value="{{ old('dinas_pendidikan', $sekolah->dinas_pendidikan ?? 'DINAS PENDIDIKAN DAN KEBUDAYAAN') }}" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px;">
             </div>
         </div>
 

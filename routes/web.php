@@ -78,10 +78,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/jadwal/{id}/rekap-nilai', [AdminController::class, 'rekapNilai'])->name('rekap_nilai');
     Route::get('/jadwal/{id}/export-nilai', [AdminController::class, 'exportRekapNilaiXlsx'])->name('export_nilai');
 
-    // Dokumen Cetak
+    // Dokumen Cetak & Berita Acara
     Route::get('/cetak-kartu', [AdminController::class, 'cetakKartu'])->name('cetak_kartu');
+    Route::get('/jadwal/{id}/berita-acara', [AdminController::class, 'formBeritaAcara'])->name('berita_acara.form');
+    Route::post('/jadwal/{id}/berita-acara', [AdminController::class, 'simpanBeritaAcara'])->name('berita_acara.simpan');
     Route::get('/cetak-berita-acara/{id}', [AdminController::class, 'cetakBeritaAcara'])->name('cetak_berita_acara');
     Route::get('/cetak-daftar-hadir/{id}', [AdminController::class, 'cetakDaftarHadir'])->name('cetak_daftar_hadir');
+
+    // Petugas & Pengawas Ujian
+    Route::get('/petugas-ujian', [AdminController::class, 'petugasUjian'])->name('petugas_ujian');
+    Route::post('/petugas-ujian', [AdminController::class, 'simpanPetugasUjian'])->name('petugas_ujian.simpan');
+    Route::post('/petugas-ujian/{id}/hapus', [AdminController::class, 'hapusPetugasUjian'])->name('petugas_ujian.hapus');
+    Route::get('/cetak-kartu-petugas', [AdminController::class, 'cetakKartuPetugas'])->name('cetak_kartu_petugas');
 
     // Pengaturan
     Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');

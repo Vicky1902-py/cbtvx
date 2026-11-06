@@ -79,7 +79,7 @@
                         <a href="{{ route('admin.rekap_nilai', $j->id) }}" class="btn btn-secondary btn-sm" title="Lihat Rekap Nilai Ujian">
                             Rekap Nilai
                         </a>
-                        <a href="{{ route('admin.cetak_berita_acara', $j->id) }}" target="_blank" class="btn btn-secondary btn-sm" title="Cetak Berita Acara A4">
+                        <a href="{{ route('admin.berita_acara.form', $j->id) }}" class="btn btn-secondary btn-sm" style="color: var(--accent); font-weight: 600;" title="Isi & Cetak Berita Acara A4">
                             Berita Acara
                         </a>
                         <a href="{{ route('admin.cetak_daftar_hadir', $j->id) }}" target="_blank" class="btn btn-secondary btn-sm" title="Cetak Daftar Hadir A4">

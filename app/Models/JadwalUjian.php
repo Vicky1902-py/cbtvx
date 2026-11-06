@@ -32,4 +32,14 @@ class JadwalUjian extends Model
     {
         return $this->hasMany(UjianPeserta::class);
     }
+
+    public function beritaAcara()
+    {
+        return $this->hasOne(BeritaAcara::class, 'jadwal_ujian_id');
+    }
+
+    public function petugas()
+    {
+        return $this->hasMany(PetugasUjian::class, 'jadwal_ujian_id');
+    }
 }

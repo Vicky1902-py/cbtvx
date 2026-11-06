@@ -142,9 +142,10 @@
     <div class="kop-surat">
         <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov">
         <div class="kop-text">
-            <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR &bull; DINAS PENDIDIKAN DAN KEBUDAYAAN</h4>
+            <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR</h4>
+            <h4>DINAS PENDIDIKAN DAN KEBUDAYAAN</h4>
             <h2>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</h2>
-            <p>{{ $sekolah->alamat ?? 'Desa Kuanheun' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}, {{ $sekolah->kabupaten ?? 'Kab. Kupang' }}</p>
+            <p>{{ $sekolah->alamat ?? 'Desa Kuanheun, RT 02 / RW 02' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}, {{ $sekolah->kabupaten ?? 'Kab. Kupang' }} &bull; NPSN: {{ $sekolah->npsn ?? '69727541' }}</p>
         </div>
         <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
     </div>
@@ -218,15 +219,15 @@
         <div class="ttd-box">
             <p>Pengawas Ruang,</p>
             <div style="height: 45px;"></div>
-            <p><strong>( _______________________ )</strong></p>
-            <p style="font-size: 8pt;">NIP. -</p>
+            <p><strong><u>{{ $beritaAcara->nama_pengawas ?? 'Potifera Buan, S.Pd' }}</u></strong></p>
+            <p style="font-size: 8pt;">NIP. {{ $beritaAcara->nip_pengawas ?? '198911042024212044' }}</p>
         </div>
 
         <div class="ttd-box">
             <p>Proktor Ujian,</p>
             <div style="height: 45px;"></div>
-            <p><strong>( _______________________ )</strong></p>
-            <p style="font-size: 8pt;">NIP. -</p>
+            <p><strong><u>{{ $beritaAcara->nama_proktor ?? 'Izak Robinson Koroh, S.Pd' }}</u></strong></p>
+            <p style="font-size: 8pt;">NIP. {{ $beritaAcara->nip_proktor ?? '199002192020121003' }}</p>
         </div>
 
         <div class="ttd-box">

@@ -58,9 +58,16 @@
         }
 
         .header-text h4 {
-            font-size: 9px;
+            font-size: 8.5px;
+            font-weight: 700;
+            margin-bottom: 0px;
+        }
+
+        .header-text h5 {
+            font-size: 8px;
             font-weight: 700;
             margin-bottom: 1px;
+            color: #1e293b;
         }
 
         .header-text h3 {
@@ -180,8 +187,9 @@
                 <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov">
                 <div class="header-text">
                     <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR</h4>
+                    <h5>DINAS PENDIDIKAN DAN KEBUDAYAAN</h5>
                     <h3>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</h3>
-                    <p>{{ $sekolah->alamat ?? 'Desa Kuanheun' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}</p>
+                    <p>{{ $sekolah->alamat ?? 'Desa Kuanheun, RT 02 / RW 02' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}</p>
                 </div>
                 <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
             </div>

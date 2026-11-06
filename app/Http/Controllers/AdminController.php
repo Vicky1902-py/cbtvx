@@ -20,6 +20,8 @@ use App\Models\SoalButir;
 use App\Models\JadwalUjian;
 use App\Models\UjianPeserta;
 use App\Models\UjianJawaban;
+use App\Models\BeritaAcara;
+use App\Models\PetugasUjian;
 
 class AdminController extends Controller
 {
@@ -515,10 +517,26 @@ class AdminController extends Controller
     // DATA USER & GURU (CRUD)
     // ==========================================
 
-    public function users()
+    public function users(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $userList = User::whereIn('role', ['admin', 'guru', 'proktor'])->orderBy('role')->orderBy('name')->get();
+        $query = User::whereIn('role', ['admin', 'guru', 'proktor']);
+
+        if ($request->filled('role')) {
+            $query->where('role', $request->role);
+        }
+
+        if ($request->filled('q')) {
+            $q = $request->q;
+            $query->where(function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                  ->orWhere('username', 'like', "%{$q}%")
+                  ->orWhere('nip', 'like', "%{$q}%")
+                  ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
+        $userList = $query->orderBy('role')->orderBy('name')->paginate(15)->withQueryString();
         return view('admin.users', compact('sekolah', 'userList'));
     }
 
@@ -528,6 +546,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:150',
             'username' => 'required|string|max:50|unique:users,username',
             'email' => 'nullable|email|unique:users,email',
+            'nip' => 'nullable|string|max:40',
+            'nuptk' => 'nullable|string|max:40',
             'password' => 'required|string|min:4',
             'role' => 'required|in:admin,guru,proktor',
         ]);
@@ -536,6 +556,8 @@ class AdminController extends Controller
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
+            'nip' => $data['nip'] ?? null,
+            'nuptk' => $data['nuptk'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
             'status' => 'aktif',
@@ -551,6 +573,8 @@ class AdminController extends Controller
             'name' => 'required|string|max:150',
             'username' => 'required|string|max:50|unique:users,username,' . $user->id,
             'email' => 'nullable|email|unique:users,email,' . $user->id,
+            'nip' => 'nullable|string|max:40',
+            'nuptk' => 'nullable|string|max:40',
             'password' => 'nullable|string|min:4',
             'role' => 'required|in:admin,guru,proktor',
             'status' => 'required|in:aktif,nonaktif',
@@ -560,6 +584,8 @@ class AdminController extends Controller
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
+            'nip' => $data['nip'] ?? null,
+            'nuptk' => $data['nuptk'] ?? null,
             'role' => $data['role'],
             'status' => $data['status'],
         ];
@@ -971,18 +997,90 @@ class AdminController extends Controller
         return view('admin.cetak_kartu', compact('sekolah', 'daftarSiswa'));
     }
 
+    public function formBeritaAcara($jadwalId)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas.siswa'])->findOrFail($jadwalId);
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
+        $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
+        $totalPeserta = Siswa::whereIn('kelas_id', $jadwal->kelas->pluck('id'))->count();
+
+        return view('admin.berita_acara_form', compact('sekolah', 'jadwal', 'beritaAcara', 'guruList', 'totalPeserta'));
+    }
+
+    public function simpanBeritaAcara(Request $request, $jadwalId)
+    {
+        $jadwal = JadwalUjian::findOrFail($jadwalId);
+
+        $data = $request->validate([
+            'nomor_surat' => 'required|string|max:100',
+            'hari_tanggal' => 'required|string|max:100',
+            'waktu_mulai' => 'nullable|string|max:30',
+            'waktu_selesai' => 'nullable|string|max:30',
+            'ruangan' => 'nullable|string|max:50',
+            'sesi' => 'nullable|string|max:30',
+            'proktor_id' => 'nullable|exists:users,id',
+            'nama_proktor' => 'required|string|max:150',
+            'nip_proktor' => 'nullable|string|max:40',
+            'pengawas_id' => 'nullable|exists:users,id',
+            'nama_pengawas' => 'required|string|max:150',
+            'nip_pengawas' => 'nullable|string|max:40',
+            'jumlah_peserta_seharusnya' => 'required|integer|min:0',
+            'jumlah_peserta_hadir' => 'required|integer|min:0',
+            'jumlah_peserta_tidak_hadir' => 'nullable|integer|min:0',
+            'daftar_tidak_hadir' => 'nullable|string',
+            'catatan_pelaksanaan' => 'nullable|string',
+        ]);
+
+        $data['jadwal_ujian_id'] = $jadwalId;
+
+        BeritaAcara::updateOrCreate(
+            ['jadwal_ujian_id' => $jadwalId],
+            $data
+        );
+
+        return redirect()->route('admin.berita_acara.form', $jadwalId)->with('success', 'Berita Acara Ujian berhasil disimpan. Anda dapat langsung mencetak lembar dokumen.');
+    }
+
     public function cetakBeritaAcara($jadwalId)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'peserta.siswa.kelas'])->findOrFail($jadwalId);
+        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'peserta.siswa.kelas', 'kelas.siswa'])->findOrFail($jadwalId);
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
 
-        return view('admin.cetak_berita_acara', compact('sekolah', 'jadwal'));
+        // Jika belum pernah disimpan, buat objek default agar lembar cetak langsung valid
+        if (!$beritaAcara) {
+            $totalPeserta = Siswa::whereIn('kelas_id', $jadwal->kelas->pluck('id'))->count();
+            $proktor = User::where('role', 'proktor')->first() ?? User::where('username', '199002192020121003')->first();
+            $pengawas = User::where('role', 'guru')->first() ?? User::where('username', '198911042024212044')->first();
+
+            $beritaAcara = new BeritaAcara([
+                'nomor_surat' => '421.5/024/SMKN1.KB/' . date('Y'),
+                'hari_tanggal' => Carbon::now()->isoFormat('dddd, D MMMM Y'),
+                'waktu_mulai' => '08:00',
+                'waktu_selesai' => '09:30',
+                'ruangan' => 'Lab Komputer 1',
+                'sesi' => 'Sesi 1',
+                'nama_proktor' => $proktor ? $proktor->name : 'Izak Robinson Koroh, S.Pd',
+                'nip_proktor' => $proktor ? ($proktor->nip ?: $proktor->username) : '199002192020121003',
+                'nama_pengawas' => $pengawas ? $pengawas->name : 'Potifera Buan, S.Pd',
+                'nip_pengawas' => $pengawas ? ($pengawas->nip ?: $pengawas->username) : '198911042024212044',
+                'jumlah_peserta_seharusnya' => $totalPeserta ?: 89,
+                'jumlah_peserta_hadir' => $totalPeserta ?: 89,
+                'jumlah_peserta_tidak_hadir' => 0,
+                'daftar_tidak_hadir' => '-',
+                'catatan_pelaksanaan' => 'Pelaksanaan asesmen CBT berjalan tertib, aman, dan lancar sesuai standar teknis Pusmendik/ANBK.',
+            ]);
+        }
+
+        return view('admin.cetak_berita_acara', compact('sekolah', 'jadwal', 'beritaAcara'));
     }
 
     public function cetakDaftarHadir($jadwalId)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
         $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas.siswa'])->findOrFail($jadwalId);
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
 
         // Ambil seluruh siswa dari rombel kelas yang ditugaskan
         $kelasIds = $jadwal->kelas->pluck('id');
@@ -991,7 +1089,90 @@ class AdminController extends Controller
             ->orderBy('nama_lengkap')
             ->get();
 
-        return view('admin.cetak_daftar_hadir', compact('sekolah', 'jadwal', 'siswaList'));
+        return view('admin.cetak_daftar_hadir', compact('sekolah', 'jadwal', 'siswaList', 'beritaAcara'));
+    }
+
+    public function petugasUjian(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $petugasList = PetugasUjian::with(['user', 'jadwal'])->orderBy('jenis_petugas')->get();
+        $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
+        $jadwalList = JadwalUjian::all();
+
+        return view('admin.petugas_ujian', compact('sekolah', 'petugasList', 'guruList', 'jadwalList'));
+    }
+
+    public function simpanPetugasUjian(Request $request)
+    {
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'jadwal_ujian_id' => 'nullable|exists:jadwal_ujian,id',
+            'jenis_petugas' => 'required|in:proktor,pengawas',
+            'ruangan' => 'required|string|max:50',
+            'sesi' => 'required|string|max:30',
+            'nomor_sk' => 'nullable|string|max:100',
+        ]);
+
+        PetugasUjian::create($data);
+
+        // Jika ditugaskan sebagai proktor, pastikan role user terupdate
+        if ($data['jenis_petugas'] === 'proktor') {
+            User::where('id', $data['user_id'])->update(['role' => 'proktor']);
+        }
+
+        return back()->with('success', 'Petugas Ujian (' . ucfirst($data['jenis_petugas']) . ') berhasil ditambahkan.');
+    }
+
+    public function hapusPetugasUjian($id)
+    {
+        $petugas = PetugasUjian::findOrFail($id);
+        $petugas->delete();
+
+        return back()->with('success', 'Penugasan petugas berhasil dihapus.');
+    }
+
+    public function cetakKartuPetugas(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $query = PetugasUjian::with(['user', 'jadwal']);
+
+        if ($request->filled('petugas_id')) {
+            $query->where('id', $request->petugas_id);
+        }
+
+        $daftarPetugas = $query->get();
+
+        // Jika belum ada penugasan manual, buat preview dari proktor dan guru default
+        if ($daftarPetugas->isEmpty()) {
+            $proktor = User::where('role', 'proktor')->first() ?? User::where('username', '199002192020121003')->first();
+            $pengawas = User::where('role', 'guru')->first() ?? User::where('username', '198911042024212044')->first();
+
+            $daftarPetugas = collect();
+            if ($proktor) {
+                $p1 = new PetugasUjian([
+                    'user_id' => $proktor->id,
+                    'jenis_petugas' => 'proktor',
+                    'ruangan' => 'Lab Komputer 1',
+                    'sesi' => 'Sesi 1',
+                    'nomor_sk' => '421.5/012/SMKN1.KB/2026',
+                ]);
+                $p1->setRelation('user', $proktor);
+                $daftarPetugas->push($p1);
+            }
+            if ($pengawas) {
+                $p2 = new PetugasUjian([
+                    'user_id' => $pengawas->id,
+                    'jenis_petugas' => 'pengawas',
+                    'ruangan' => 'Lab Komputer 1',
+                    'sesi' => 'Sesi 1',
+                    'nomor_sk' => '421.5/012/SMKN1.KB/2026',
+                ]);
+                $p2->setRelation('user', $pengawas);
+                $daftarPetugas->push($p2);
+            }
+        }
+
+        return view('admin.cetak_kartu_petugas', compact('sekolah', 'daftarPetugas'));
     }
 
     public function pengaturan()
@@ -1011,6 +1192,7 @@ class AdminController extends Controller
             'kecamatan' => 'required|string',
             'kabupaten' => 'required|string',
             'provinsi' => 'required|string',
+            'dinas_pendidikan' => 'nullable|string',
             'kepala_sekolah' => 'required|string',
             'nip_kepala_sekolah' => 'nullable|string',
             'tahun_ajaran_aktif' => 'required|string',

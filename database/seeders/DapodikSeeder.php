@@ -10,6 +10,8 @@ use App\Models\Kelas;
 use App\Models\MataPelajaran;
 use App\Models\Siswa;
 use App\Models\JadwalUjian;
+use App\Models\PetugasUjian;
+use App\Models\BeritaAcara;
 
 class DapodikSeeder extends Seeder
 {
@@ -25,6 +27,7 @@ class DapodikSeeder extends Seeder
                 'kecamatan' => 'Kupang Barat',
                 'kabupaten' => 'Kabupaten Kupang',
                 'provinsi' => 'Nusa Tenggara Timur',
+                'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
                 'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
                 'nip_kepala_sekolah' => '198501192011011005',
                 'ttd_kepala_sekolah' => 'images/ttd_kepsek.png',
@@ -625,6 +628,8 @@ class DapodikSeeder extends Seeder
                 [
                     'name' => $ptk['name'],
                     'email' => $ptk['email'],
+                    'nip' => $ptk['nip'] ?? null,
+                    'nuptk' => $ptk['nuptk'] ?? null,
                     'password' => $defaultGuruPassword,
                     'role' => 'guru',
                     'status' => 'aktif',
@@ -1737,6 +1742,50 @@ class DapodikSeeder extends Seeder
         $jadwals = JadwalUjian::all();
         foreach ($jadwals as $j) {
             $j->kelas()->syncWithoutDetaching($allKelasIds);
+        }
+
+        // 6. Default Petugas Ujian (Proktor & Pengawas) & Berita Acara
+        $proktorUser = User::where('username', '199002192020121003')->first() ?? User::where('role', 'proktor')->first();
+        if ($proktorUser) {
+            $proktorUser->update(['role' => 'proktor', 'nip' => '199002192020121003']);
+            PetugasUjian::updateOrCreate(
+                ['user_id' => $proktorUser->id, 'ruangan' => 'Lab Komputer 1', 'sesi' => 'Sesi 1'],
+                ['jenis_petugas' => 'proktor', 'nomor_sk' => '421.5/012/SMKN1.KB/2026']
+            );
+        }
+
+        $pengawasUser = User::where('username', '198911042024212044')->first() ?? User::where('role', 'guru')->first();
+        if ($pengawasUser) {
+            PetugasUjian::updateOrCreate(
+                ['user_id' => $pengawasUser->id, 'ruangan' => 'Lab Komputer 1', 'sesi' => 'Sesi 1'],
+                ['jenis_petugas' => 'pengawas', 'nomor_sk' => '421.5/012/SMKN1.KB/2026']
+            );
+        }
+
+        $firstJadwal = JadwalUjian::first();
+        if ($firstJadwal) {
+            BeritaAcara::updateOrCreate(
+                ['jadwal_ujian_id' => $firstJadwal->id],
+                [
+                    'nomor_surat' => '421.5/024/SMKN1.KB/' . date('Y'),
+                    'hari_tanggal' => date('d F Y'),
+                    'waktu_mulai' => '08:00',
+                    'waktu_selesai' => '09:30',
+                    'ruangan' => 'Lab Komputer 1',
+                    'sesi' => 'Sesi 1',
+                    'proktor_id' => $proktorUser ? $proktorUser->id : null,
+                    'nama_proktor' => $proktorUser ? $proktorUser->name : 'Izak Robinson Koroh, S.Pd',
+                    'nip_proktor' => $proktorUser ? ($proktorUser->nip ?? '199002192020121003') : '199002192020121003',
+                    'pengawas_id' => $pengawasUser ? $pengawasUser->id : null,
+                    'nama_pengawas' => $pengawasUser ? $pengawasUser->name : 'Potifera Buan, S.Pd',
+                    'nip_pengawas' => $pengawasUser ? ($pengawasUser->nip ?? '198911042024212044') : '198911042024212044',
+                    'jumlah_peserta_seharusnya' => 89,
+                    'jumlah_peserta_hadir' => 89,
+                    'jumlah_peserta_tidak_hadir' => 0,
+                    'daftar_tidak_hadir' => '-',
+                    'catatan_pelaksanaan' => 'Pelaksanaan asesmen CBT berjalan tertib, aman, dan lancar sesuai standar teknis Pusmendik/ANBK.',
+                ]
+            );
         }
     }
 }
