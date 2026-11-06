@@ -159,8 +159,23 @@ class SiswaController extends Controller
         }
 
         $soal = SoalButir::findOrFail($soalId);
-        $isBenar = (strtoupper(trim($jawaban)) === strtoupper(trim($soal->kunci_jawaban)));
-        $nilai = $isBenar ? $soal->bobot : 0;
+
+        if ($soal->jenis_soal === 'uraian') {
+            $isBenar = null;
+            $nilai = 0; // Dinilai manual oleh guru penguji/proktor
+        } else {
+            $cleanSiswa = strtoupper(trim((string)$jawaban));
+            $cleanKunci = strtoupper(trim((string)$soal->kunci_jawaban));
+            // Dukungan Benar/Salah (B = BENAR, S = SALAH)
+            if ($soal->jenis_soal === 'benar_salah') {
+                if ($cleanSiswa === 'B') $cleanSiswa = 'BENAR';
+                if ($cleanSiswa === 'S') $cleanSiswa = 'SALAH';
+                if ($cleanKunci === 'B') $cleanKunci = 'BENAR';
+                if ($cleanKunci === 'S') $cleanKunci = 'SALAH';
+            }
+            $isBenar = ($cleanSiswa === $cleanKunci);
+            $nilai = $isBenar ? (float)$soal->bobot : 0;
+        }
 
         $ujianJawaban = UjianJawaban::updateOrCreate(
             [

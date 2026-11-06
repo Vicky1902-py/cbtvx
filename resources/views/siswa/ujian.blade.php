@@ -6,6 +6,11 @@
     <title>Ujian CBT &bull; {{ $jadwal->nama_ujian }} &bull; SMKN 1 Kupang Barat</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
+
+    <!-- KaTeX Rumus Matematika (ANBK / TKA) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <style>
         :root {
             --primary: #0f2b48;
@@ -652,8 +657,18 @@
             currentIndex = index;
 
             const q = questions[currentIndex];
-            document.getElementById('current-question-title').textContent = 'SOAL NOMOR ' + (currentIndex + 1);
-            document.getElementById('question-text-el').textContent = q.konten_soal;
+            const jenisBadge = q.jenis_soal === 'benar_salah' ? ' (BENAR/SALAH)' : (q.jenis_soal === 'uraian' ? ' (URAIAN)' : '');
+            document.getElementById('current-question-title').textContent = 'SOAL NOMOR ' + (currentIndex + 1) + jenisBadge;
+            document.getElementById('question-text-el').innerHTML = q.konten_soal.replace(/\n/g, '<br>');
+
+            // Update Media Jika Ada
+            let mediaHtml = '';
+            if (q.gambar_soal) {
+                mediaHtml += `<div style="margin-bottom: 14px;"><img src="/${q.gambar_soal}" alt="Gambar Soal" style="max-height: 260px; max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);"></div>`;
+            }
+            if (q.audio_file) {
+                mediaHtml += `<div style="margin-bottom: 14px;"><audio controls style="width: 280px;"><source src="/${q.audio_file}"></audio></div>`;
+            }
 
             // Update Status Ragu-Ragu Checkbox
             const isDoubt = answersState[q.id]?.ragu_ragu || false;
@@ -667,38 +682,78 @@
 
             // Render Opsi
             const container = document.getElementById('options-container');
-            container.innerHTML = '';
-
-            const options = [
-                { key: 'A', text: q.opsi_a },
-                { key: 'B', text: q.opsi_b },
-                { key: 'C', text: q.opsi_c },
-                { key: 'D', text: q.opsi_d },
-                { key: 'E', text: q.opsi_e }
-            ];
+            container.innerHTML = mediaHtml;
 
             const currentAns = answersState[q.id]?.jawaban;
 
-            options.forEach(opt => {
-                if (!opt.text) return;
+            if (q.jenis_soal === 'pg') {
+                const options = [
+                    { key: 'A', text: q.opsi_a },
+                    { key: 'B', text: q.opsi_b },
+                    { key: 'C', text: q.opsi_c },
+                    { key: 'D', text: q.opsi_d },
+                    { key: 'E', text: q.opsi_e }
+                ];
 
-                const isSelected = (currentAns === opt.key);
-                const optDiv = document.createElement('div');
-                optDiv.className = 'option-item' + (isSelected ? ' selected' : '');
-                optDiv.onclick = () => selectOption(opt.key);
+                options.forEach(opt => {
+                    if (!opt.text) return;
 
-                optDiv.innerHTML = `
-                    <div class="option-letter">${opt.key}</div>
-                    <div class="option-text">${opt.text}</div>
+                    const isSelected = (currentAns === opt.key);
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'option-item' + (isSelected ? ' selected' : '');
+                    optDiv.onclick = () => selectOption(opt.key);
+
+                    optDiv.innerHTML = `
+                        <div class="option-letter">${opt.key}</div>
+                        <div class="option-text">${opt.text}</div>
+                    `;
+                    container.appendChild(optDiv);
+                });
+            } else if (q.jenis_soal === 'benar_salah') {
+                const bsOptions = [
+                    { key: 'BENAR', label: 'A', text: q.opsi_a || 'Benar' },
+                    { key: 'SALAH', label: 'B', text: q.opsi_b || 'Salah' },
+                ];
+
+                bsOptions.forEach(opt => {
+                    const isSelected = (currentAns === opt.key);
+                    const optDiv = document.createElement('div');
+                    optDiv.className = 'option-item' + (isSelected ? ' selected' : '');
+                    optDiv.onclick = () => selectOption(opt.key);
+
+                    optDiv.innerHTML = `
+                        <div class="option-letter">${opt.label}</div>
+                        <div class="option-text"><strong>${opt.key}:</strong> ${opt.text}</div>
+                    `;
+                    container.appendChild(optDiv);
+                });
+            } else {
+                // Uraian
+                const uraianBox = document.createElement('div');
+                uraianBox.style.cssText = 'background: #f8fafc; border: 1.5px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-top: 10px;';
+                uraianBox.innerHTML = `
+                    <label style="display: block; font-weight: 600; font-size: 13px; color: var(--text-main); margin-bottom: 6px;">Ketikkan Lembar Jawaban Uraian Anda:</label>
+                    <textarea rows="6" placeholder="Ketikkan uraian jawaban secara lengkap di sini..." style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13.5px; font-family: inherit; resize: vertical;" onblur="saveAnswerToServer(${q.id}, this.value, answersState[${q.id}].ragu_ragu)" oninput="answersState[${q.id}].jawaban = this.value; renderNumberGrid();">${currentAns || ''}</textarea>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 4px;">Jawaban tersimpan otomatis saat Anda berpindah soal atau menekan tombol berikutnya.</div>
                 `;
-                container.appendChild(optDiv);
-            });
+                container.appendChild(uraianBox);
+            }
 
             // Update Nav Buttons
             document.getElementById('btn-prev').disabled = (currentIndex === 0);
             document.getElementById('btn-prev').style.opacity = (currentIndex === 0) ? '0.5' : '1';
 
             updateGridActiveState();
+
+            // Render rumus matematika KaTeX
+            if (window.renderMathInElement) {
+                renderMathInElement(document.getElementById('question-content-area'), {
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true},
+                        {left: '$', right: '$', display: false}
+                    ]
+                });
+            }
         }
 
         function selectOption(key) {

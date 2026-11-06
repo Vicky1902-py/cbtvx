@@ -472,14 +472,43 @@ class AdminController extends Controller
     }
 
     // ==========================================
-    // DATA MATA PELAJARAN (CRUD)
+    // DATA MATA PELAJARAN (CRUD & IMPORT/EXPORT XLSX)
     // ==========================================
 
-    public function mapel()
+    public function mapel(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $mapelList = MataPelajaran::withCount('bankSoal')->orderBy('nama_mapel')->get();
-        return view('admin.mapel', compact('sekolah', 'mapelList'));
+        $guruList = User::whereIn('role', ['guru', 'admin', 'proktor'])->orderBy('name')->get();
+
+        $query = MataPelajaran::with(['guru'])->withCount('bankSoal');
+
+        if ($request->filled('q')) {
+            $q = trim($request->q);
+            $query->where(function ($w) use ($q) {
+                $w->where('kode_mapel', 'like', "%{$q}%")
+                  ->orWhere('nama_mapel', 'like', "%{$q}%");
+            });
+        }
+
+        if ($request->filled('kelompok')) {
+            $query->where('kelompok', $request->kelompok);
+        }
+
+        if ($request->filled('jurusan')) {
+            $query->where('jurusan', $request->jurusan);
+        }
+
+        if ($request->filled('tingkat')) {
+            $query->where('tingkat', $request->tingkat);
+        }
+
+        if ($request->filled('guru_id')) {
+            $query->where('guru_id', $request->guru_id);
+        }
+
+        $mapelList = $query->orderBy('nama_mapel')->paginate(15)->withQueryString();
+
+        return view('admin.mapel', compact('sekolah', 'mapelList', 'guruList'));
     }
 
     public function simpanMapel(Request $request)
@@ -487,10 +516,14 @@ class AdminController extends Controller
         $data = $request->validate([
             'kode_mapel' => 'required|string|max:30|unique:mata_pelajaran,kode_mapel',
             'nama_mapel' => 'required|string|max:100',
+            'kelompok' => 'required|string|max:50',
+            'jurusan' => 'required|string|max:100',
+            'tingkat' => 'required|in:Semua,10,11,12',
+            'guru_id' => 'nullable|exists:users,id',
         ]);
 
         MataPelajaran::create($data);
-        return back()->with('success', 'Mata Pelajaran ' . $data['nama_mapel'] . ' berhasil ditambahkan.');
+        return back()->with('success', 'Mata Pelajaran ' . $data['nama_mapel'] . ' (' . $data['jurusan'] . ') berhasil ditambahkan.');
     }
 
     public function updateMapel(Request $request, $id)
@@ -499,6 +532,10 @@ class AdminController extends Controller
         $data = $request->validate([
             'kode_mapel' => 'required|string|max:30|unique:mata_pelajaran,kode_mapel,' . $mapel->id,
             'nama_mapel' => 'required|string|max:100',
+            'kelompok' => 'required|string|max:50',
+            'jurusan' => 'required|string|max:100',
+            'tingkat' => 'required|in:Semua,10,11,12',
+            'guru_id' => 'nullable|exists:users,id',
         ]);
 
         $mapel->update($data);
@@ -511,6 +548,175 @@ class AdminController extends Controller
         $nama = $mapel->nama_mapel;
         $mapel->delete();
         return back()->with('success', 'Mata Pelajaran ' . $nama . ' berhasil dihapus.');
+    }
+
+    public function downloadTemplateMapelXlsx()
+    {
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Mapel');
+
+        $headers = [
+            'A1' => 'Kode Mapel (Wajib/Unik)',
+            'B1' => 'Nama Mata Pelajaran (Wajib)',
+            'C1' => 'Kelompok (Umum/Kejuruan)',
+            'D1' => 'Jurusan Sasaran',
+            'E1' => 'Tingkat (Semua/10/11/12)',
+            'F1' => 'NIP atau Username Guru Pengampu',
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $samples = [
+            ['MTK-DPIB-X', 'Matematika Terapan (DPIB)', 'Muatan Umum (A)', 'Desain Pemodelan dan Informasi Bangunan', '10', '0945774675230212'],
+            ['BIN-X', 'Bahasa Indonesia', 'Muatan Umum (A)', 'Semua Jurusan', '10', '7339765666131093'],
+            ['C2-DPIB-X', 'Dasar-dasar Gambar Teknik dan Statika Bangunan', 'Dasar Program Keahlian (C2)', 'Desain Pemodelan dan Informasi Bangunan', '10', '199204052020121007'],
+            ['C3-TITL-XI', 'Instalasi Penerangan dan Tenaga Listrik Bangunan', 'Konsentrasi Keahlian / Produktif (C3)', 'Teknik Instalasi Tenaga Listrik', '11', '198603262022211009'],
+            ['TKA-SIMDIG', 'Simulasi dan Komunikasi Digital', 'Dasar Program Keahlian (C2)', 'Semua Jurusan', '10', 'admin'],
+        ];
+
+        $rowIdx = 2;
+        foreach ($samples as $row) {
+            $sheet->setCellValue('A' . $rowIdx, $row[0]);
+            $sheet->setCellValue('B' . $rowIdx, $row[1]);
+            $sheet->setCellValue('C' . $rowIdx, $row[2]);
+            $sheet->setCellValue('D' . $rowIdx, $row[3]);
+            $sheet->setCellValue('E' . $rowIdx, $row[4]);
+            $sheet->setCellValue('F' . $rowIdx, $row[5]);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'F') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Template_Mata_Pelajaran_SMK.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function importMapelXlsx(Request $request)
+    {
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $file = $request->file('file_excel');
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        $totalImported = 0;
+        $totalSkipped = 0;
+
+        foreach ($rows as $index => $row) {
+            if ($index == 1) continue; // Skip header
+
+            $kode = trim((string)($row['A'] ?? ''));
+            $nama = trim((string)($row['B'] ?? ''));
+
+            if (empty($kode) || empty($nama)) {
+                $totalSkipped++;
+                continue;
+            }
+
+            $kelompok = trim((string)($row['C'] ?? 'Muatan Umum (A)'));
+            if (empty($kelompok)) $kelompok = 'Muatan Umum (A)';
+
+            $jurusan = trim((string)($row['D'] ?? 'Semua Jurusan'));
+            if (empty($jurusan)) $jurusan = 'Semua Jurusan';
+
+            $tingkat = trim((string)($row['E'] ?? 'Semua'));
+            if (!in_array($tingkat, ['Semua', '10', '11', '12'])) $tingkat = 'Semua';
+
+            $guruId = null;
+            $guruRef = trim((string)($row['F'] ?? ''));
+            if (!empty($guruRef)) {
+                $guruUser = User::where('nip', $guruRef)
+                    ->orWhere('username', $guruRef)
+                    ->orWhere('name', 'like', "%{$guruRef}%")
+                    ->first();
+                if ($guruUser) {
+                    $guruId = $guruUser->id;
+                }
+            }
+
+            MataPelajaran::updateOrCreate(
+                ['kode_mapel' => $kode],
+                [
+                    'nama_mapel' => $nama,
+                    'kelompok' => $kelompok,
+                    'jurusan' => $jurusan,
+                    'tingkat' => $tingkat,
+                    'guru_id' => $guruId,
+                ]
+            );
+
+            $totalImported++;
+        }
+
+        return back()->with('success', "Impor berhasil: {$totalImported} mata pelajaran disimpan/diperbarui, {$totalSkipped} baris kosong dilewati.");
+    }
+
+    public function exportMapelXlsx()
+    {
+        $mapels = MataPelajaran::with(['guru'])->withCount('bankSoal')->orderBy('nama_mapel')->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Data Mata Pelajaran');
+
+        $headers = [
+            'A1' => 'No',
+            'B1' => 'Kode Mapel',
+            'C1' => 'Nama Mata Pelajaran',
+            'D1' => 'Kelompok Mapel',
+            'E1' => 'Jurusan Sasaran',
+            'F1' => 'Tingkat',
+            'G1' => 'Guru Pengampu',
+            'H1' => 'NIP / NUPTK Guru',
+            'I1' => 'Jumlah Paket Bank Soal',
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $rowIdx = 2;
+        foreach ($mapels as $idx => $m) {
+            $sheet->setCellValue('A' . $rowIdx, $idx + 1);
+            $sheet->setCellValue('B' . $rowIdx, $m->kode_mapel);
+            $sheet->setCellValue('C' . $rowIdx, $m->nama_mapel);
+            $sheet->setCellValue('D' . $rowIdx, $m->kelompok);
+            $sheet->setCellValue('E' . $rowIdx, $m->jurusan);
+            $sheet->setCellValue('F' . $rowIdx, $m->tingkat);
+            $sheet->setCellValue('G' . $rowIdx, $m->guru ? $m->guru->name : '-');
+            $sheet->setCellValue('H' . $rowIdx, $m->guru ? ($m->guru->nip ?: ($m->guru->nuptk ?: '-')) : '-');
+            $sheet->setCellValue('I' . $rowIdx, $m->bank_soal_count);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'I') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Daftar_Mata_Pelajaran_SMKN1_Kupang_Barat_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     // ==========================================
@@ -615,11 +821,21 @@ class AdminController extends Controller
     // BANK SOAL & BUTIR SOAL (PRESET 25 & 40)
     // ==========================================
 
-    public function bankSoal()
+    public function bankSoal(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $mapelList = MataPelajaran::orderBy('nama_mapel')->get();
-        $bankList = BankSoal::with(['mataPelajaran', 'butirSoal'])->latest()->get();
+        $mapelList = MataPelajaran::with('guru')->orderBy('nama_mapel')->get();
+
+        $query = BankSoal::with(['mataPelajaran.guru', 'guru', 'butirSoal']);
+
+        if ($request->filled('mapel_id')) {
+            $query->where('mata_pelajaran_id', $request->mapel_id);
+        }
+        if ($request->filled('tingkat')) {
+            $query->where('tingkat', $request->tingkat);
+        }
+
+        $bankList = $query->latest()->get();
 
         return view('admin.bank_soal', compact('sekolah', 'mapelList', 'bankList'));
     }
@@ -628,40 +844,58 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'kode_bank' => 'required|string|max:50|unique:bank_soal,kode_bank',
+            'nama_bank' => 'nullable|string|max:150',
             'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
             'tingkat' => 'required|in:Semua,10,11,12',
             'standar_preset' => 'required|in:25,40,kustom',
             'kkm' => 'required|numeric|min:0|max:100',
         ]);
 
+        $mapel = MataPelajaran::findOrFail($data['mata_pelajaran_id']);
+
         // Hitung bobot otomatis sesuai Roadmap:
         // Standar 25 nomor: Benar/Salah 5 x 4 = 20; PG 15 x 2 = 30; Uraian 5 x 10 = 50. Total = 100
         // Standar 40 nomor: Benar/Salah 10 x 1 = 10; PG 20 x 2 = 40; Uraian 10 x 5 = 50. Total = 100
         if ($data['standar_preset'] === '25') {
-            $jumlahPg = 20; // 15 PG + 5 B/S
+            $standarBobot = '25_soal';
+            $jumlahPg = 15;
+            $bobotPg = 30.00;
+            $jumlahBs = 5;
+            $bobotBs = 20.00;
             $jumlahUraian = 5;
-            $bobotPg = 50.0;
-            $bobotUraian = 50.0;
+            $bobotUraian = 50.00;
         } elseif ($data['standar_preset'] === '40') {
-            $jumlahPg = 30; // 20 PG + 10 B/S
+            $standarBobot = '40_soal';
+            $jumlahPg = 20;
+            $bobotPg = 40.00;
+            $jumlahBs = 10;
+            $bobotBs = 10.00;
             $jumlahUraian = 10;
-            $bobotPg = 50.0;
-            $bobotUraian = 50.0;
+            $bobotUraian = 50.00;
         } else {
+            $standarBobot = 'kustom';
             $jumlahPg = 25;
+            $bobotPg = 100.00;
+            $jumlahBs = 0;
+            $bobotBs = 0.00;
             $jumlahUraian = 0;
-            $bobotPg = 100.0;
-            $bobotUraian = 0.0;
+            $bobotUraian = 0.00;
         }
+
+        $namaBank = $data['nama_bank'] ?: ($mapel->nama_mapel . ' (' . $mapel->jurusan . ')');
 
         $bank = BankSoal::create([
             'kode_bank' => $data['kode_bank'],
-            'mata_pelajaran_id' => $data['mata_pelajaran_id'],
-            'guru_id' => auth()->id(),
+            'nama_bank' => $namaBank,
+            'mata_pelajaran_id' => $mapel->id,
+            'guru_id' => $mapel->guru_id ?? auth()->id(),
             'tingkat' => $data['tingkat'],
+            'standar_bobot' => $standarBobot,
             'jumlah_soal_pg' => $jumlahPg,
+            'jumlah_soal_bs' => $jumlahBs,
             'jumlah_soal_uraian' => $jumlahUraian,
             'bobot_pg' => $bobotPg,
+            'bobot_bs' => $bobotBs,
             'bobot_uraian' => $bobotUraian,
             'kkm' => $data['kkm'],
             'status' => 'aktif',
@@ -670,12 +904,54 @@ class AdminController extends Controller
         return redirect()->route('admin.bank_soal.detail', $bank->id)->with('success', 'Paket Bank Soal ' . $bank->kode_bank . ' berhasil dibuat. Silahkan kelola butir soal.');
     }
 
-    public function detailBankSoal($id)
+    public function detailBankSoal(Request $request, $id)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $bank = BankSoal::with(['mataPelajaran', 'butirSoal'])->findOrFail($id);
+        $bank = BankSoal::with(['mataPelajaran.guru', 'guru', 'butirSoal'])->findOrFail($id);
 
-        return view('admin.bank_soal_detail', compact('sekolah', 'bank'));
+        $filterJenis = $request->query('jenis', 'semua');
+        $soalQuery = $bank->butirSoal();
+        if ($filterJenis !== 'semua') {
+            $soalQuery->where('jenis_soal', $filterJenis);
+        }
+        $soalList = $soalQuery->orderBy('nomor_urut')->get();
+
+        // Hitung statistik butir soal saat ini
+        $allSoal = $bank->butirSoal;
+        $countPg = $allSoal->where('jenis_soal', 'pg')->count();
+        $countBs = $allSoal->where('jenis_soal', 'benar_salah')->count();
+        $countUraian = $allSoal->where('jenis_soal', 'uraian')->count();
+
+        $bobotPgCurrent = (float) $allSoal->where('jenis_soal', 'pg')->sum('bobot');
+        $bobotBsCurrent = (float) $allSoal->where('jenis_soal', 'benar_salah')->sum('bobot');
+        $bobotUraianCurrent = (float) $allSoal->where('jenis_soal', 'uraian')->sum('bobot');
+        $totalBobotCurrent = (float) $allSoal->sum('bobot');
+
+        // Nomor urut berikutnya yang disarankan
+        $maxNomor = $allSoal->max('nomor_urut') ?? 0;
+        $nextNomor = $maxNomor + 1;
+
+        // Default bobot saran berdasarkan preset
+        if ($bank->standar_bobot === '25_soal') {
+            $saranBobotPg = 2.0;
+            $saranBobotBs = 4.0;
+            $saranBobotUraian = 10.0;
+        } elseif ($bank->standar_bobot === '40_soal') {
+            $saranBobotPg = 2.0;
+            $saranBobotBs = 1.0;
+            $saranBobotUraian = 5.0;
+        } else {
+            $saranBobotPg = 4.0;
+            $saranBobotBs = 2.0;
+            $saranBobotUraian = 10.0;
+        }
+
+        return view('admin.bank_soal_detail', compact(
+            'sekolah', 'bank', 'soalList', 'filterJenis',
+            'countPg', 'countBs', 'countUraian',
+            'bobotPgCurrent', 'bobotBsCurrent', 'bobotUraianCurrent', 'totalBobotCurrent',
+            'nextNomor', 'saranBobotPg', 'saranBobotBs', 'saranBobotUraian'
+        ));
     }
 
     public function simpanButirSoal(Request $request, $bankId)
@@ -693,23 +969,112 @@ class AdminController extends Controller
             'opsi_e' => 'nullable|string',
             'kunci_jawaban' => 'nullable|string',
             'bobot' => 'required|numeric|min:0',
+            'rubrik_uraian' => 'nullable|string',
+            'gambar_soal' => 'nullable|image|max:5120',
+            'audio_file' => 'nullable|mimes:mp3,wav,ogg,m4a|max:10240',
         ]);
 
-        SoalButir::create([
+        $createData = [
             'bank_soal_id' => $bank->id,
             'nomor_urut' => $data['nomor_urut'],
             'jenis_soal' => $data['jenis_soal'],
             'konten_soal' => $data['konten_soal'],
-            'opsi_a' => $data['opsi_a'],
-            'opsi_b' => $data['opsi_b'],
-            'opsi_c' => $data['opsi_c'],
-            'opsi_d' => $data['opsi_d'],
-            'opsi_e' => $data['opsi_e'],
+            'opsi_a' => $data['opsi_a'] ?? null,
+            'opsi_b' => $data['opsi_b'] ?? null,
+            'opsi_c' => $data['opsi_c'] ?? null,
+            'opsi_d' => $data['opsi_d'] ?? null,
+            'opsi_e' => $data['opsi_e'] ?? null,
             'kunci_jawaban' => strtoupper(trim($data['kunci_jawaban'] ?? '')),
             'bobot' => $data['bobot'],
-        ]);
+            'rubrik_uraian' => $data['rubrik_uraian'] ?? null,
+        ];
+
+        if ($request->hasFile('gambar_soal')) {
+            $destDir = public_path('uploads/soal');
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $img = $request->file('gambar_soal');
+            $imgName = 'img_' . time() . '_' . Str::random(6) . '.' . $img->getClientOriginalExtension();
+            $img->move($destDir, $imgName);
+            $createData['gambar_soal'] = 'uploads/soal/' . $imgName;
+        }
+
+        if ($request->hasFile('audio_file')) {
+            $destDir = public_path('uploads/soal');
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $audio = $request->file('audio_file');
+            $audioName = 'audio_' . time() . '_' . Str::random(6) . '.' . $audio->getClientOriginalExtension();
+            $audio->move($destDir, $audioName);
+            $createData['audio_file'] = 'uploads/soal/' . $audioName;
+        }
+
+        SoalButir::create($createData);
 
         return back()->with('success', 'Butir soal nomor ' . $data['nomor_urut'] . ' berhasil ditambahkan.');
+    }
+
+    public function updateButirSoal(Request $request, $id)
+    {
+        $soal = SoalButir::findOrFail($id);
+
+        $data = $request->validate([
+            'nomor_urut' => 'required|integer|min:1',
+            'jenis_soal' => 'required|in:pg,benar_salah,uraian',
+            'konten_soal' => 'required|string',
+            'opsi_a' => 'nullable|string',
+            'opsi_b' => 'nullable|string',
+            'opsi_c' => 'nullable|string',
+            'opsi_d' => 'nullable|string',
+            'opsi_e' => 'nullable|string',
+            'kunci_jawaban' => 'nullable|string',
+            'bobot' => 'required|numeric|min:0',
+            'rubrik_uraian' => 'nullable|string',
+            'gambar_soal' => 'nullable|image|max:5120',
+            'audio_file' => 'nullable|mimes:mp3,wav,ogg,m4a|max:10240',
+        ]);
+
+        $updateData = [
+            'nomor_urut' => $data['nomor_urut'],
+            'jenis_soal' => $data['jenis_soal'],
+            'konten_soal' => $data['konten_soal'],
+            'opsi_a' => $data['opsi_a'] ?? null,
+            'opsi_b' => $data['opsi_b'] ?? null,
+            'opsi_c' => $data['opsi_c'] ?? null,
+            'opsi_d' => $data['opsi_d'] ?? null,
+            'opsi_e' => $data['opsi_e'] ?? null,
+            'kunci_jawaban' => strtoupper(trim($data['kunci_jawaban'] ?? '')),
+            'bobot' => $data['bobot'],
+            'rubrik_uraian' => $data['rubrik_uraian'] ?? null,
+        ];
+
+        if ($request->hasFile('gambar_soal')) {
+            $destDir = public_path('uploads/soal');
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $img = $request->file('gambar_soal');
+            $imgName = 'img_' . time() . '_' . Str::random(6) . '.' . $img->getClientOriginalExtension();
+            $img->move($destDir, $imgName);
+            $updateData['gambar_soal'] = 'uploads/soal/' . $imgName;
+        }
+
+        if ($request->hasFile('audio_file')) {
+            $destDir = public_path('uploads/soal');
+            if (!is_dir($destDir)) {
+                mkdir($destDir, 0755, true);
+            }
+            $audio = $request->file('audio_file');
+            $audioName = 'audio_' . time() . '_' . Str::random(6) . '.' . $audio->getClientOriginalExtension();
+            $audio->move($destDir, $audioName);
+            $updateData['audio_file'] = 'uploads/soal/' . $audioName;
+        }
+
+        $soal->update($updateData);
+
+        return back()->with('success', 'Butir soal nomor ' . $soal->nomor_urut . ' berhasil diperbarui.');
     }
 
     public function hapusButirSoal($soalId)
@@ -728,6 +1093,461 @@ class AdminController extends Controller
         $bank->delete();
 
         return back()->with('success', 'Bank Soal ' . $kode . ' berhasil dihapus.');
+    }
+
+    public function downloadTemplateSoalXlsx($bankId)
+    {
+        $bank = BankSoal::with('mataPelajaran')->findOrFail($bankId);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Template Butir Soal');
+
+        $headers = [
+            'A1' => 'No Urut',
+            'B1' => 'Jenis Soal (PG / BENAR_SALAH / URAIAN)',
+            'C1' => 'Konten Pertanyaan (Dapat memakai rumus KaTeX $x^2$)',
+            'D1' => 'Pilihan A',
+            'E1' => 'Pilihan B',
+            'F1' => 'Pilihan C',
+            'G1' => 'Pilihan D',
+            'H1' => 'Pilihan E',
+            'I1' => 'Kunci Jawaban (A-E atau BENAR/SALAH)',
+            'J1' => 'Rubrik Kunci Uraian',
+            'K1' => 'Bobot Poin (Opsional/Otomatis Sesuai Preset)',
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $bobotPg = ($bank->standar_bobot === '25_soal') ? 2.0 : (($bank->standar_bobot === '40_soal') ? 2.0 : 4.0);
+        $bobotBs = ($bank->standar_bobot === '25_soal') ? 4.0 : (($bank->standar_bobot === '40_soal') ? 1.0 : 2.0);
+        $bobotUraian = ($bank->standar_bobot === '25_soal') ? 10.0 : (($bank->standar_bobot === '40_soal') ? 5.0 : 10.0);
+
+        $samples = [
+            [
+                1, 'PG',
+                'Protokol jaringan yang bertugas menerjemahkan alamat IP menjadi nama domain (seperti smkn1kupangbarat.sch.id) adalah...',
+                'DHCP', 'DNS', 'FTP', 'HTTP', 'SMTP',
+                'B', '', $bobotPg
+            ],
+            [
+                2, 'PG',
+                'Perangkat keras yang berfungsi menghubungkan dua jaringan yang berbeda segmen IP adalah...',
+                'Switch Layer 2', 'Hub', 'Router', 'Repeater', 'Modem',
+                'C', '', $bobotPg
+            ],
+            [
+                3, 'BENAR_SALAH',
+                'Topologi jaringan tipe Star menggunakan satu kabel utama tunggal sebagai tulang punggung tempat semua komputer terhubung.',
+                'Benar', 'Salah', '', '', '',
+                'SALAH', '', $bobotBs
+            ],
+            [
+                4, 'BENAR_SALAH',
+                'Kabel fiber optik mentransmisikan data menggunakan sinyal gelombang cahaya dan kebal terhadap interferensi elektromagnetik.',
+                'Benar', 'Salah', '', '', '',
+                'BENAR', '', $bobotBs
+            ],
+            [
+                5, 'URAIAN',
+                'Jelaskan perbedaan mendasar antara kabel jaringan jenis UTP (Unshielded Twisted Pair) dan STP (Shielded Twisted Pair) serta sebutkan situasi penggunaan keduanya!',
+                '', '', '', '', '',
+                '', 'Kabel UTP tidak memiliki pelindung aluminium foil sedangkan kabel STP memiliki pelindung pelat foil untuk mencegah gangguan elektromagnetik pada area industri.', $bobotUraian
+            ],
+        ];
+
+        $rowIdx = 2;
+        foreach ($samples as $s) {
+            $sheet->setCellValue('A' . $rowIdx, $s[0]);
+            $sheet->setCellValue('B' . $rowIdx, $s[1]);
+            $sheet->setCellValue('C' . $rowIdx, $s[2]);
+            $sheet->setCellValue('D' . $rowIdx, $s[3]);
+            $sheet->setCellValue('E' . $rowIdx, $s[4]);
+            $sheet->setCellValue('F' . $rowIdx, $s[5]);
+            $sheet->setCellValue('G' . $rowIdx, $s[6]);
+            $sheet->setCellValue('H' . $rowIdx, $s[7]);
+            $sheet->setCellValue('I' . $rowIdx, $s[8]);
+            $sheet->setCellValue('J' . $rowIdx, $s[9]);
+            $sheet->setCellValue('K' . $rowIdx, $s[10]);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Template_Soal_' . Str::slug($bank->kode_bank) . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function importSoalXlsx(Request $request, $bankId)
+    {
+        $bank = BankSoal::findOrFail($bankId);
+
+        $request->validate([
+            'file_excel' => 'required|file|mimes:xlsx,xls,csv|max:10240',
+        ]);
+
+        $file = $request->file('file_excel');
+        $spreadsheet = IOFactory::load($file->getRealPath());
+        $sheet = $spreadsheet->getActiveSheet();
+        $rows = $sheet->toArray(null, true, true, true);
+
+        $bobotPg = ($bank->standar_bobot === '25_soal') ? 2.0 : (($bank->standar_bobot === '40_soal') ? 2.0 : 4.0);
+        $bobotBs = ($bank->standar_bobot === '25_soal') ? 4.0 : (($bank->standar_bobot === '40_soal') ? 1.0 : 2.0);
+        $bobotUraian = ($bank->standar_bobot === '25_soal') ? 10.0 : (($bank->standar_bobot === '40_soal') ? 5.0 : 10.0);
+
+        $totalImported = 0;
+        $totalSkipped = 0;
+
+        DB::beginTransaction();
+        try {
+            foreach ($rows as $index => $row) {
+                if ($index == 1) continue;
+
+                $konten = trim((string)($row['C'] ?? ''));
+                if (empty($konten)) {
+                    $totalSkipped++;
+                    continue;
+                }
+
+                $rawJenis = strtoupper(trim((string)($row['B'] ?? 'PG')));
+                if (str_contains($rawJenis, 'BENAR') || str_contains($rawJenis, 'SALAH') || $rawJenis === 'BS' || $rawJenis === 'B/S') {
+                    $jenis = 'benar_salah';
+                } elseif (str_contains($rawJenis, 'URAIAN') || str_contains($rawJenis, 'ESAI') || str_contains($rawJenis, 'ESSAY')) {
+                    $jenis = 'uraian';
+                } else {
+                    $jenis = 'pg';
+                }
+
+                $nomorUrut = (int)($row['A'] ?? 0);
+                if ($nomorUrut <= 0) {
+                    $nomorUrut = ($bank->butirSoal()->max('nomor_urut') ?? 0) + 1;
+                }
+
+                $opsiA = trim((string)($row['D'] ?? ''));
+                $opsiB = trim((string)($row['E'] ?? ''));
+                $opsiC = trim((string)($row['F'] ?? ''));
+                $opsiD = trim((string)($row['G'] ?? ''));
+                $opsiE = trim((string)($row['H'] ?? ''));
+
+                if ($jenis === 'benar_salah') {
+                    if (empty($opsiA)) $opsiA = 'Benar';
+                    if (empty($opsiB)) $opsiB = 'Salah';
+                }
+
+                $kunci = strtoupper(trim((string)($row['I'] ?? '')));
+                $rubrik = trim((string)($row['J'] ?? ''));
+
+                $bobot = (float)($row['K'] ?? 0);
+                if ($bobot <= 0) {
+                    if ($jenis === 'benar_salah') $bobot = $bobotBs;
+                    elseif ($jenis === 'uraian') $bobot = $bobotUraian;
+                    else $bobot = $bobotPg;
+                }
+
+                SoalButir::updateOrCreate(
+                    [
+                        'bank_soal_id' => $bank->id,
+                        'nomor_urut' => $nomorUrut,
+                    ],
+                    [
+                        'jenis_soal' => $jenis,
+                        'konten_soal' => $konten,
+                        'opsi_a' => $opsiA ?: null,
+                        'opsi_b' => $opsiB ?: null,
+                        'opsi_c' => $opsiC ?: null,
+                        'opsi_d' => $opsiD ?: null,
+                        'opsi_e' => $opsiE ?: null,
+                        'kunci_jawaban' => $kunci ?: null,
+                        'rubrik_uraian' => $rubrik ?: null,
+                        'bobot' => $bobot,
+                    ]
+                );
+
+                $totalImported++;
+            }
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal impor soal dari XLSX: ' . $e->getMessage());
+        }
+
+        return back()->with('success', "Impor selesai: {$totalImported} butir soal berhasil diimpor ke paket {$bank->kode_bank}. ({$totalSkipped} baris kosong dilewati)");
+    }
+
+    public function importSoalDocx(Request $request, $bankId)
+    {
+        $bank = BankSoal::findOrFail($bankId);
+
+        $request->validate([
+            'file_docx' => 'required|file|max:15360',
+        ]);
+
+        $file = $request->file('file_docx');
+        $ext = strtolower($file->getClientOriginalExtension());
+        if ($ext !== 'docx') {
+            return back()->with('error', 'Berkas harus memiliki format Microsoft Word .docx');
+        }
+
+        $zip = new \ZipArchive();
+        if ($zip->open($file->getRealPath()) !== true) {
+            return back()->with('error', 'Tidak dapat mengekstrak berkas .docx. Pastikan berkas tidak rusak atau terenkripsi password.');
+        }
+
+        $xmlIndex = $zip->locateName('word/document.xml');
+        if ($xmlIndex === false) {
+            $zip->close();
+            return back()->with('error', 'Format struktur internal dokumen Word tidak valid (tidak ditemukan word/document.xml).');
+        }
+
+        $xmlData = $zip->getFromIndex($xmlIndex);
+        $zip->close();
+
+        $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadXML($xmlData);
+        libxml_clear_errors();
+
+        $paragraphs = $dom->getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'p');
+        $lines = [];
+        foreach ($paragraphs as $p) {
+            $lineText = '';
+            $runs = $p->getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 't');
+            foreach ($runs as $r) {
+                $lineText .= $r->nodeValue;
+            }
+            $lineText = trim($lineText);
+            if (!empty($lineText)) {
+                $lines[] = $lineText;
+            }
+        }
+
+        if (empty($lines)) {
+            return back()->with('error', 'Dokumen Word kosong atau tidak ditemukan baris pertanyaan teks.');
+        }
+
+        $bobotPg = ($bank->standar_bobot === '25_soal') ? 2.0 : (($bank->standar_bobot === '40_soal') ? 2.0 : 4.0);
+        $bobotBs = ($bank->standar_bobot === '25_soal') ? 4.0 : (($bank->standar_bobot === '40_soal') ? 1.0 : 2.0);
+        $bobotUraian = ($bank->standar_bobot === '25_soal') ? 10.0 : (($bank->standar_bobot === '40_soal') ? 5.0 : 10.0);
+
+        $parsedQuestions = [];
+        $currentQuestion = null;
+
+        $saveCurrent = function () use (&$parsedQuestions, &$currentQuestion, $bank, $bobotPg, $bobotBs, $bobotUraian) {
+            if (!$currentQuestion || empty($currentQuestion['konten'])) return;
+
+            if (empty($currentQuestion['jenis'])) {
+                if (!empty($currentQuestion['opsi_c']) || !empty($currentQuestion['opsi_d']) || !empty($currentQuestion['opsi_e'])) {
+                    $currentQuestion['jenis'] = 'pg';
+                } elseif (!empty($currentQuestion['opsi_a']) && !empty($currentQuestion['opsi_b']) && empty($currentQuestion['opsi_c'])) {
+                    $currentQuestion['jenis'] = 'benar_salah';
+                } elseif (in_array(strtoupper($currentQuestion['kunci'] ?? ''), ['BENAR', 'SALAH', 'B', 'S'])) {
+                    $currentQuestion['jenis'] = 'benar_salah';
+                } else {
+                    $currentQuestion['jenis'] = 'uraian';
+                }
+            }
+
+            if ($currentQuestion['jenis'] === 'benar_salah') {
+                if (empty($currentQuestion['opsi_a'])) $currentQuestion['opsi_a'] = 'Benar';
+                if (empty($currentQuestion['opsi_b'])) $currentQuestion['opsi_b'] = 'Salah';
+                if ($currentQuestion['kunci'] === 'B') $currentQuestion['kunci'] = 'BENAR';
+                if ($currentQuestion['kunci'] === 'S') $currentQuestion['kunci'] = 'SALAH';
+                if (empty($currentQuestion['bobot'])) $currentQuestion['bobot'] = $bobotBs;
+            } elseif ($currentQuestion['jenis'] === 'uraian') {
+                if (empty($currentQuestion['bobot'])) $currentQuestion['bobot'] = $bobotUraian;
+            } else {
+                if (empty($currentQuestion['bobot'])) $currentQuestion['bobot'] = $bobotPg;
+            }
+
+            $parsedQuestions[] = $currentQuestion;
+            $currentQuestion = null;
+        };
+
+        foreach ($lines as $line) {
+            if (preg_match('/^(?:No\.?\s*)?(\d+)[\.\)\:\-\]]\s*(.*)$/i', $line, $matches)) {
+                $saveCurrent();
+                $no = (int)$matches[1];
+                $konten = trim($matches[2]);
+
+                $jenis = null;
+                if (preg_match('/^\[(B\/S|BENAR\/SALAH|BENAR SALAH)\]\s*(.*)$/i', $konten, $jm)) {
+                    $jenis = 'benar_salah';
+                    $konten = trim($jm[2]);
+                } elseif (preg_match('/^\[(URAIAN|ESAI|ESSAY)\]\s*(.*)$/i', $konten, $jm)) {
+                    $jenis = 'uraian';
+                    $konten = trim($jm[2]);
+                } elseif (preg_match('/^\[(PG|PILIHAN GANDA)\]\s*(.*)$/i', $konten, $jm)) {
+                    $jenis = 'pg';
+                    $konten = trim($jm[2]);
+                }
+
+                $currentQuestion = [
+                    'nomor' => $no,
+                    'konten' => $konten,
+                    'jenis' => $jenis,
+                    'opsi_a' => '',
+                    'opsi_b' => '',
+                    'opsi_c' => '',
+                    'opsi_d' => '',
+                    'opsi_e' => '',
+                    'kunci' => '',
+                    'rubrik' => '',
+                    'bobot' => null,
+                ];
+                continue;
+            }
+
+            if (!$currentQuestion) continue;
+
+            if (preg_match('/^(?:KUNCI(?:\s*JAWABAN)?|JAWABAN|ANSWER|KUNCI)\s*[\:\=]\s*([A-E]|BENAR|SALAH|B|S)(.*)$/i', $line, $km)) {
+                $currentQuestion['kunci'] = strtoupper(trim($km[1]));
+                continue;
+            }
+
+            if (preg_match('/^(?:RUBRIK|KUNCI URAIAN|PEMBAHASAN)\s*[\:\=]\s*(.*)$/i', $line, $rm)) {
+                $currentQuestion['rubrik'] = trim($rm[1]);
+                $currentQuestion['jenis'] = 'uraian';
+                continue;
+            }
+
+            if (preg_match('/^[A\x{0041}][\.\)\:\-]\s*(.*)$/u', $line, $om)) {
+                $currentQuestion['opsi_a'] = trim($om[1]);
+                continue;
+            }
+            if (preg_match('/^[B\x{0042}][\.\)\:\-]\s*(.*)$/u', $line, $om)) {
+                $currentQuestion['opsi_b'] = trim($om[1]);
+                continue;
+            }
+            if (preg_match('/^[C\x{0043}][\.\)\:\-]\s*(.*)$/u', $line, $om)) {
+                $currentQuestion['opsi_c'] = trim($om[1]);
+                continue;
+            }
+            if (preg_match('/^[D\x{0044}][\.\)\:\-]\s*(.*)$/u', $line, $om)) {
+                $currentQuestion['opsi_d'] = trim($om[1]);
+                continue;
+            }
+            if (preg_match('/^[E\x{0045}][\.\)\:\-]\s*(.*)$/u', $line, $om)) {
+                $currentQuestion['opsi_e'] = trim($om[1]);
+                continue;
+            }
+
+            if (empty($currentQuestion['opsi_a'])) {
+                $currentQuestion['konten'] .= "\n" . $line;
+            }
+        }
+        $saveCurrent();
+
+        if (empty($parsedQuestions)) {
+            return back()->with('error', 'Tidak berhasil mengekstrak nomor soal dari berkas Word. Pastikan format nomor soal menggunakan penomoran standar seperti "1. ", "2. ", dst.');
+        }
+
+        DB::beginTransaction();
+        try {
+            foreach ($parsedQuestions as $q) {
+                SoalButir::updateOrCreate(
+                    [
+                        'bank_soal_id' => $bank->id,
+                        'nomor_urut' => $q['nomor'],
+                    ],
+                    [
+                        'jenis_soal' => $q['jenis'],
+                        'konten_soal' => $q['konten'],
+                        'opsi_a' => $q['opsi_a'] ?: null,
+                        'opsi_b' => $q['opsi_b'] ?: null,
+                        'opsi_c' => $q['opsi_c'] ?: null,
+                        'opsi_d' => $q['opsi_d'] ?: null,
+                        'opsi_e' => $q['opsi_e'] ?: null,
+                        'kunci_jawaban' => $q['kunci'] ?: null,
+                        'rubrik_uraian' => $q['rubrik'] ?: null,
+                        'bobot' => $q['bobot'],
+                    ]
+                );
+            }
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            return back()->with('error', 'Gagal menyimpan butir soal DOCX: ' . $e->getMessage());
+        }
+
+        $total = count($parsedQuestions);
+        return back()->with('success', "Import Word (.docx) berhasil: {$total} butir soal terdeteksi dan tersimpan ke paket {$bank->kode_bank}!");
+    }
+
+    public function exportSoalXlsx($bankId)
+    {
+        $bank = BankSoal::with(['mataPelajaran', 'butirSoal'])->findOrFail($bankId);
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Butir Soal');
+
+        $headers = [
+            'A1' => 'No Urut',
+            'B1' => 'Jenis Soal',
+            'C1' => 'Konten Soal',
+            'D1' => 'Pilihan A',
+            'E1' => 'Pilihan B',
+            'F1' => 'Pilihan C',
+            'G1' => 'Pilihan D',
+            'H1' => 'Pilihan E',
+            'I1' => 'Kunci Jawaban',
+            'J1' => 'Rubrik Uraian',
+            'K1' => 'Bobot Poin',
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $rowIdx = 2;
+        foreach ($bank->butirSoal as $s) {
+            $sheet->setCellValue('A' . $rowIdx, $s->nomor_urut);
+            $sheet->setCellValue('B' . $rowIdx, strtoupper($s->jenis_soal));
+            $sheet->setCellValue('C' . $rowIdx, $s->konten_soal);
+            $sheet->setCellValue('D' . $rowIdx, $s->opsi_a);
+            $sheet->setCellValue('E' . $rowIdx, $s->opsi_b);
+            $sheet->setCellValue('F' . $rowIdx, $s->opsi_c);
+            $sheet->setCellValue('G' . $rowIdx, $s->opsi_d);
+            $sheet->setCellValue('H' . $rowIdx, $s->opsi_e);
+            $sheet->setCellValue('I' . $rowIdx, $s->kunci_jawaban);
+            $sheet->setCellValue('J' . $rowIdx, $s->rubrik_uraian);
+            $sheet->setCellValue('K' . $rowIdx, $s->bobot);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Ekspor_Soal_' . Str::slug($bank->kode_bank) . '_' . date('Ymd_His') . '.xlsx';
+
+        return response()->streamDownload(function () use ($writer) {
+            $writer->save('php://output');
+        }, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
+    }
+
+    public function pratinjauBankSoal($id)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $bank = BankSoal::with(['mataPelajaran.guru', 'guru', 'butirSoal'])->findOrFail($id);
+        $soalList = $bank->butirSoal;
+
+        return view('admin.bank_soal_pratinjau', compact('sekolah', 'bank', 'soalList'));
     }
 
     // ==========================================

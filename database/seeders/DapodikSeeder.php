@@ -1787,5 +1787,306 @@ class DapodikSeeder extends Seeder
                 ]
             );
         }
+
+        // 7. Data Master Mata Pelajaran Khas SMK (Muatan Umum & Muatan Kejuruan Berdasarkan Dapodik SMKN 1 Kupang Barat)
+        $daftarMapel = [
+            // Muatan Umum / Nasional
+            [
+                'kode' => 'BIN-X',
+                'nama' => 'Bahasa Indonesia',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => '10',
+                'nip_guru' => '',
+                'user_guru' => '7339765666131093', // Yohana J. Fati, S.Pd
+            ],
+            [
+                'kode' => 'BIN-XI',
+                'nama' => 'Bahasa Indonesia',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => '11',
+                'nip_guru' => '198406032022212022', // Yonatan Martinus Sau, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'BIN-XII',
+                'nama' => 'Bahasa Indonesia',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => '12',
+                'nip_guru' => '',
+                'user_guru' => '1456772673230223', // Helma Soraya Tjandri, S.Pd
+            ],
+            [
+                'kode' => 'MTK-DPIB-X',
+                'nama' => 'Matematika Terapan (DPIB)',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Desain Pemodelan dan Informasi Bangunan',
+                'tingkat' => '10',
+                'nip_guru' => '',
+                'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
+            ],
+            [
+                'kode' => 'MTK-TITL-X',
+                'nama' => 'Matematika Terapan (TITL)',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Teknik Instalasi Tenaga Listrik',
+                'tingkat' => '10',
+                'nip_guru' => '',
+                'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
+            ],
+            [
+                'kode' => 'MTK-TO-X',
+                'nama' => 'Matematika Terapan (Otomotif)',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Teknik Otomotif',
+                'tingkat' => '10',
+                'nip_guru' => '',
+                'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
+            ],
+            [
+                'kode' => 'MTK-TP-X',
+                'nama' => 'Matematika Terapan (Pemesinan)',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Teknik Pemesinan',
+                'tingkat' => '10',
+                'nip_guru' => '',
+                'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
+            ],
+            [
+                'kode' => 'BIG-DPIB',
+                'nama' => 'Bahasa Inggris Kejuruan',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Desain Pemodelan dan Informasi Bangunan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198412102010012040', // Milani Sahar, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'BIG-TO',
+                'nama' => 'Bahasa Inggris Teknik',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Teknik Otomotif',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198708282025212053', // Sara Marisa Otemusu, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'PPKN-UMUM',
+                'nama' => 'Pendidikan Pancasila dan Kewarganegaraan',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198905062022212023', // Mondra Suwita Laibois, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'AGM-KRISTEN',
+                'nama' => 'Pendidikan Agama Kristen dan Budi Pekerti',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198911042024212044', // Potifera Buan, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'AGM-KATOLIK',
+                'nama' => 'Pendidikan Agama Katolik dan Budi Pekerti',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198808192025212040', // Maria Lebangu, S.Ag
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'AGM-ISLAM',
+                'nama' => 'Pendidikan Agama Islam dan Budi Pekerti',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '',
+                'user_guru' => '0759773674230242', // Sinta Ariance Pate Lado, S.Pd
+            ],
+            [
+                'kode' => 'PJOK-UMUM',
+                'nama' => 'Pendidikan Jasmani, Olahraga, dan Kesehatan',
+                'kelompok' => 'Muatan Kewilayahan (B)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '198310142022211014', // Eliatus Sau, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'SEJ-UMUM',
+                'nama' => 'Sejarah Indonesia',
+                'kelompok' => 'Muatan Umum (A)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '196704062006041009', // Apolos Kofan, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'SENI-UMUM',
+                'nama' => 'Seni Budaya dan Musik',
+                'kelompok' => 'Muatan Kewilayahan (B)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => 'Semua',
+                'nip_guru' => '199704112025212104', // Apriyana Sole, S.Sn
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'IPAS-X',
+                'nama' => 'Projek Ilmu Pengetahuan Alam dan Sosial (IPAS)',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => '10',
+                'nip_guru' => '199305012022212021', // Meylen Petna Amtiran, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'TKA-SIMDIG',
+                'nama' => 'Simulasi dan Komunikasi Digital',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Semua Jurusan',
+                'tingkat' => '10',
+                'nip_guru' => '198501192011011005', // Vicky Koroh, S.Pd., M.Kom.
+                'user_guru' => 'admin',
+            ],
+
+            // Muatan Kejuruan Produktif (C2 & C3) Sesuai Jurusan
+            [
+                'kode' => 'C2-DPIB-X',
+                'nama' => 'Dasar-dasar Gambar Teknik dan Statika Bangunan',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Desain Pemodelan dan Informasi Bangunan',
+                'tingkat' => '10',
+                'nip_guru' => '199204052020121007', // Vinsensius Ferrer Kua, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-DPIB-XI',
+                'nama' => 'Aplikasi Perangkat Lunak & Perancangan Interior Gedung',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Desain Pemodelan dan Informasi Bangunan',
+                'tingkat' => '11',
+                'nip_guru' => '198906072022212025', // Arylien Ludji Bire, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-DPIB-XII',
+                'nama' => 'Konstruksi Gedung, Sanitasi, dan Estimasi Biaya',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Desain Pemodelan dan Informasi Bangunan',
+                'tingkat' => '12',
+                'nip_guru' => '198111232022211008', // Bernabas Balu Bildad Baun, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C2-TITL-X',
+                'nama' => 'Dasar-dasar Teknik Ketenagalistrikan & Pengukuran',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Teknik Instalasi Tenaga Listrik',
+                'tingkat' => '10',
+                'nip_guru' => '199002182022211008', // Ibrahim Metboki, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TITL-XI',
+                'nama' => 'Instalasi Penerangan dan Tenaga Listrik Bangunan',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Instalasi Tenaga Listrik',
+                'tingkat' => '11',
+                'nip_guru' => '198603262022211009', // Mesak Meliyaki Natbais, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TITL-XII',
+                'nama' => 'Instalasi Motor Listrik dan Kontrol Otomasi PLC',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Instalasi Tenaga Listrik',
+                'tingkat' => '12',
+                'nip_guru' => '199312052020122008', // Serli Jumadil Taebenu, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C2-TO-X',
+                'nama' => 'Dasar-dasar Otomotif & Gambar Teknik Mesin',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Teknik Otomotif',
+                'tingkat' => '10',
+                'nip_guru' => '198403172010011028', // Messakh Paulus Adu, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TKR-XI',
+                'nama' => 'Pemeliharaan Mesin & Sasis Kendaraan Ringan',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Kendaraan Ringan',
+                'tingkat' => '11',
+                'nip_guru' => '197901192011011002', // Jhonson Ebenheiser Boimau, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TKR-XII',
+                'nama' => 'Pemeliharaan Kelistrikan dan Elektronika Otomotif',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Kendaraan Ringan',
+                'tingkat' => '12',
+                'nip_guru' => '198006012010011032', // Kader Mansyur, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C2-TP-X',
+                'nama' => 'Dasar-dasar Teknik Mesin dan Perkakas Tangan',
+                'kelompok' => 'Dasar Program Keahlian (C2)',
+                'jurusan' => 'Teknik Pemesinan',
+                'tingkat' => '10',
+                'nip_guru' => '199103082020121003', // Floribertus Dhae Goa, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TP-XI',
+                'nama' => 'Teknik Pemesinan Bubut dan Frais Presisi',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Pemesinan',
+                'tingkat' => '11',
+                'nip_guru' => '199101182020121003', // Januario Pa Padja, S.Pd
+                'user_guru' => '',
+            ],
+            [
+                'kode' => 'C3-TPFL-XII',
+                'nama' => 'Teknik Pengelasan dan Fabrikasi Logam Terapan',
+                'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
+                'jurusan' => 'Teknik Pengelasan dan Fabrikasi Logam',
+                'tingkat' => '12',
+                'nip_guru' => '198105112010011012', // Thomen Blegur, S.Pd
+                'user_guru' => '',
+            ],
+        ];
+
+        foreach ($daftarMapel as $m) {
+            $guruUser = null;
+            if (!empty($m['nip_guru'])) {
+                $guruUser = User::where('nip', $m['nip_guru'])->first();
+            }
+            if (!$guruUser && !empty($m['user_guru'])) {
+                $guruUser = User::where('username', $m['user_guru'])->first();
+            }
+            if (!$guruUser) {
+                $guruUser = User::where('role', 'guru')->first() ?? User::where('role', 'admin')->first();
+            }
+
+            MataPelajaran::updateOrCreate(
+                ['kode_mapel' => $m['kode']],
+                [
+                    'nama_mapel' => $m['nama'],
+                    'kelompok' => $m['kelompok'],
+                    'jurusan' => $m['jurusan'],
+                    'tingkat' => $m['tingkat'],
+                    'guru_id' => $guruUser ? $guruUser->id : null,
+                ]
+            );
+        }
     }
 }

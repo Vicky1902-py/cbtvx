@@ -42,11 +42,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/kelas/{id}/update', [AdminController::class, 'updateKelas'])->name('kelas.update');
     Route::post('/kelas/{id}/hapus', [AdminController::class, 'hapusKelas'])->name('kelas.hapus');
 
-    // Mata Pelajaran CRUD
+    // Mata Pelajaran CRUD & Import/Export
     Route::get('/mapel', [AdminController::class, 'mapel'])->name('mapel');
     Route::post('/mapel', [AdminController::class, 'simpanMapel'])->name('mapel.simpan');
     Route::post('/mapel/{id}/update', [AdminController::class, 'updateMapel'])->name('mapel.update');
     Route::post('/mapel/{id}/hapus', [AdminController::class, 'hapusMapel'])->name('mapel.hapus');
+    Route::get('/mapel/template-xlsx', [AdminController::class, 'downloadTemplateMapelXlsx'])->name('mapel.template_xlsx');
+    Route::post('/mapel/import-xlsx', [AdminController::class, 'importMapelXlsx'])->name('mapel.import_xlsx');
+    Route::get('/mapel/export-xlsx', [AdminController::class, 'exportMapelXlsx'])->name('mapel.export_xlsx');
 
     // User CRUD
     Route::get('/users', [AdminController::class, 'users'])->name('users');
@@ -54,13 +57,19 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
     Route::post('/users/{id}/hapus', [AdminController::class, 'hapusUser'])->name('users.hapus');
 
-    // Bank Soal & Butir Soal
+    // Bank Soal & Butir Soal (Roadmap Preset 25 & 40)
     Route::get('/bank-soal', [AdminController::class, 'bankSoal'])->name('bank_soal');
     Route::post('/bank-soal', [AdminController::class, 'simpanBankSoal'])->name('bank_soal.simpan');
     Route::get('/bank-soal/{id}', [AdminController::class, 'detailBankSoal'])->name('bank_soal.detail');
     Route::post('/bank-soal/{id}/butir', [AdminController::class, 'simpanButirSoal'])->name('bank_soal.butir.simpan');
+    Route::post('/butir-soal/{id}/update', [AdminController::class, 'updateButirSoal'])->name('bank_soal.butir.update');
     Route::post('/butir-soal/{id}/hapus', [AdminController::class, 'hapusButirSoal'])->name('bank_soal.butir.hapus');
     Route::post('/bank-soal/{id}/hapus', [AdminController::class, 'hapusBankSoal'])->name('bank_soal.hapus');
+    Route::get('/bank-soal/{id}/template-xlsx', [AdminController::class, 'downloadTemplateSoalXlsx'])->name('bank_soal.template_xlsx');
+    Route::post('/bank-soal/{id}/import-xlsx', [AdminController::class, 'importSoalXlsx'])->name('bank_soal.import_xlsx');
+    Route::post('/bank-soal/{id}/import-docx', [AdminController::class, 'importSoalDocx'])->name('bank_soal.import_docx');
+    Route::get('/bank-soal/{id}/export-xlsx', [AdminController::class, 'exportSoalXlsx'])->name('bank_soal.export_xlsx');
+    Route::get('/bank-soal/{id}/pratinjau', [AdminController::class, 'pratinjauBankSoal'])->name('bank_soal.pratinjau');
 
     // Jadwal Ujian CRUD & Kontrol Proktor
     Route::get('/jadwal', [AdminController::class, 'jadwal'])->name('jadwal');

@@ -14,6 +14,11 @@ class BankSoal extends Model
         return $this->belongsTo(MataPelajaran::class);
     }
 
+    public function guru()
+    {
+        return $this->belongsTo(User::class, 'guru_id');
+    }
+
     public function butirSoal()
     {
         return $this->hasMany(SoalButir::class, 'bank_soal_id')->orderBy('nomor_urut');
@@ -22,5 +27,25 @@ class BankSoal extends Model
     public function jadwalUjian()
     {
         return $this->hasMany(JadwalUjian::class);
+    }
+
+    public function getCountPgAttribute()
+    {
+        return $this->butirSoal->where('jenis_soal', 'pg')->count();
+    }
+
+    public function getCountBsAttribute()
+    {
+        return $this->butirSoal->where('jenis_soal', 'benar_salah')->count();
+    }
+
+    public function getCountUraianAttribute()
+    {
+        return $this->butirSoal->where('jenis_soal', 'uraian')->count();
+    }
+
+    public function getTotalBobotAttribute()
+    {
+        return (float) $this->butirSoal->sum('bobot');
     }
 }
