@@ -388,12 +388,12 @@
         <div class="auth-info-panel">
             <div>
                 <div class="school-logos">
-                    <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMKN 1 Kupang Barat" class="logo-box">
-                    <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov NTT" class="logo-box" style="width: 46px; height: 46px;">
+                    <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK" class="logo-box">
+                    <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov" class="logo-box" style="width: 46px; height: 46px;">
                     <div class="kop-text">
-                        <h4>PEMPROV NUSA TENGGARA TIMUR</h4>
-                        <h2>SMKN 1 KUPANG BARAT</h2>
-                        <p>Desa Kuanheun, Kec. Kupang Barat</p>
+                        <h4>{{ $sekolah->kop_baris1 }}</h4>
+                        <h2>{{ $sekolah->kop_baris3 }}</h2>
+                        <p>{{ $sekolah->alamat }}, Kec. {{ $sekolah->kecamatan }}</p>
                     </div>
                 </div>
 

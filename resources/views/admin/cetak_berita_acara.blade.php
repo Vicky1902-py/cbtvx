@@ -168,14 +168,14 @@
 
     <!-- KOP RESMI RESMI DINAS & SEKOLAH -->
     <div class="kop-surat">
-        <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov">
+        <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov">
         <div class="kop-text">
-            <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR</h4>
-            <h4>DINAS PENDIDIKAN DAN KEBUDAYAAN</h4>
-            <h2>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</h2>
-            <p>Alamat: {{ $sekolah->alamat ?? 'Desa Kuanheun, RT 02 / RW 02' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}, {{ $sekolah->kabupaten ?? 'Kab. Kupang' }} &bull; NPSN: {{ $sekolah->npsn ?? '69727541' }}</p>
+            <h4>{{ $sekolah->kop_baris1 }}</h4>
+            <h4>{{ $sekolah->kop_baris2 }}</h4>
+            <h2>{{ $sekolah->kop_baris3 }}</h2>
+            <p>{{ $sekolah->kop_alamat_lengkap }}</p>
         </div>
-        <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
+        <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
     </div>
 
     <div class="judul-dokumen">
@@ -184,7 +184,7 @@
     </div>
 
     <p class="paragraf">
-        Pada hari ini <strong>{{ $beritaAcara->hari_tanggal ?? \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</strong>, bertempat di SMK Negeri 1 Kupang Barat, telah diselenggarakan Asesmen Berbasis Komputer (CBT) dengan ketentuan dan rincian pelaksanaan sebagai berikut:
+        Pada hari ini <strong>{{ $beritaAcara->hari_tanggal ?? \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</strong>, bertempat di <strong>{{ $sekolah->nama_sekolah }}</strong>, telah diselenggarakan Asesmen Berbasis Komputer (CBT) dengan ketentuan dan rincian pelaksanaan sebagai berikut:
     </p>
 
     <table class="table-info">
@@ -270,15 +270,11 @@
 
         <!-- 3. KEPALA SEKOLAH -->
         <div class="ttd-box">
-            <p>Kupang Barat, {{ date('d F Y') }}</p>
+            <p>{{ $sekolah->titimangsa_lengkap }}</p>
             <p>Mengetahui,<br><strong>Kepala Sekolah</strong></p>
-            @if (!empty($sekolah->ttd_kepala_sekolah))
-                <img src="{{ asset($sekolah->ttd_kepala_sekolah) }}" alt="TTD Kepsek" class="ttd-img">
-            @else
-                <div class="ttd-space"></div>
-            @endif
-            <p><strong><u>{{ $sekolah->kepala_sekolah ?? 'Vicky Koroh, S.Pd., M.Kom.' }}</u></strong></p>
-            <p>NIP. {{ $sekolah->nip_kepala_sekolah ?? '198501192011011005' }}</p>
+            <img src="{{ $sekolah->ttd_kepala_sekolah_url }}" alt="TTD Kepsek" class="ttd-img">
+            <p><strong><u>{{ $sekolah->kepala_sekolah }}</u></strong></p>
+            <p>NIP. {{ $sekolah->nip_kepala_sekolah }}</p>
         </div>
     </div>
 

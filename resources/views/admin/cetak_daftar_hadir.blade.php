@@ -140,14 +140,14 @@
     </div>
 
     <div class="kop-surat">
-        <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov">
+        <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov">
         <div class="kop-text">
-            <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR</h4>
-            <h4>DINAS PENDIDIKAN DAN KEBUDAYAAN</h4>
-            <h2>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</h2>
-            <p>{{ $sekolah->alamat ?? 'Desa Kuanheun, RT 02 / RW 02' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }}, {{ $sekolah->kabupaten ?? 'Kab. Kupang' }} &bull; NPSN: {{ $sekolah->npsn ?? '69727541' }}</p>
+            <h4>{{ $sekolah->kop_baris1 }}</h4>
+            <h4>{{ $sekolah->kop_baris2 }}</h4>
+            <h2>{{ $sekolah->kop_baris3 }}</h2>
+            <p>{{ $sekolah->kop_alamat_lengkap }}</p>
         </div>
-        <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
+        <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
     </div>
 
     <div class="judul-dokumen">
@@ -231,11 +231,11 @@
         </div>
 
         <div class="ttd-box">
-            <p>Mengetahui,</p>
-            <p>Kepala Sekolah,</p>
-            <img src="{{ asset($sekolah->ttd_kepala_sekolah ?? 'images/ttd_kepsek.png') }}" alt="TTD Kepsek" class="ttd-img">
-            <p><strong><u>{{ $sekolah->kepala_sekolah ?? 'Vicky Koroh, S.Pd., M.Kom.' }}</u></strong></p>
-            <p style="font-size: 8pt;">NIP. {{ $sekolah->nip_kepala_sekolah ?? '198501192011011005' }}</p>
+            <p>{{ $sekolah->titimangsa_lengkap }}</p>
+            <p>Mengetahui,<br>Kepala Sekolah,</p>
+            <img src="{{ $sekolah->ttd_kepala_sekolah_url }}" alt="TTD Kepsek" class="ttd-img">
+            <p><strong><u>{{ $sekolah->kepala_sekolah }}</u></strong></p>
+            <p style="font-size: 8pt;">NIP. {{ $sekolah->nip_kepala_sekolah }}</p>
         </div>
     </div>
 

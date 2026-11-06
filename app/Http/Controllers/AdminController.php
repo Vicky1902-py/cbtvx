@@ -2017,6 +2017,9 @@ class AdminController extends Controller
             'nip_kepala_sekolah' => 'nullable|string',
             'tahun_ajaran_aktif' => 'required|string',
             'semester_aktif' => 'required|string',
+            'ttd_kepala_sekolah' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',
+            'logo_pemprov' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',
+            'logo_sekolah' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',
         ]);
 
         if ($request->hasFile('ttd_kepala_sekolah')) {
@@ -2026,9 +2029,23 @@ class AdminController extends Controller
             $data['ttd_kepala_sekolah'] = 'images/' . $filename;
         }
 
+        if ($request->hasFile('logo_pemprov')) {
+            $file = $request->file('logo_pemprov');
+            $filename = 'logo_pemprov_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images'), $filename);
+            $data['logo_pemprov'] = 'images/' . $filename;
+        }
+
+        if ($request->hasFile('logo_sekolah')) {
+            $file = $request->file('logo_sekolah');
+            $filename = 'logo_sekolah_' . time() . '.' . $file->getClientOriginalExtension();
+            $file->move(public_path('images'), $filename);
+            $data['logo_sekolah'] = 'images/' . $filename;
+        }
+
         $sekolah->fill($data);
         $sekolah->save();
 
-        return back()->with('success', 'Pengaturan sekolah dan identitas kepala sekolah berhasil diperbarui.');
+        return back()->with('success', 'Pengaturan sekolah, logo kop dinas, dan tanda tangan kepala sekolah berhasil diperbarui.');
     }
 }

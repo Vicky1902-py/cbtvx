@@ -518,9 +518,9 @@
     <!-- Sidebar Kiri Tetap / Toggleable -->
     <aside class="sidebar" id="mainSidebar">
         <div class="sidebar-brand">
-            <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
+            <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
             <div class="sidebar-brand-text">
-                <h1>SMKN 1 KUPANG BARAT</h1>
+                <h1>{{ $sekolah->nama_sekolah }}</h1>
                 <p>CBT Asesmen Terstandar</p>
             </div>
         </div>
@@ -613,8 +613,8 @@
 
         <div class="sidebar-footer">
             <div>Kepala Sekolah:</div>
-            <div style="font-weight: 600; color: #ffffff;">Vicky Koroh, S.Pd., M.Kom.</div>
-            <div style="font-size: 10px; margin-top: 4px;">NIP. 198501192011011005</div>
+            <div style="font-weight: 600; color: #ffffff;">{{ $sekolah->kepala_sekolah }}</div>
+            <div style="font-size: 10px; margin-top: 4px;">NIP. {{ $sekolah->nip_kepala_sekolah }}</div>
         </div>
     </aside>
 

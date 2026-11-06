@@ -226,14 +226,14 @@
         <div class="card-petugas">
             <!-- KOP RESMI DINAS & SEKOLAH -->
             <div class="card-header">
-                <img src="{{ asset('images/logo_pemprov_ntt.svg') }}" alt="Logo Pemprov">
+                <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov">
                 <div class="header-text">
-                    <h4>PEMERINTAH PROVINSI NUSA TENGGARA TIMUR</h4>
-                    <h5>DINAS PENDIDIKAN DAN KEBUDAYAAN</h5>
-                    <h3>{{ $sekolah->nama_sekolah ?? 'SMK NEGERI 1 KUPANG BARAT' }}</h3>
-                    <p>{{ $sekolah->alamat ?? 'Desa Kuanheun, RT 02 / RW 02' }}, Kec. {{ $sekolah->kecamatan ?? 'Kupang Barat' }} &bull; NPSN: {{ $sekolah->npsn ?? '69727541' }}</p>
+                    <h4>{{ $sekolah->kop_baris1 }}</h4>
+                    <h5>{{ $sekolah->kop_baris2 }}</h5>
+                    <h3>{{ $sekolah->kop_baris3 }}</h3>
+                    <p>{{ $sekolah->kop_alamat_lengkap }}</p>
                 </div>
-                <img src="{{ asset('images/logo_smk.png') }}" alt="Logo SMK">
+                <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
             </div>
 
             <div class="badge-title {{ $p->jenis_petugas === 'pengawas' ? 'pengawas' : '' }}">
@@ -295,15 +295,11 @@
                 </div>
 
                 <div class="ttd-box">
-                    <div>Kupang Barat, {{ date('d F Y') }}</div>
+                    <div>{{ $sekolah->titimangsa_lengkap }}</div>
                     <div>Kepala Sekolah,</div>
-                    @if (!empty($sekolah->ttd_kepala_sekolah))
-                        <img src="{{ asset($sekolah->ttd_kepala_sekolah) }}" alt="TTD">
-                    @else
-                        <div style="height: 38px;"></div>
-                    @endif
-                    <div><strong><u>{{ $sekolah->kepala_sekolah ?? 'Vicky Koroh, S.Pd., M.Kom.' }}</u></strong></div>
-                    <div>NIP. {{ $sekolah->nip_kepala_sekolah ?? '198501192011011005' }}</div>
+                    <img src="{{ $sekolah->ttd_kepala_sekolah_url }}" alt="TTD">
+                    <div><strong><u>{{ $sekolah->kepala_sekolah }}</u></strong></div>
+                    <div>NIP. {{ $sekolah->nip_kepala_sekolah }}</div>
                 </div>
             </div>
         </div>
