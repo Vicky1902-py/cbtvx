@@ -25,8 +25,8 @@ class DatabaseSeeder extends Seeder
             ['id' => 1],
             [
                 'nama_sekolah' => 'SMK NEGERI 1 KUPANG BARAT',
-                'npsn' => '69984954',
-                'alamat' => 'Desa Kuanheun',
+                'npsn' => '69727541',
+                'alamat' => 'Desa Kuanheun, RT 02 / RW 02',
                 'kecamatan' => 'Kupang Barat',
                 'kabupaten' => 'Kabupaten Kupang',
                 'provinsi' => 'Nusa Tenggara Timur',
@@ -74,83 +74,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // 3. Master Kelas
-        $k1 = Kelas::updateOrCreate(
-            ['kode_kelas' => 'XI-MM'],
-            ['nama_kelas' => 'XI MM', 'tingkat' => '11', 'jurusan' => 'Multimedia']
-        );
-        $k2 = Kelas::updateOrCreate(
-            ['kode_kelas' => 'XII-TKJ'],
-            ['nama_kelas' => 'XII TKJ', 'tingkat' => '12', 'jurusan' => 'Teknik Komputer dan Jaringan']
-        );
-        $k3 = Kelas::updateOrCreate(
-            ['kode_kelas' => 'X-TBSM'],
-            ['nama_kelas' => 'X TBSM', 'tingkat' => '10', 'jurusan' => 'Teknik Bisnis Sepeda Motor']
-        );
-
-        // 4. Master Siswa
-        $siswaUsers = [
-            [
-                'username' => '12345',
-                'name' => 'Joko Susanto',
-                'nis' => '22101',
-                'nisn' => '0054819201',
-                'kelas_id' => $k1->id,
-                'jk' => 'L',
-                'sesi' => 'Sesi 1',
-                'ruang' => 'Lab Komputer 1',
-                'nopes' => '26-24-05-01-001-8',
-            ],
-            [
-                'username' => '0054819202',
-                'name' => 'Maria Fatima Berek',
-                'nis' => '22102',
-                'nisn' => '0054819202',
-                'kelas_id' => $k1->id,
-                'jk' => 'P',
-                'sesi' => 'Sesi 1',
-                'ruang' => 'Lab Komputer 1',
-                'nopes' => '26-24-05-01-002-7',
-            ],
-            [
-                'username' => '0054819203',
-                'name' => 'Yehezkiel Nalle',
-                'nis' => '21101',
-                'nisn' => '0054819203',
-                'kelas_id' => $k2->id,
-                'jk' => 'L',
-                'sesi' => 'Sesi 2',
-                'ruang' => 'Lab Komputer 2',
-                'nopes' => '26-24-05-01-003-6',
-            ],
-        ];
-
-        foreach ($siswaUsers as $su) {
-            $u = User::updateOrCreate(
-                ['username' => $su['username']],
-                [
-                    'name' => $su['name'],
-                    'password' => Hash::make('12345'),
-                    'role' => 'siswa',
-                    'status' => 'aktif',
-                ]
-            );
-
-            Siswa::updateOrCreate(
-                ['user_id' => $u->id],
-                [
-                    'nis' => $su['nis'],
-                    'nisn' => $su['nisn'],
-                    'nama_lengkap' => $su['name'],
-                    'jenis_kelamin' => $su['jk'],
-                    'kelas_id' => $su['kelas_id'],
-                    'sesi_ujian' => $su['sesi'],
-                    'ruangan_ujian' => $su['ruang'],
-                    'nomor_peserta' => $su['nopes'],
-                    'status_login' => 'offline',
-                ]
-            );
-        }
+        // 3. Sinkronisasi Data Riil Dapodik (Profil Sekolah, 12 Rombel, 38 Guru, 89 Siswa)
+        $this->call(DapodikSeeder::class);
 
         // 5. Mata Pelajaran
         $mapel = MataPelajaran::updateOrCreate(
@@ -327,7 +252,8 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // Pasangkan ke semua kelas
-        $jadwal->kelas()->sync([$k1->id, $k2->id, $k3->id]);
+        // Pasangkan ke seluruh 12 kelas Dapodik
+        $allKelasIds = Kelas::pluck('id')->toArray();
+        $jadwal->kelas()->sync($allKelasIds);
     }
 }
