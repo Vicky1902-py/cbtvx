@@ -59,9 +59,9 @@ class BankSoalPresetSeeder extends Seeder
             $b2 = new BankSoal();
             $b2->kode_bank = 'BS-TITL-40';
         }
-        $mapelTitl = \App\Models\MataPelajaran::where('kode_mapel', 'LIKE', '%TITL%')
-            ->orWhere('jurusan', 'LIKE', '%Teknik Instalasi Tenaga Listrik%')
-            ->first();
+        $mapelTitl = \App\Models\MataPelajaran::where('kode_mapel', 'KK-TITL-XI')->first()
+            ?? \App\Models\MataPelajaran::where('kode_mapel', 'LIKE', '%TITL%')->first()
+            ?? \App\Models\MataPelajaran::where('jurusan', 'LIKE', '%Teknik Instalasi Tenaga Listrik%')->first();
 
         $b2->nama_bank = 'Dasar Teknik Ketenagalistrikan (Preset Standar 40 Soal)';
         $b2->mata_pelajaran_id = $mapelTitl ? $mapelTitl->id : 1;

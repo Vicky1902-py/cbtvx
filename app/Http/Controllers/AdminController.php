@@ -518,10 +518,10 @@ class AdminController extends Controller
     public function simpanMapel(Request $request)
     {
         $data = $request->validate([
-            'kode_mapel' => 'required|string|max:30|unique:mata_pelajaran,kode_mapel',
-            'nama_mapel' => 'required|string|max:100',
-            'kelompok' => 'required|string|max:50',
-            'jurusan' => 'required|string|max:100',
+            'kode_mapel' => 'required|string|max:50|unique:mata_pelajaran,kode_mapel',
+            'nama_mapel' => 'required|string|max:150',
+            'kelompok' => 'required|string|max:100',
+            'jurusan' => 'required|string|max:150',
             'tingkat' => 'required|in:Semua,10,11,12',
             'guru_id' => 'nullable|exists:users,id',
         ]);
@@ -534,10 +534,10 @@ class AdminController extends Controller
     {
         $mapel = MataPelajaran::findOrFail($id);
         $data = $request->validate([
-            'kode_mapel' => 'required|string|max:30|unique:mata_pelajaran,kode_mapel,' . $mapel->id,
-            'nama_mapel' => 'required|string|max:100',
-            'kelompok' => 'required|string|max:50',
-            'jurusan' => 'required|string|max:100',
+            'kode_mapel' => 'required|string|max:50|unique:mata_pelajaran,kode_mapel,' . $mapel->id,
+            'nama_mapel' => 'required|string|max:150',
+            'kelompok' => 'required|string|max:100',
+            'jurusan' => 'required|string|max:150',
             'tingkat' => 'required|in:Semua,10,11,12',
             'guru_id' => 'nullable|exists:users,id',
         ]);

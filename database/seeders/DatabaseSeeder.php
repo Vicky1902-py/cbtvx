@@ -77,11 +77,8 @@ class DatabaseSeeder extends Seeder
         // 3. Sinkronisasi Data Riil Dapodik (Profil Sekolah, 12 Rombel, 38 Guru, 89 Siswa)
         $this->call(DapodikSeeder::class);
 
-        // 5. Mata Pelajaran
-        $mapel = MataPelajaran::updateOrCreate(
-            ['kode_mapel' => 'TKA-SIMDIG'],
-            ['nama_mapel' => 'Simulasi Digital dan Literasi TIK']
-        );
+        // 5. Standarisasi Mata Pelajaran Kejuruan (DKK, KK, dan MPP KKA)
+        $this->call(MataPelajaranStandardSeeder::class);
 
         // 6. Bank Soal & Preset 25 / 40 Soal Lengkap
         $this->call(BankSoalPresetSeeder::class);

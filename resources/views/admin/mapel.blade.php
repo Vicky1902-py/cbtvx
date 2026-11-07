@@ -39,10 +39,11 @@
             <label style="display: block; font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;">Kelompok Mapel</label>
             <select name="kelompok" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px;">
                 <option value="">-- Semua Kelompok --</option>
+                <option value="Mata Pelajaran Pilihan (MPP)" {{ request('kelompok') === 'Mata Pelajaran Pilihan (MPP)' ? 'selected' : '' }}>Mata Pelajaran Pilihan (MPP)</option>
+                <option value="Dasar Program Keahlian (DKK)" {{ request('kelompok') === 'Dasar Program Keahlian (DKK)' ? 'selected' : '' }}>Dasar Program Keahlian (DKK)</option>
+                <option value="Konsentrasi Keahlian (KK)" {{ request('kelompok') === 'Konsentrasi Keahlian (KK)' ? 'selected' : '' }}>Konsentrasi Keahlian (KK)</option>
                 <option value="Muatan Umum (A)" {{ request('kelompok') === 'Muatan Umum (A)' ? 'selected' : '' }}>Muatan Umum (A)</option>
                 <option value="Muatan Kewilayahan (B)" {{ request('kelompok') === 'Muatan Kewilayahan (B)' ? 'selected' : '' }}>Muatan Kewilayahan (B)</option>
-                <option value="Dasar Program Keahlian (C2)" {{ request('kelompok') === 'Dasar Program Keahlian (C2)' ? 'selected' : '' }}>Dasar Program Keahlian (C2)</option>
-                <option value="Konsentrasi Keahlian / Produktif (C3)" {{ request('kelompok') === 'Konsentrasi Keahlian / Produktif (C3)' ? 'selected' : '' }}>Konsentrasi Keahlian (C3)</option>
                 <option value="Muatan Lokal" {{ request('kelompok') === 'Muatan Lokal' ? 'selected' : '' }}>Muatan Lokal</option>
             </select>
         </div>
@@ -109,12 +110,14 @@
                     <strong style="color: var(--primary); font-size: 13px;">{{ $m->nama_mapel }}</strong>
                 </td>
                 <td>
-                    @if (str_contains($m->kelompok, 'Umum') || str_contains($m->kelompok, 'Nasional'))
-                        <span class="badge badge-info" style="font-size: 11px;">{{ $m->kelompok }}</span>
-                    @elseif (str_contains($m->kelompok, 'C2') || str_contains($m->kelompok, 'Dasar'))
+                    @if (str_contains($m->kelompok, 'Pilihan') || str_contains($m->kelompok, 'MPP'))
+                        <span class="badge" style="background: #f3e8ff; color: #7e22ce; border: 1px solid #d8b4fe; font-size: 11px; font-weight: 700;">{{ $m->kelompok }}</span>
+                    @elseif (str_contains($m->kelompok, 'DKK') || str_contains($m->kelompok, 'C2') || str_contains($m->kelompok, 'Dasar'))
                         <span class="badge badge-warning" style="font-size: 11px;">{{ $m->kelompok }}</span>
-                    @elseif (str_contains($m->kelompok, 'C3') || str_contains($m->kelompok, 'Konsentrasi'))
+                    @elseif (str_contains($m->kelompok, 'KK') || str_contains($m->kelompok, 'C3') || str_contains($m->kelompok, 'Konsentrasi'))
                         <span class="badge badge-success" style="font-size: 11px;">{{ $m->kelompok }}</span>
+                    @elseif (str_contains($m->kelompok, 'Umum') || str_contains($m->kelompok, 'Nasional'))
+                        <span class="badge badge-info" style="font-size: 11px;">{{ $m->kelompok }}</span>
                     @else
                         <span class="badge badge-neutral" style="font-size: 11px;">{{ $m->kelompok }}</span>
                     @endif
@@ -196,38 +199,44 @@
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Kelompok Mapel *</label>
-                    <select name="kelompok" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                        <option value="Muatan Umum (A)">Muatan Umum (A)</option>
-                        <option value="Muatan Kewilayahan (B)">Muatan Kewilayahan (B)</option>
-                        <option value="Dasar Program Keahlian (C2)">Dasar Program Keahlian (C2)</option>
-                        <option value="Konsentrasi Keahlian / Produktif (C3)">Konsentrasi Keahlian / Produktif (C3)</option>
-                        <option value="Muatan Lokal">Muatan Lokal</option>
-                    </select>
+                    <input list="list_kelompok_tambah" name="kelompok" id="tambah_kelompok" required placeholder="Pilih atau ketik kelompok..." style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                    <datalist id="list_kelompok_tambah">
+                        <option value="Mata Pelajaran Pilihan (MPP)">
+                        <option value="Dasar Program Keahlian (DKK)">
+                        <option value="Konsentrasi Keahlian (KK)">
+                        <option value="Muatan Umum (A)">
+                        <option value="Muatan Kewilayahan (B)">
+                        <option value="Muatan Lokal">
+                    </datalist>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                        Pilih saran dari daftar atau ketik kelompok bebas.
+                    </div>
                 </div>
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tingkat Sasaran *</label>
                     <select name="tingkat" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                        <option value="Semua">Semua Tingkat</option>
-                        <option value="10">Kelas 10</option>
-                        <option value="11">Kelas 11</option>
-                        <option value="12">Kelas 12</option>
+                        <option value="Semua">Semua Tingkat (Lintas Kelas)</option>
+                        <option value="10">Kelas 10 (Fase E)</option>
+                        <option value="11">Kelas 11 (Fase F)</option>
+                        <option value="12">Kelas 12 (Fase F)</option>
                     </select>
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jurusan Sasaran *</label>
-                <select name="jurusan" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                    <option value="Semua Jurusan">Semua Jurusan (Lintas Kompetensi Keahlian)</option>
-                    <option value="Desain Pemodelan dan Informasi Bangunan">Desain Pemodelan dan Informasi Bangunan (DPIB)</option>
-                    <option value="Teknik Instalasi Tenaga Listrik">Teknik Instalasi Tenaga Listrik (TITL / TKL)</option>
-                    <option value="Teknik Kendaraan Ringan">Teknik Kendaraan Ringan (TKR / TO)</option>
-                    <option value="Teknik Otomotif">Teknik Otomotif (TO)</option>
-                    <option value="Teknik Pemesinan">Teknik Pemesinan (TP)</option>
-                    <option value="Teknik Pengelasan dan Fabrikasi Logam">Teknik Pengelasan dan Fabrikasi Logam (TPFL)</option>
-                </select>
+                <input list="list_jurusan_tambah" name="jurusan" id="tambah_jurusan" required placeholder="Pilih atau ketik nama jurusan sasaran..." style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                <datalist id="list_jurusan_tambah">
+                    <option value="Semua Jurusan">
+                    <option value="Desain Pemodelan dan Informasi Bangunan">
+                    <option value="Teknik Instalasi Tenaga Listrik">
+                    <option value="Teknik Kendaraan Ringan">
+                    <option value="Teknik Otomotif">
+                    <option value="Teknik Pemesinan">
+                    <option value="Teknik Pengelasan dan Fabrikasi Logam">
+                </datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
-                    Pilih jurusan sasaran. Di SMK, satu nama mapel (misal Matematika) dapat memiliki guru & silabus berbeda tiap jurusan.
+                    Pilih jurusan sasaran atau ketik nama jurusan kustom bebas.
                 </div>
             </div>
 
@@ -272,36 +281,45 @@
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Kelompok Mapel *</label>
-                    <select name="kelompok" id="edit_kelompok" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                        <option value="Muatan Umum (A)">Muatan Umum (A)</option>
-                        <option value="Muatan Kewilayahan (B)">Muatan Kewilayahan (B)</option>
-                        <option value="Dasar Program Keahlian (C2)">Dasar Program Keahlian (C2)</option>
-                        <option value="Konsentrasi Keahlian / Produktif (C3)">Konsentrasi Keahlian / Produktif (C3)</option>
-                        <option value="Muatan Lokal">Muatan Lokal</option>
-                    </select>
+                    <input list="list_kelompok_edit" name="kelompok" id="edit_kelompok" required placeholder="Pilih atau ketik kelompok..." style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                    <datalist id="list_kelompok_edit">
+                        <option value="Mata Pelajaran Pilihan (MPP)">
+                        <option value="Dasar Program Keahlian (DKK)">
+                        <option value="Konsentrasi Keahlian (KK)">
+                        <option value="Muatan Umum (A)">
+                        <option value="Muatan Kewilayahan (B)">
+                        <option value="Muatan Lokal">
+                    </datalist>
+                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                        Pilih saran dari daftar atau ketik kelompok bebas.
+                    </div>
                 </div>
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tingkat Sasaran *</label>
                     <select name="tingkat" id="edit_tingkat" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                        <option value="Semua">Semua Tingkat</option>
-                        <option value="10">Kelas 10</option>
-                        <option value="11">Kelas 11</option>
-                        <option value="12">Kelas 12</option>
+                        <option value="Semua">Semua Tingkat (Lintas Kelas)</option>
+                        <option value="10">Kelas 10 (Fase E)</option>
+                        <option value="11">Kelas 11 (Fase F)</option>
+                        <option value="12">Kelas 12 (Fase F)</option>
                     </select>
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jurusan Sasaran *</label>
-                <select name="jurusan" id="edit_jurusan" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
-                    <option value="Semua Jurusan">Semua Jurusan (Lintas Kompetensi Keahlian)</option>
-                    <option value="Desain Pemodelan dan Informasi Bangunan">Desain Pemodelan dan Informasi Bangunan (DPIB)</option>
-                    <option value="Teknik Instalasi Tenaga Listrik">Teknik Instalasi Tenaga Listrik (TITL / TKL)</option>
-                    <option value="Teknik Kendaraan Ringan">Teknik Kendaraan Ringan (TKR / TO)</option>
-                    <option value="Teknik Otomotif">Teknik Otomotif (TO)</option>
-                    <option value="Teknik Pemesinan">Teknik Pemesinan (TP)</option>
-                    <option value="Teknik Pengelasan dan Fabrikasi Logam">Teknik Pengelasan dan Fabrikasi Logam (TPFL)</option>
-                </select>
+                <input list="list_jurusan_edit" name="jurusan" id="edit_jurusan" required placeholder="Pilih atau ketik jurusan sasaran..." style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                <datalist id="list_jurusan_edit">
+                    <option value="Semua Jurusan">
+                    <option value="Desain Pemodelan dan Informasi Bangunan">
+                    <option value="Teknik Instalasi Tenaga Listrik">
+                    <option value="Teknik Kendaraan Ringan">
+                    <option value="Teknik Otomotif">
+                    <option value="Teknik Pemesinan">
+                    <option value="Teknik Pengelasan dan Fabrikasi Logam">
+                </datalist>
+                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                    Pilih jurusan sasaran atau ketik nama jurusan kustom bebas.
+                </div>
             </div>
 
             <div style="margin-bottom: 20px;">
