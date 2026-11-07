@@ -3,6 +3,38 @@
 @section('title', 'Kelola Soal - ' . $bank->kode_bank)
 
 @section('content')
+<style>
+    .btn-formula {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        padding: 4px 8px;
+        font-size: 11px;
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 4px;
+        color: #1e293b;
+        cursor: pointer !important;
+        user-select: none;
+        position: relative;
+        z-index: 5;
+        pointer-events: auto !important;
+        transition: all 0.15s ease;
+    }
+    .btn-formula:hover {
+        background: #e2e8f0;
+        border-color: #94a3b8;
+        color: #0f172a;
+    }
+    .btn-formula:active {
+        transform: scale(0.97);
+    }
+    .btn-formula * {
+        pointer-events: none !important;
+    }
+</style>
+
 <div class="page-header">
     <div>
         <div style="font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 2px;">
@@ -21,10 +53,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             Pratinjau Siswa
         </a>
-        <a href="{{ route('admin.bank_soal.template_xlsx', $bank->id) }}" class="btn btn-secondary btn-sm" title="Unduh template Excel butir soal">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('modalPilihTemplate')" title="Unduh template Excel butir soal (Pilihan Preset 25 atau 40 Butir)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
             Template XLSX
-        </a>
+        </button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('modalImportXlsx')" title="Impor butir soal dari Excel">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             Impor XLSX
@@ -225,24 +257,46 @@
             </div>
 
             <!-- Toolbar Bantuan Rumus Matematika (KaTeX) -->
-            <div style="margin-bottom: 6px; background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px;">
-                <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;">Bantuan Rumus Matematika (KaTeX):</div>
+            <div style="margin-bottom: 8px; background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11.5px; font-weight: 700; color: #334155;">Bantuan Simbol &amp; Rumus Matematika/Teknik (KaTeX):</span>
+                    <span style="font-size: 10.5px; color: #64748b;">Klik tombol untuk menyisipkan rumus</span>
+                </div>
                 <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\frac{a}{b}$')">Pecahan $\frac{a}{b}$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\sqrt{x}$')">Akar $\sqrt{x}$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$x^{2}$')">Pangkat $x^2$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\times$')">Kali $\times$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\pm$')">Plus-Minus $\pm$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\le$')">Kurang Sama $\le$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\ge$')">Lebih Sama $\ge$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\pi$')">Pi $\pi$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('tambah_konten', '$\\alpha$')">Alpha $\alpha$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\frac{a}{b}$')">Pecahan $\frac{a}{b}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\sqrt{x}$')">Akar $\sqrt{x}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\sqrt[n]{x}$')">Akar n $\sqrt[n]{x}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$x^{2}$')">Pangkat $x^2$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$x_{1}$')">Subskrip $x_1$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$90^{\\circ}$')">Derajat $90^\circ$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\Omega$')">Ohm $\Omega$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\times$')">Kali $\times$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\div$')">Bagi $\div$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\pm$')">Plus-Minus $\pm$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\le$')">Kurang Sama $\le$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\ge$')">Lebih Sama $\ge$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\pi$')">Pi $\pi$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\Delta$')">Delta $\Delta$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$V = I \\times R$')">Ohm $V=I \cdot R$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$P = V \\times I$')">Daya $P=V \cdot I$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('tambah_konten', '$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$')">Matriks $\begin{pmatrix}a&b\\c&d\end{pmatrix}$</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Isi / Konten Pertanyaan *</label>
                 <textarea name="konten_soal" id="tambah_konten" rows="4" required placeholder="Tuliskan teks pertanyaan soal asesmen..." style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;"></textarea>
+                
+                <!-- Live KaTeX Preview -->
+                <div style="margin-top: 6px; padding: 8px 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 10.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pratinjau Langsung KaTeX:</span>
+                        <span style="font-size: 10.5px; color: #94a3b8;">Format: $rumus$ atau $$blok$$</span>
+                    </div>
+                    <div id="tambah_konten_preview" style="min-height: 24px; font-size: 13px; color: #0f172a; line-height: 1.5; word-break: break-word;">
+                        <span style="color: #94a3b8; font-style: italic;">Pratinjau rumus dan teks akan muncul otomatis di sini...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Media Unggah: Gambar & Audio -->
@@ -349,21 +403,46 @@
             </div>
 
             <!-- Toolbar Bantuan Rumus Matematika (KaTeX) -->
-            <div style="margin-bottom: 6px; background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px;">
-                <div style="font-size: 11px; font-weight: 600; color: #475569; margin-bottom: 4px;">Bantuan Rumus Matematika (KaTeX):</div>
+            <div style="margin-bottom: 8px; background: #f8fafc; border: 1px solid var(--border-light); border-radius: var(--radius-sm); padding: 8px 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <span style="font-size: 11.5px; font-weight: 700; color: #334155;">Bantuan Simbol &amp; Rumus Matematika/Teknik (KaTeX):</span>
+                    <span style="font-size: 10.5px; color: #64748b;">Klik tombol untuk menyisipkan rumus</span>
+                </div>
                 <div style="display: flex; gap: 4px; flex-wrap: wrap;">
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$\\frac{a}{b}$')">Pecahan $\frac{a}{b}$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$\\sqrt{x}$')">Akar $\sqrt{x}$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$x^{2}$')">Pangkat $x^2$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$\\times$')">Kali $\times$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$\\pm$')">Plus-Minus $\pm$</button>
-                    <button type="button" class="btn btn-secondary btn-sm" style="padding: 2px 6px; font-size: 11px;" onclick="insertFormula('edit_konten', '$\\pi$')">Pi $\pi$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\frac{a}{b}$')">Pecahan $\frac{a}{b}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\sqrt{x}$')">Akar $\sqrt{x}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\sqrt[n]{x}$')">Akar n $\sqrt[n]{x}$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$x^{2}$')">Pangkat $x^2$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$x_{1}$')">Subskrip $x_1$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$90^{\\circ}$')">Derajat $90^\circ$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\Omega$')">Ohm $\Omega$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\times$')">Kali $\times$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\div$')">Bagi $\div$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\pm$')">Plus-Minus $\pm$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\le$')">Kurang Sama $\le$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\ge$')">Lebih Sama $\ge$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\pi$')">Pi $\pi$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\Delta$')">Delta $\Delta$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$V = I \\times R$')">Ohm $V=I \cdot R$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$P = V \\times I$')">Daya $P=V \cdot I$</button>
+                    <button type="button" class="btn-formula" onclick="insertFormula('edit_konten', '$\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$')">Matriks $\begin{pmatrix}a&b\\c&d\end{pmatrix}$</button>
                 </div>
             </div>
 
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Isi / Konten Pertanyaan *</label>
                 <textarea name="konten_soal" id="edit_konten" rows="4" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: inherit;"></textarea>
+                
+                <!-- Live KaTeX Preview -->
+                <div style="margin-top: 6px; padding: 8px 12px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 6px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span style="font-size: 10.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Pratinjau Langsung KaTeX:</span>
+                        <span style="font-size: 10.5px; color: #94a3b8;">Format: $rumus$ atau $$blok$$</span>
+                    </div>
+                    <div id="edit_konten_preview" style="min-height: 24px; font-size: 13px; color: #0f172a; line-height: 1.5; word-break: break-word;">
+                        <span style="color: #94a3b8; font-style: italic;">Pratinjau rumus dan teks akan muncul otomatis di sini...</span>
+                    </div>
+                </div>
             </div>
 
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; background: #fdfefe; border: 1px dashed var(--border); padding: 10px; border-radius: var(--radius-sm);">
@@ -440,6 +519,102 @@
     </div>
 </div>
 
+<!-- Modal Pilih Format Template XLSX (25 vs 40 Soal) -->
+<div id="modalPilihTemplate" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.65); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(2px);">
+    <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 640px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px solid var(--border-light); padding-bottom: 12px;">
+            <div>
+                <h3 style="font-size: 17px; font-weight: 700; color: var(--primary); margin: 0;">Pilih Format Template Excel (.xlsx)</h3>
+                <p style="font-size: 12px; color: #64748b; margin: 3px 0 0 0;">Sesuaikan jumlah butir soal dan standarisasi bobot 100 poin penuh</p>
+            </div>
+            <button type="button" onclick="closeModal('modalPilihTemplate')" style="background: none; border: none; font-size: 24px; line-height: 1; cursor: pointer; color: #94a3b8;">&times;</button>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px;">
+            <!-- Card Preset 25 Soal -->
+            <div style="border: 2px solid {{ $bank->standar_bobot === '25_soal' ? 'var(--primary)' : '#e2e8f0' }}; background: {{ $bank->standar_bobot === '25_soal' ? '#f8fafc' : '#ffffff' }}; border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                @if ($bank->standar_bobot === '25_soal')
+                    <div style="position: absolute; top: -10px; right: 12px; background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">Standar Bank Ini</div>
+                @endif
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #e0f2fe; color: #0284c7; font-weight: 700; font-size: 13px; border-radius: 6px;">25</span>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Preset 25 Nomor</h4>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 12px;">
+                        Template dibatasi <strong>presisi 25 baris soal</strong> (Baris 6 s/d 30). Dilengkapi contoh soal &amp; kunci valid.
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 11.5px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Benar / Salah (5 soal):</span>
+                            <strong>20 Poin (@4)</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Pilihan Ganda (15 soal):</span>
+                            <strong>30 Poin (@2)</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Uraian / Esai (5 soal):</span>
+                            <strong>50 Poin (@10)</strong>
+                        </div>
+                        <div style="border-top: 1px dashed #cbd5e1; margin-top: 6px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: 700; color: #15803d;">
+                            <span>Total Akumulasi:</span>
+                            <span>100 Poin</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('admin.bank_soal.template_xlsx', ['id' => $bank->id, 'preset' => 'preset_25']) }}" class="btn btn-primary btn-sm" style="width: 100%; text-align: center; justify-content: center;" onclick="closeModal('modalPilihTemplate')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Unduh Template 25 Soal
+                </a>
+            </div>
+
+            <!-- Card Preset 40 Soal -->
+            <div style="border: 2px solid {{ $bank->standar_bobot === '40_soal' ? 'var(--primary)' : '#e2e8f0' }}; background: {{ $bank->standar_bobot === '40_soal' ? '#f8fafc' : '#ffffff' }}; border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                @if ($bank->standar_bobot === '40_soal')
+                    <div style="position: absolute; top: -10px; right: 12px; background: var(--primary); color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">Standar Bank Ini</div>
+                @endif
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #fef3c7; color: #d97706; font-weight: 700; font-size: 13px; border-radius: 6px;">40</span>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Preset 40 Nomor</h4>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 12px;">
+                        Template dibatasi <strong>presisi 40 baris soal</strong> (Baris 6 s/d 45). Dilengkapi contoh soal &amp; kunci valid.
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px; font-size: 11.5px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Benar / Salah (10 soal):</span>
+                            <strong>10 Poin (@1)</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Pilihan Ganda (20 soal):</span>
+                            <strong>40 Poin (@2)</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span>&bull; Uraian / Esai (10 soal):</span>
+                            <strong>50 Poin (@5)</strong>
+                        </div>
+                        <div style="border-top: 1px dashed #cbd5e1; margin-top: 6px; padding-top: 6px; display: flex; justify-content: space-between; font-weight: 700; color: #15803d;">
+                            <span>Total Akumulasi:</span>
+                            <span>100 Poin</span>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('admin.bank_soal.template_xlsx', ['id' => $bank->id, 'preset' => 'preset_40']) }}" class="btn btn-secondary btn-sm" style="width: 100%; text-align: center; justify-content: center; background: #f8fafc; border-color: #cbd5e1;" onclick="closeModal('modalPilihTemplate')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Unduh Template 40 Soal
+                </a>
+            </div>
+        </div>
+
+        <div style="background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; color: #475569; display: flex; align-items: center; justify-content: space-between;">
+            <span>Keduanya memiliki banner resmi sekolah, validasi dropdown tipe &amp; kunci, serta siap diimpor kembali.</span>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPilihTemplate')">Tutup</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Impor XLSX Soal -->
 <div id="modalImportXlsx" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999; align-items: center; justify-content: center;">
     <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 520px; padding: 24px;">
@@ -452,7 +627,7 @@
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 12px; color: #166534;">
                 <strong>Panduan Impor Soal:</strong>
                 <ol style="margin: 6px 0 0 16px; padding: 0;">
-                    <li>Unduh template resmi: <a href="{{ route('admin.bank_soal.template_xlsx', $bank->id) }}" style="color: #15803d; font-weight: 700; text-decoration: underline;">Unduh Template Soal</a></li>
+                    <li>Unduh template resmi: <a href="javascript:void(0)" onclick="closeModal('modalImportXlsx'); openModal('modalPilihTemplate');" style="color: #15803d; font-weight: 700; text-decoration: underline;">Pilih &amp; Unduh Template (Preset 25 atau 40 Soal)</a></li>
                     <li>Mendukung jenis: <code>PG</code>, <code>BENAR_SALAH</code>, dan <code>URAIAN</code>.</li>
                     <li>Rumus KaTeX didukung, contoh: <code>$x^2$</code> atau <code>$\frac{a}{b}$</code>.</li>
                     <li>Bobot otomatis dihitung sesuai preset jika kolom bobot dikosongkan.</li>
@@ -520,12 +695,42 @@ Rubrik: UTP tanpa foil, STP memakai foil pelindung.</pre>
 
     function insertFormula(textareaId, formula) {
         const txt = document.getElementById(textareaId);
-        const start = txt.selectionStart;
-        const end = txt.selectionEnd;
+        if (!txt) return;
+        const start = (typeof txt.selectionStart === 'number') ? txt.selectionStart : txt.value.length;
+        const end = (typeof txt.selectionEnd === 'number') ? txt.selectionEnd : txt.value.length;
         const current = txt.value;
         txt.value = current.substring(0, start) + formula + current.substring(end);
+        const nextPos = start + formula.length;
         txt.focus();
-        txt.setSelectionRange(start + formula.length, start + formula.length);
+        txt.setSelectionRange(nextPos, nextPos);
+
+        // Memicu event input agar live preview KaTeX langsung ter-update
+        txt.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
+    function updateKatexPreview(textareaId, previewId) {
+        const txt = document.getElementById(textareaId);
+        const prev = document.getElementById(previewId);
+        if (!txt || !prev) return;
+        const val = txt.value.trim();
+        if (!val) {
+            prev.innerHTML = '<span style="color: #94a3b8; font-style: italic;">Pratinjau rumus dan teks akan muncul otomatis di sini...</span>';
+            return;
+        }
+
+        // Sanitasi dasar teks lalu format baris
+        const safe = val.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+        prev.innerHTML = safe;
+
+        if (window.renderMathInElement) {
+            renderMathInElement(prev, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false}
+                ],
+                throwOnError: false
+            });
+        }
     }
 
     function switchJenisSoalTambah() {
@@ -606,17 +811,34 @@ Rubrik: UTP tanpa foil, STP memakai foil pelindung.</pre>
 
         document.getElementById('formEditSoal').action = '/admin/butir-soal/' + s.id + '/update';
         switchJenisSoalEdit();
+        updateKatexPreview('edit_konten', 'edit_konten_preview');
         openModal('modalEditSoal');
     }
 
-    // Auto-render KaTeX on document load
+    // Pasang listener input untuk live preview KaTeX
     document.addEventListener("DOMContentLoaded", function() {
+        const tambahInput = document.getElementById('tambah_konten');
+        if (tambahInput) {
+            tambahInput.addEventListener('input', function() {
+                updateKatexPreview('tambah_konten', 'tambah_konten_preview');
+            });
+        }
+
+        const editInput = document.getElementById('edit_konten');
+        if (editInput) {
+            editInput.addEventListener('input', function() {
+                updateKatexPreview('edit_konten', 'edit_konten_preview');
+            });
+        }
+
+        // Auto-render KaTeX on document load
         if (window.renderMathInElement) {
             renderMathInElement(document.body, {
                 delimiters: [
                     {left: '$$', right: '$$', display: true},
                     {left: '$', right: '$', display: false}
-                ]
+                ],
+                throwOnError: false
             });
         }
     });

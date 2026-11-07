@@ -10,6 +10,10 @@ use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 use App\Models\User;
 use App\Models\MasterSekolah;
 use App\Models\Kelas;
@@ -1095,71 +1099,104 @@ class AdminController extends Controller
         return back()->with('success', 'Bank Soal ' . $kode . ' berhasil dihapus.');
     }
 
-    public function downloadTemplateSoalXlsx($bankId)
+    public function downloadTemplateSoalXlsx(Request $request, $bankId)
     {
         $bank = BankSoal::with('mataPelajaran')->findOrFail($bankId);
 
+        $preset = $request->query('preset');
+        if (!in_array($preset, ['preset_25', 'preset_40', '25_soal', '40_soal'])) {
+            $preset = ($bank->standar_bobot === '40_soal') ? 'preset_40' : 'preset_25';
+        }
+
+        $is40 = ($preset === 'preset_40' || $preset === '40_soal');
+        $totalRows = $is40 ? 40 : 25;
+        $bobotBs = $is40 ? 1.0 : 4.0;
+        $bobotPg = 2.0;
+        $bobotUraian = $is40 ? 5.0 : 10.0;
+        $presetTitle = $is40 ? 'PRESET STANDAR 40 NOMOR (10 B/S x 1 + 20 PG x 2 + 10 URAIAN x 5 = 100 POIN)' : 'PRESET STANDAR 25 NOMOR (5 B/S x 4 + 15 PG x 2 + 5 URAIAN x 10 = 100 POIN)';
+
+        $samples = $is40 ? $this->getSampleQuestions40($bobotBs, $bobotPg, $bobotUraian) : $this->getSampleQuestions25($bobotBs, $bobotPg, $bobotUraian);
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle('Template Butir Soal');
+        $sheet->setTitle($is40 ? 'Template 40 Soal' : 'Template 25 Soal');
 
+        // 1. BANNER HEADER RESMI SEKOLAH
+        $sheet->mergeCells('A1:K1');
+        $sheet->setCellValue('A1', 'SMK NEGERI 1 KUPANG BARAT - SISTEM CBT ASESMEN TERSTANDAR');
+        $sheet->getStyle('A1:K1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F2B48');
+        $sheet->getStyle('A1:K1')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:K1')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(1)->setRowHeight(28);
+
+        // 2. IDENTITAS PAKET SOAL
+        $sheet->mergeCells('A2:K2');
+        $mapelNama = $bank->mataPelajaran ? $bank->mataPelajaran->nama_mapel : 'Semua Mapel';
+        $sheet->setCellValue('A2', 'PAKET: ' . strtoupper($bank->kode_bank) . ' | MAPEL: ' . strtoupper($mapelNama) . ' | ' . $presetTitle);
+        $sheet->getStyle('A2:K2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E293B');
+        $sheet->getStyle('A2:K2')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A2:K2')->getFont()->setSize(9.5)->setBold(true);
+        $sheet->getStyle('A2:K2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(2)->setRowHeight(22);
+
+        // 3. PETUNJUK PENGISIAN
+        $sheet->mergeCells('A3:K3');
+        $sheet->setCellValue('A3', 'PETUNJUK: Isi baris soal di bawah. Jangan ubah urutan kolom A s/d K. Kolom B (Tipe Soal) pilih PG, BENAR_SALAH, atau URAIAN. Rumus KaTeX didukung (contoh $x^2$ atau $\\frac{a}{b}$).');
+        $sheet->getStyle('A3:K3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+        $sheet->getStyle('A3:K3')->getFont()->getColor()->setARGB('FF334155');
+        $sheet->getStyle('A3:K3')->getFont()->setSize(8.5)->setItalic(true);
+        $sheet->getStyle('A3:K3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(3)->setRowHeight(20);
+
+        // 4. PEMISAH KOSONG
+        $sheet->getRowDimension(4)->setRowHeight(8);
+
+        // 5. HEADER TABEL UTAMA (BARIS 5)
         $headers = [
-            'A1' => 'No Urut',
-            'B1' => 'Jenis Soal (PG / BENAR_SALAH / URAIAN)',
-            'C1' => 'Konten Pertanyaan (Dapat memakai rumus KaTeX $x^2$)',
-            'D1' => 'Pilihan A',
-            'E1' => 'Pilihan B',
-            'F1' => 'Pilihan C',
-            'G1' => 'Pilihan D',
-            'H1' => 'Pilihan E',
-            'I1' => 'Kunci Jawaban (A-E atau BENAR/SALAH)',
-            'J1' => 'Rubrik Kunci Uraian',
-            'K1' => 'Bobot Poin (Opsional/Otomatis Sesuai Preset)',
+            'A5' => 'No',
+            'B5' => 'Tipe Soal (PG/B_S/URAIAN)',
+            'C5' => 'Pertanyaan Soal (Mendukung KaTeX $x^2$)',
+            'D5' => 'Pilihan A',
+            'E5' => 'Pilihan B',
+            'F5' => 'Pilihan C',
+            'G5' => 'Pilihan D',
+            'H5' => 'Pilihan E',
+            'I5' => 'Kunci Jawaban',
+            'J5' => 'Rubrik Jawaban Uraian',
+            'K5' => 'Bobot Poin',
         ];
 
         foreach ($headers as $cell => $val) {
             $sheet->setCellValue($cell, $val);
-            $sheet->getStyle($cell)->getFont()->setBold(true);
         }
 
-        $bobotPg = ($bank->standar_bobot === '25_soal') ? 2.0 : (($bank->standar_bobot === '40_soal') ? 2.0 : 4.0);
-        $bobotBs = ($bank->standar_bobot === '25_soal') ? 4.0 : (($bank->standar_bobot === '40_soal') ? 1.0 : 2.0);
-        $bobotUraian = ($bank->standar_bobot === '25_soal') ? 10.0 : (($bank->standar_bobot === '40_soal') ? 5.0 : 10.0);
+        $sheet->getStyle('A5:K5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0284C7');
+        $sheet->getStyle('A5:K5')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A5:K5')->getFont()->setBold(true)->setSize(9.5);
+        $sheet->getStyle('A5:K5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getRowDimension(5)->setRowHeight(26);
 
-        $samples = [
-            [
-                1, 'PG',
-                'Protokol jaringan yang bertugas menerjemahkan alamat IP menjadi nama domain (seperti smkn1kupangbarat.sch.id) adalah...',
-                'DHCP', 'DNS', 'FTP', 'HTTP', 'SMTP',
-                'B', '', $bobotPg
-            ],
-            [
-                2, 'PG',
-                'Perangkat keras yang berfungsi menghubungkan dua jaringan yang berbeda segmen IP adalah...',
-                'Switch Layer 2', 'Hub', 'Router', 'Repeater', 'Modem',
-                'C', '', $bobotPg
-            ],
-            [
-                3, 'BENAR_SALAH',
-                'Topologi jaringan tipe Star menggunakan satu kabel utama tunggal sebagai tulang punggung tempat semua komputer terhubung.',
-                'Benar', 'Salah', '', '', '',
-                'SALAH', '', $bobotBs
-            ],
-            [
-                4, 'BENAR_SALAH',
-                'Kabel fiber optik mentransmisikan data menggunakan sinyal gelombang cahaya dan kebal terhadap interferensi elektromagnetik.',
-                'Benar', 'Salah', '', '', '',
-                'BENAR', '', $bobotBs
-            ],
-            [
-                5, 'URAIAN',
-                'Jelaskan perbedaan mendasar antara kabel jaringan jenis UTP (Unshielded Twisted Pair) dan STP (Shielded Twisted Pair) serta sebutkan situasi penggunaan keduanya!',
-                '', '', '', '', '',
-                '', 'Kabel UTP tidak memiliki pelindung aluminium foil sedangkan kabel STP memiliki pelindung pelat foil untuk mencegah gangguan elektromagnetik pada area industri.', $bobotUraian
-            ],
+        // LEBAR KOLOM PROPORSIONAL
+        $widths = [
+            'A' => 6,
+            'B' => 18,
+            'C' => 45,
+            'D' => 20,
+            'E' => 20,
+            'F' => 20,
+            'G' => 20,
+            'H' => 20,
+            'I' => 15,
+            'J' => 35,
+            'K' => 12,
         ];
+        foreach ($widths as $col => $w) {
+            $sheet->getColumnDimension($col)->setWidth($w);
+        }
 
-        $rowIdx = 2;
+        // 6. TULISKAN BARIS DATA BUTIR SOAL SECARA PRESISI
+        $rowIdx = 6;
         foreach ($samples as $s) {
             $sheet->setCellValue('A' . $rowIdx, $s[0]);
             $sheet->setCellValue('B' . $rowIdx, $s[1]);
@@ -1172,21 +1209,146 @@ class AdminController extends Controller
             $sheet->setCellValue('I' . $rowIdx, $s[8]);
             $sheet->setCellValue('J' . $rowIdx, $s[9]);
             $sheet->setCellValue('K' . $rowIdx, $s[10]);
+
+            // Perataan sel
+            $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('I' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('K' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+
+            // Zebra striping baris genap
+            if ($rowIdx % 2 === 0) {
+                $sheet->getStyle('A' . $rowIdx . ':K' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8FAFC');
+            }
+
+            // Dropdown validasi tipe soal
+            $validationJenis = $sheet->getCell('B' . $rowIdx)->getDataValidation();
+            $validationJenis->setType(DataValidation::TYPE_LIST);
+            $validationJenis->setAllowBlank(false);
+            $validationJenis->setShowDropDown(true);
+            $validationJenis->setFormula1('"PG,BENAR_SALAH,URAIAN"');
+
+            // Dropdown validasi kunci jawaban
+            $validationKunci = $sheet->getCell('I' . $rowIdx)->getDataValidation();
+            $validationKunci->setType(DataValidation::TYPE_LIST);
+            $validationKunci->setAllowBlank(true);
+            $validationKunci->setShowDropDown(true);
+            $validationKunci->setFormula1('"A,B,C,D,E,BENAR,SALAH"');
+
+            $sheet->getRowDimension($rowIdx)->setRowHeight(34);
             $rowIdx++;
         }
 
-        foreach (range('A', 'K') as $col) {
-            $sheet->getColumnDimension($col)->setAutoSize(true);
-        }
+        $lastRow = $rowIdx - 1;
+
+        // Wrap text pada kolom pertanyaan dan opsi
+        $sheet->getStyle('C6:H' . $lastRow)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('J6:J' . $lastRow)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER);
+
+        // Border tipis pada seluruh tabel
+        $sheet->getStyle('A5:K' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFCBD5E1');
 
         $writer = new Xlsx($spreadsheet);
-        $fileName = 'Template_Soal_' . Str::slug($bank->kode_bank) . '.xlsx';
+        $fileName = 'Template_Soal_' . Str::slug($bank->kode_bank) . '_' . ($is40 ? 'Preset_40_Nomor' : 'Preset_25_Nomor') . '.xlsx';
 
         return response()->streamDownload(function () use ($writer) {
             $writer->save('php://output');
         }, $fileName, [
             'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         ]);
+    }
+
+    /**
+     * Bank Soal Sampel Preset 25 Nomor (100 Poin Penuh)
+     */
+    public function getSampleQuestions25($bobotBs, $bobotPg, $bobotUraian): array
+    {
+        return [
+            // 5 BENAR / SALAH (Bobot masing-masing 4.0 pt = 20 pt)
+            [1, 'BENAR_SALAH', 'Topologi jaringan tipe Star menggunakan satu perangkat konsentrator (seperti Switch atau Hub) sebagai pusat distribusi seluruh transmisi data antar-komputer client.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [2, 'BENAR_SALAH', 'Alamat IP versi 4 (IPv4) memiliki panjang total 128 bit yang terbagi ke dalam 8 blok heksadesimal.', 'Benar', 'Salah', '', '', '', 'SALAH', 'IPv4 memiliki panjang 32 bit yang terbagi dalam 4 oktet desimal, sedangkan 128 bit adalah panjang IPv6.', $bobotBs],
+            [3, 'BENAR_SALAH', 'Pada instalasi penerangan listrik rumah tangga, saklar pemutus arus selalu wajib dipasang pada penghantar fasa (bertegangan), bukan pada penghantar netral.', 'Benar', 'Salah', '', '', '', 'BENAR', 'Memutus fasa menjamin keamanan dari sengatan listrik saat lampu atau fiting diperbaiki.', $bobotBs],
+            [4, 'BENAR_SALAH', 'Hukum Ohm menyatakan bahwa kuat arus listrik yang mengalir berbanding terbalik dengan beda potensial dan berbanding lurus dengan nilai hambatan ($I = \\frac{R}{V}$).', 'Benar', 'Salah', '', '', '', 'SALAH', 'Rumus hukum Ohm yang benar adalah $I = \\frac{V}{R}$, di mana arus berbanding lurus dengan tegangan V.', $bobotBs],
+            [5, 'BENAR_SALAH', 'Proses pendinginan cepat (quenching) pada perlakuan panas baja karbon bertujuan untuk membentuk fasa struktur mikro Martensit yang memiliki tingkat kekerasan tinggi.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+
+            // 15 PILIHAN GANDA (Bobot masing-masing 2.0 pt = 30 pt)
+            [6, 'PG', 'Protokol jaringan yang bertugas memetakan alamat IP logis menjadi alamat fisik perangkat keras (MAC Address) pada jaringan lokal adalah...', 'ARP (Address Resolution Protocol)', 'DNS (Domain Name System)', 'DHCP Server', 'ICMP', 'RARP', 'A', '', $bobotPg],
+            [7, 'PG', 'Dalam arsitektur referensi 7 OSI Layer, perangkat router beroperasi pada lapisan...', 'Physical Layer (Layer 1)', 'Data Link Layer (Layer 2)', 'Network Layer (Layer 3)', 'Transport Layer (Layer 4)', 'Application Layer (Layer 7)', 'C', '', $bobotPg],
+            [8, 'PG', 'Perhitungan daya aktif ($P$) pada sistem kelistrikan arus bolak-balik (AC) satu fasa dengan faktor daya $\\cos(\\phi)$ dirumuskan...', '$P = V \\times I$', '$P = V \\times I \\times \\cos(\\phi)$', '$P = V^2 \\times R$', '$P = \\frac{V \\times I}{\\cos(\\phi)}$', '$P = \\sqrt{3} \\times V \\times I$', 'B', '', $bobotPg],
+            [9, 'PG', 'Komponen pada sistem pengapian konvensional kendaraan bermotor yang berfungsi menyerap percikan bunga api pada kontak platina adalah...', 'Busi pemantik', 'Kondensor (Kapasitor)', 'Koil pengapian', 'Distributor rotor', 'Alternator', 'B', '', $bobotPg],
+            [10, 'PG', 'Pada gambar teknik konstruksi bangunan (DPIB), garis strip-titik-strip tipis ($-\\cdot-\\cdot-$) standar ISO digunakan untuk menunjukkan...', 'Garis sumbu atau as simetri', 'Garis kontur dinding tampak', 'Garis potongan bidang', 'Garis ukuran dan dimensi', 'Garis arsiran material', 'A', '', $bobotPg],
+            [11, 'PG', 'Sebuah resistor karbon memiliki 4 gelang warna: Cokelat, Hitam, Merah, Emas. Nilai resistansi nominal dan nilai toleransinya adalah...', '$100\\,\\Omega \\pm 5\\%$', '$1.000\\,\\Omega \\pm 10\\%$', '$10.000\\,\\Omega \\pm 5\\%$', '$1.000\\,\\Omega \\pm 5\\%$ ($1\\,\\text{k}\\Omega$)', '$10\\,\\Omega \\pm 5\\%$', 'D', '', $bobotPg],
+            [12, 'PG', 'Skala gambar $1 : 50$ pada gambar denah bangunan bermakna bahwa setiap jarak $1\\text{ cm}$ pada kertas gambar mewakili ukuran sesungguhnya di lapangan sebesar...', '$5\\text{ cm}$', '$50\\text{ cm}$ ($0,5\\text{ meter}$)', '$500\\text{ cm}$ ($5\\text{ meter}$)', '$50\\text{ meter}$', '$5\\text{ meter}$', 'B', '', $bobotPg],
+            [13, 'PG', 'Rumus luas penampang ($A$) pondasi tiang pancang berbentuk lingkaran dengan diameter $d$ dirumuskan secara matematis dengan...', '$A = \\pi \\times d$', '$A = 2 \\times \\pi \\times d$', '$A = \\frac{\\pi \\times d^2}{4}$', '$A = \\pi \\times d^2$', '$A = \\frac{\\pi \\times d}{2}$', 'C', '', $bobotPg],
+            [14, 'PG', 'Alat ukur presisi otomotif yang paling tepat digunakan untuk mengukur keolengan (run-out) piringan rem cakram roda mobil adalah...', 'Jangka Sorong (Vernier Caliper)', 'Mikrometer Luar', 'Dial Indicator (Dial Gauge)', 'Silinder Bore Gauge', 'Feeler Gauge', 'C', '', $bobotPg],
+            [15, 'PG', 'Kecepatan potong mesin bubut ($C_s$ dalam meter/menit) dengan diameter benda kerja $d\\text{ (mm)}$ dan putaran spindel $n\\text{ (rpm)}$ dirumuskan...', '$C_s = \\frac{\\pi \\times d \\times n}{1000}$', '$C_s = \\pi \\times d \\times n$', '$C_s = \\frac{1000}{\\pi \\times d \\times n}$', '$C_s = \\frac{\\pi \\times d}{n \\times 1000}$', '$C_s = \\frac{d \\times n}{1000}$', 'A', '', $bobotPg],
+            [16, 'PG', 'Kawat elektroda las busur manual (SMAW) dengan kode spesifikasi AWS E6013 menunjukkan nilai kuat tarik minimum deposit las sebesar...', '$6.000\\text{ psi}$', '$60.000\\text{ psi}$', '$130.000\\text{ psi}$', '$600.000\\text{ psi}$', '$13.000\\text{ psi}$', 'B', '', $bobotPg],
+            [17, 'PG', 'Fungsi utama dari Master Cylinder pada sistem pengereman hidrolis kendaraan adalah...', 'Mengurangi gesekan pada roda', 'Menyerap panas dari tromol rem', 'Menambah debit aliran udara', 'Mengubah dorongan pedal mekanis menjadi tekanan fluida hidrolik', 'Mendinginkan sirkulasi minyak rem', 'D', '', $bobotPg],
+            [18, 'PG', 'Subnet mask standar untuk alamat jaringan IPv4 kelas C dengan notasi prefix CIDR /24 adalah...', '255.255.255.0', '255.255.0.0', '255.0.0.0', '255.255.255.128', '255.255.255.192', 'A', '', $bobotPg],
+            [19, 'PG', 'Berdasarkan Teorema Pythagoras, panjang sisi miring hipotenusa ($c$) pada segitiga siku-siku dengan sisi penyiku $a$ dan $b$ dirumuskan...', '$c = \\sqrt{a^2 + b^2}$', '$c = a^2 + b^2$', '$c = \\sqrt{a^2 - b^2}$', '$c = \\sqrt{a + b}$', '$c = \\frac{a^2 + b^2}{2}$', 'A', '', $bobotPg],
+            [20, 'PG', 'Pada motor bensin 4-langkah (4-stroke), langkah kerja di mana katup masuk dan buang sama-sama tertutup dan torak bergerak dari TMB ke TMA adalah...', 'Langkah Isap (Intake Stroke)', 'Langkah Kompresi (Compression Stroke)', 'Langkah Usaha (Power Stroke)', 'Langkah Buang (Exhaust Stroke)', 'Langkah Overlapping', 'B', '', $bobotPg],
+
+            // 5 URAIAN / ESAI (Bobot masing-masing 10.0 pt = 50 pt)
+            [21, 'URAIAN', 'Jelaskan perbedaan mendasar antara kabel jaringan jenis UTP (Unshielded Twisted Pair) dan STP (Shielded Twisted Pair) serta sebutkan situasi penggunaan keduanya!', '', '', '', '', '', '', 'Kunci Jawaban: Kabel UTP tidak memiliki lapisan pelindung aluminium foil (shielding) dan digunakan pada area perkantoran tertutup/indoor. Kabel STP memiliki lapisan pelindung logam foil untuk meredam gangguan interferensi elektromagnetik dan cocok untuk area industri/outdoor bertegangan tinggi.', $bobotUraian],
+            [22, 'URAIAN', 'Sebuah pemanas listrik dihubungkan pada tegangan sumber $V = 220\\text{ Volt}$. Jika hambatan kawat pemanas adalah $R = 44\\,\\Omega$, hitunglah kuat arus listrik ($I$) dan daya listrik ($P$) yang diserap kawat menggunakan rumus $I = \\frac{V}{R}$ dan $P = V \\times I$!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Kuat arus $I = \\frac{220}{44} = 5\\text{ Ampere}$. 2) Daya listrik $P = 220 \\times 5 = 1.100\\text{ Watt}$. Bobot skor penuh (10 pt) jika mencantumkan rumus, langkah pengerjaan, dan satuan dengan benar.', $bobotUraian],
+            [23, 'URAIAN', 'Sebutkan 4 (empat) Alat Pelindung Diri (APD) utama yang wajib dikenakan oleh seorang juru las saat melaksanakan pengelasan SMAW di bengkel beserta fungsinya!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Helm/Topeng Las: melindungi mata dan wajah dari sinar radiasi UV/IR dan percikan terak. 2) Sarung Tangan Kulit: melindungi tangan dari panas dan sengatan listrik. 3) Apron Kulit: melindungi dada dan tubuh dari percikan api las. 4) Safety Shoes: melindungi kaki dari kejatuhan benda panas/berat.', $bobotUraian],
+            [24, 'URAIAN', 'Uraikan urutan langkah kerja penyetelan celah katup (valve clearance) pada mesin bensin 4 silinder segaris dengan Firing Order (FO) 1-3-4-2!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Putar poros engkol hingga tanda timing di puli lurus dengan angka 0 pada posisi TOP 1. 2) Periksa dan setel katup bebas silinder 1 menggunakan feeler gauge sesuai buku manual. 3) Kencangkan mur pengunci sambil menahan baut penyetel. 4) Putar poros engkol 360 derajat ke posisi TOP 4. 5) Setel celah katup bebas silinder 4.', $bobotUraian],
+            [25, 'URAIAN', 'Jelaskan apa yang dimaksud dengan selimut beton (concrete cover) pada konstruksi beton bertulang (DPIB) dan mengapa ketebalannya minimal harus 3 cm pada pekerjaan pondasi!', '', '', '', '', '', '', 'Kunci Jawaban: Selimut beton adalah jarak antara permukaan luar tulangan baja dengan permukaan terluar beton. Pada pondasi, ketebalan minimal 3-5 cm diperlukan untuk melindungi tulangan baja dari kontak air tanah, garam mineral, dan kelembaban agar tidak mengalami korosi (karat) serta menjamin ketahanan terhadap api.', $bobotUraian],
+        ];
+    }
+
+    /**
+     * Bank Soal Sampel Preset 40 Nomor (100 Poin Penuh)
+     */
+    public function getSampleQuestions40($bobotBs, $bobotPg, $bobotUraian): array
+    {
+        return [
+            // 10 BENAR / SALAH (Bobot masing-masing 1.0 pt = 10 pt)
+            [1, 'BENAR_SALAH', 'Topologi jaringan tipe Star menggunakan satu perangkat konsentrator (seperti Switch atau Hub) sebagai pusat distribusi seluruh transmisi data.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [2, 'BENAR_SALAH', 'Alamat IP versi 4 (IPv4) memiliki panjang total 128 bit yang terbagi ke dalam 8 blok heksadesimal.', 'Benar', 'Salah', '', '', '', 'SALAH', 'IPv4 memiliki panjang 32 bit, sedangkan 128 bit adalah panjang IPv6.', $bobotBs],
+            [3, 'BENAR_SALAH', 'Pada instalasi penerangan listrik rumah tangga, saklar pemutus arus selalu wajib dipasang pada penghantar fasa, bukan netral.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [4, 'BENAR_SALAH', 'Hukum Ohm menyatakan bahwa kuat arus listrik yang mengalir berbanding terbalik dengan beda potensial ($I = \\frac{R}{V}$).', 'Benar', 'Salah', '', '', '', 'SALAH', 'Rumus hukum Ohm yang benar adalah $I = \\frac{V}{R}$.', $bobotBs],
+            [5, 'BENAR_SALAH', 'Proses pendinginan cepat (quenching) pada baja karbon bertujuan untuk membentuk fasa Martensit yang keras.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [6, 'BENAR_SALAH', 'Protokol DHCP berfungsi untuk mendistribusikan konfigurasi IP address secara otomatis kepada komputer client dalam jaringan.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [7, 'BENAR_SALAH', 'Kabel coaxial memiliki ketahanan terhadap interferensi elektromagnetik yang lebih tinggi dibandingkan kabel fiber optik.', 'Benar', 'Salah', '', '', '', 'SALAH', 'Kabel fiber optik kebal interferensi elektromagnetik karena mentransmisikan berkas cahaya.', $bobotBs],
+            [8, 'BENAR_SALAH', 'Transformator tipe step-up berfungsi menaikkan tegangan listrik arus bolak-balik (AC) dengan menurunkan kuat arusnya secara seimbang.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+            [9, 'BENAR_SALAH', 'Pada mesin diesel 4-langkah, bahan bakar solar dinyalakan oleh percikan bunga api tegangan tinggi dari busi pemantik.', 'Benar', 'Salah', '', '', '', 'SALAH', 'Mesin diesel menyalakan bahan bakar melalui kompresi udara bertekanan dan suhu tinggi tanpa busi.', $bobotBs],
+            [10, 'BENAR_SALAH', 'Simbol pengelasan jenis sudut (fillet weld) pada gambar teknik dilambangkan dengan bentuk segitiga siku-siku pada garis referensi.', 'Benar', 'Salah', '', '', '', 'BENAR', '', $bobotBs],
+
+            // 20 PILIHAN GANDA (Bobot masing-masing 2.0 pt = 40 pt)
+            [11, 'PG', 'Protokol jaringan yang bertugas memetakan alamat IP logis menjadi alamat fisik perangkat keras (MAC Address) pada jaringan lokal adalah...', 'ARP (Address Resolution Protocol)', 'DNS (Domain Name System)', 'DHCP Server', 'ICMP', 'RARP', 'A', '', $bobotPg],
+            [12, 'PG', 'Dalam arsitektur referensi 7 OSI Layer, perangkat router beroperasi pada lapisan...', 'Physical Layer (Layer 1)', 'Data Link Layer (Layer 2)', 'Network Layer (Layer 3)', 'Transport Layer (Layer 4)', 'Application Layer (Layer 7)', 'C', '', $bobotPg],
+            [13, 'PG', 'Perhitungan daya aktif ($P$) pada sistem kelistrikan AC satu fasa dengan faktor daya $\\cos(\\phi)$ dirumuskan...', '$P = V \\times I$', '$P = V \\times I \\times \\cos(\\phi)$', '$P = V^2 \\times R$', '$P = \\frac{V \\times I}{\\cos(\\phi)}$', '$P = \\sqrt{3} \\times V \\times I$', 'B', '', $bobotPg],
+            [14, 'PG', 'Komponen pada sistem pengapian konvensional kendaraan bermotor yang berfungsi menyerap percikan bunga api pada kontak platina adalah...', 'Busi pemantik', 'Kondensor (Kapasitor)', 'Koil pengapian', 'Distributor rotor', 'Alternator', 'B', '', $bobotPg],
+            [15, 'PG', 'Pada gambar teknik konstruksi bangunan (DPIB), garis strip-titik-strip tipis ($-\\cdot-\\cdot-$) standar ISO digunakan untuk menunjukkan...', 'Garis sumbu atau as simetri', 'Garis kontur dinding tampak', 'Garis potongan bidang', 'Garis ukuran dan dimensi', 'Garis arsiran material', 'A', '', $bobotPg],
+            [16, 'PG', 'Sebuah resistor karbon memiliki 4 gelang warna: Cokelat, Hitam, Merah, Emas. Nilai resistansi nominal dan nilai toleransinya adalah...', '$100\\,\\Omega \\pm 5\\%$', '$1.000\\,\\Omega \\pm 10\\%$', '$10.000\\,\\Omega \\pm 5\\%$', '$1.000\\,\\Omega \\pm 5\\%$ ($1\\,\\text{k}\\Omega$)', '$10\\,\\Omega \\pm 5\\%$', 'D', '', $bobotPg],
+            [17, 'PG', 'Skala gambar $1 : 50$ pada gambar denah bangunan bermakna bahwa setiap jarak $1\\text{ cm}$ pada kertas gambar mewakili ukuran sesungguhnya sebesar...', '$5\\text{ cm}$', '$50\\text{ cm}$ ($0,5\\text{ meter}$)', '$500\\text{ cm}$ ($5\\text{ meter}$)', '$50\\text{ meter}$', '$5\\text{ meter}$', 'B', '', $bobotPg],
+            [18, 'PG', 'Rumus luas penampang ($A$) pondasi tiang pancang berbentuk lingkaran dengan diameter $d$ dirumuskan secara matematis dengan...', '$A = \\pi \\times d$', '$A = 2 \\times \\pi \\times d$', '$A = \\frac{\\pi \\times d^2}{4}$', '$A = \\pi \\times d^2$', '$A = \\frac{\\pi \\times d}{2}$', 'C', '', $bobotPg],
+            [19, 'PG', 'Alat ukur presisi otomotif yang paling tepat digunakan untuk mengukur keolengan (run-out) piringan rem cakram roda mobil adalah...', 'Jangka Sorong (Vernier Caliper)', 'Mikrometer Luar', 'Dial Indicator (Dial Gauge)', 'Silinder Bore Gauge', 'Feeler Gauge', 'C', '', $bobotPg],
+            [20, 'PG', 'Kecepatan potong mesin bubut ($C_s$ dalam meter/menit) dengan diameter benda kerja $d\\text{ (mm)}$ dan putaran spindel $n\\text{ (rpm)}$ dirumuskan...', '$C_s = \\frac{\\pi \\times d \\times n}{1000}$', '$C_s = \\pi \\times d \\times n$', '$C_s = \\frac{1000}{\\pi \\times d \\times n}$', '$C_s = \\frac{\\pi \\times d}{n \\times 1000}$', '$C_s = \\frac{d \\times n}{1000}$', 'A', '', $bobotPg],
+            [21, 'PG', 'Kawat elektroda las busur manual (SMAW) dengan kode spesifikasi AWS E6013 menunjukkan nilai kuat tarik minimum deposit las sebesar...', '$6.000\\text{ psi}$', '$60.000\\text{ psi}$', '$130.000\\text{ psi}$', '$600.000\\text{ psi}$', '$13.000\\text{ psi}$', 'B', '', $bobotPg],
+            [22, 'PG', 'Fungsi utama dari Master Cylinder pada sistem pengereman hidrolis kendaraan adalah...', 'Mengurangi gesekan pada roda', 'Menyerap panas dari tromol rem', 'Menambah debit aliran udara', 'Mengubah dorongan pedal mekanis menjadi tekanan fluida hidrolik', 'Mendinginkan sirkulasi minyak rem', 'D', '', $bobotPg],
+            [23, 'PG', 'Subnet mask standar untuk alamat jaringan IPv4 kelas C dengan notasi prefix CIDR /24 adalah...', '255.255.255.0', '255.255.0.0', '255.0.0.0', '255.255.255.128', '255.255.255.192', 'A', '', $bobotPg],
+            [24, 'PG', 'Berdasarkan Teorema Pythagoras, panjang sisi miring hipotenusa ($c$) pada segitiga siku-siku dengan sisi penyiku $a$ dan $b$ dirumuskan...', '$c = \\sqrt{a^2 + b^2}$', '$c = a^2 + b^2$', '$c = \\sqrt{a^2 - b^2}$', '$c = \\sqrt{a + b}$', '$c = \\frac{a^2 + b^2}{2}$', 'A', '', $bobotPg],
+            [25, 'PG', 'Pada motor bensin 4-langkah (4-stroke), langkah kerja di mana katup masuk dan buang sama-sama tertutup dan torak bergerak dari TMB ke TMA adalah...', 'Langkah Isap (Intake Stroke)', 'Langkah Kompresi (Compression Stroke)', 'Langkah Usaha (Power Stroke)', 'Langkah Buang (Exhaust Stroke)', 'Langkah Overlapping', 'B', '', $bobotPg],
+            [26, 'PG', 'Perangkat keras yang berfungsi menyediakan daya listrik cadangan seketika saat listrik PLN padam pada ruang server adalah...', 'UPS (Uninterruptible Power Supply)', 'Stabilizer Analog', 'Genset Manual', 'Power Supply Unit (PSU)', 'Inverter Non-Sinusoidal', 'A', '', $bobotPg],
+            [27, 'PG', 'Satuan pengukuran fluks cahaya (luminous flux) yang dipancarkan oleh lampu penerangan dalam Sistem Internasional (SI) adalah...', 'Candela (cd)', 'Lumen (lm)', 'Lux (lx)', 'Watt (W)', 'Foot-candle', 'B', '', $bobotPg],
+            [28, 'PG', 'Perbandingan volume campuran spesi plesteran kedap air (trasraam) pada pasangan bata di atas sloof bangunan adalah...', '1 Semen : 8 Pasir', '1 Semen : 5 Pasir', '1 Semen : 2 Pasir', '1 Semen : 6 Pasir', '1 Semen : 10 Pasir', 'C', '', $bobotPg],
+            [29, 'PG', 'Minyak pelumas roda gigi transmisi manual mobil umumnya menggunakan standar viskositas SAE sebesar...', 'SAE 10W-40', 'SAE 5W-30', 'SAE 0W-20', 'SAE 80W-90', 'SAE 20W-50', 'D', '', $bobotPg],
+            [30, 'PG', 'Pada mesin bubut konvensional, ujung mata pahat bubut wajib dipasang tepat setinggi...', 'Di atas sumbu senter benda kerja 5 mm', 'Tepat setinggi garis sumbu senter mesin', 'Di bawah sumbu senter benda kerja 3 mm', 'Bebas sesuai ketebalan pahat', 'Miring 45 derajat terhadap meja', 'B', '', $bobotPg],
+
+            // 10 URAIAN / ESAI (Bobot masing-masing 5.0 pt = 50 pt)
+            [31, 'URAIAN', 'Jelaskan perbedaan mendasar antara kabel jaringan jenis UTP (Unshielded Twisted Pair) dan STP (Shielded Twisted Pair) serta sebutkan situasi penggunaan keduanya!', '', '', '', '', '', '', 'Kunci Jawaban: UTP tanpa pelindung foil untuk perkantoran indoor. STP memiliki pelindung logam foil untuk meredam interferensi elektromagnetik dan cocok untuk lingkungan industri/outdoor.', $bobotUraian],
+            [32, 'URAIAN', 'Sebuah pemanas listrik dihubungkan pada tegangan sumber $V = 220\\text{ Volt}$. Jika hambatan kawat adalah $R = 44\\,\\Omega$, hitunglah kuat arus listrik ($I$) dan daya listrik ($P$)!', '', '', '', '', '', '', 'Kunci Jawaban: 1) $I = \\frac{220}{44} = 5\\text{ Ampere}$. 2) $P = 220 \\times 5 = 1.100\\text{ Watt}$.', $bobotUraian],
+            [33, 'URAIAN', 'Sebutkan 4 (empat) Alat Pelindung Diri (APD) utama yang wajib dikenakan saat melaksanakan pengelasan SMAW di bengkel beserta fungsinya!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Helm las: lindungi mata dari sinar UV/IR. 2) Sarung tangan kulit: lindungi tangan dari panas/setrum. 3) Apron kulit: lindungi dada dari percikan api. 4) Safety shoes: lindungi kaki.', $bobotUraian],
+            [34, 'URAIAN', 'Uraikan urutan langkah kerja penyetelan celah katup pada mesin bensin 4 silinder FO 1-3-4-2!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Putar poros engkol ke tanda TOP 1. 2) Setel katup bebas silinder 1 dengan feeler gauge. 3) Kencangkan mur pengunci. 4) Putar engkol 360 derajat ke TOP 4. 5) Setel katup bebas silinder 4.', $bobotUraian],
+            [35, 'URAIAN', 'Jelaskan apa yang dimaksud dengan selimut beton (concrete cover) dan mengapa ketebalannya minimal harus 3 cm pada pondasi!', '', '', '', '', '', '', 'Kunci Jawaban: Selimut beton adalah jarak antara permukaan luar tulangan baja dan permukaan luar beton untuk melindungi baja tulangan dari karat/korosi akibat kelembaban air tanah.', $bobotUraian],
+            [36, 'URAIAN', 'Jelaskan prinsip kerja proteksi saklar otomatis MCB (Miniature Circuit Breaker) terhadap gangguan arus lebih (overload) dan arus hubung singkat (short circuit)!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Beban lebih (overload) diamankan dengan elemen bimetal yang melengkung saat panas. 2) Hubung singkat (short circuit) diamankan seketika dengan kumparan elektromagnetik (solenoid trip).', $bobotUraian],
+            [37, 'URAIAN', 'Sebutkan urutan standar susunan warna kabel UTP untuk pengkabelan standar TIA/EIA-568B dari nomor pin 1 sampai pin 8!', '', '', '', '', '', '', 'Kunci Jawaban: Pin 1: Putih-Oranye, Pin 2: Oranye, Pin 3: Putih-Hijau, Pin 4: Biru, Pin 5: Putih-Biru, Pin 6: Hijau, Pin 7: Putih-Cokelat, Pin 8: Cokelat.', $bobotUraian],
+            [38, 'URAIAN', 'Jelaskan fungsi komponen Differential (Gardan) pada kendaraan roda empat saat mobil sedang berbelok ke arah kanan atau kiri!', '', '', '', '', '', '', 'Kunci Jawaban: Membedakan putaran roda kiri dan roda kanan saat membelok (roda sisi luar berputar lebih cepat dari roda sisi dalam) agar kendaraan tidak tergelincir atau slip.', $bobotUraian],
+            [39, 'URAIAN', 'Jelaskan perbedaan mendasar antara posisi sambungan las tumpul (butt joint) dan sambungan las tumpang (lap joint)!', '', '', '', '', '', '', 'Kunci Jawaban: Sambungan tumpul (butt joint) menyatukan dua permukaan benda kerja yang sejajar pada bidang datar yang sama. Sambungan tumpang (lap joint) menyatukan dua pelat yang saling bertumpukan atau saling menindih.', $bobotUraian],
+            [40, 'URAIAN', 'Jelaskan apa yang dimaksud dengan As-Built Drawing dalam manajemen proyek konstruksi bangunan gedung (DPIB)!', '', '', '', '', '', '', 'Kunci Jawaban: As-Built Drawing adalah gambar akhir rekaman hasil pelaksanaan konstruksi yang dibuat oleh kontraktor setelah pekerjaan selesai, mencatat seluruh penyesuaian dan perubahan nyata yang terjadi di lapangan.', $bobotUraian],
+        ];
     }
 
     public function importSoalXlsx(Request $request, $bankId)
@@ -1212,7 +1374,12 @@ class AdminController extends Controller
         DB::beginTransaction();
         try {
             foreach ($rows as $index => $row) {
-                if ($index == 1) continue;
+                // Lewati baris judul / banner / header (di mana kolom A bukan angka nomor urut 1, 2, 3...)
+                $rawA = trim((string)($row['A'] ?? ''));
+                if (!is_numeric($rawA) || (int)$rawA <= 0) {
+                    continue;
+                }
+                $nomorUrut = (int)$rawA;
 
                 $konten = trim((string)($row['C'] ?? ''));
                 if (empty($konten)) {
