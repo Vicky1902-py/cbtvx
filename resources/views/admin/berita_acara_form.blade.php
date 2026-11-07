@@ -44,6 +44,14 @@
                     1. Rincian Pelaksanaan Asesmen
                 </h3>
 
+                <div style="margin-bottom: 14px;">
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nama / Jenis Asesmen (Judul KOP & Narasi Berita Acara) *</label>
+                    <input type="text" name="nama_tes" required value="{{ old('nama_tes', $beritaAcara->nama_tes ?? $jadwal->nama_ujian) }}" placeholder="Contoh: SIMULASI UJIAN CBT atau TES KEMAMPUAN AKADEMIK SMK" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;">
+                    <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                        Teks ini akan otomatis dicetak pada baris kedua judul KOP dan narasi pembuka lembar berita acara (berubah dinamis sesuai jenis tes).
+                    </div>
+                </div>
+
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px;">
                     <div>
                         <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nomor Surat Berita Acara *</label>

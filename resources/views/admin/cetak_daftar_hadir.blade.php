@@ -239,12 +239,12 @@
         </div>
     </div>
 
-    <!-- HEADER: LOGO TUT WURI & JUDUL RESMI -->
+    <!-- HEADER: LOGO SEKOLAH & JUDUL RESMI DINAMIS -->
     <div class="header-top">
-        <img src="{{ $sekolah->logo_tutwuri_url }}" alt="Logo Tut Wuri Handayani" class="logo-left">
+        <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo Sekolah" class="logo-left">
         <div class="judul-center">
             <h2>DAFTAR HADIR PESERTA</h2>
-            <h2>TES KEMAMPUAN AKADEMIK SMK</h2>
+            <h2>{{ strtoupper($beritaAcara->nama_tes ?? $jadwal->nama_ujian) }}</h2>
             <h2>TAHUN {{ date('Y') }}</h2>
         </div>
     </div>

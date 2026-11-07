@@ -138,6 +138,7 @@
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jenis Ujian *</label>
                     <select name="jenis_ujian" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                        <option value="SIMULASI">Simulasi Ujian / Asesmen</option>
                         <option value="TKA">Standar TKA</option>
                         <option value="ANBK">ANBK Pusmendik</option>
                         <option value="UTS">Penilaian Tengah Semester (UTS)</option>

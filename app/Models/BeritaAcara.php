@@ -15,6 +15,7 @@ class BeritaAcara extends Model
         'jadwal_ujian_id',
         'kelas_id',
         'nomor_surat',
+        'nama_tes',
         'hari_tanggal',
         'waktu_mulai',
         'waktu_selesai',

@@ -251,6 +251,7 @@ class DaftarHadirDanBeritaAcaraTest extends TestCase
 
         $res->assertStatus(200);
         $res->assertSee('DAFTAR HADIR PESERTA');
+        $res->assertSee($this->sekolah->logo_sekolah_url);
         $res->assertSee('TES KEMAMPUAN AKADEMIK SMK');
         $res->assertSee('K24020010-AS4K / TKA 1');
         $res->assertSee('Izak Robinson Koroh, S.Pd.,Gr');
@@ -268,6 +269,7 @@ class DaftarHadirDanBeritaAcaraTest extends TestCase
             'id_server' => 'K24020010-AS4K',
             'kode_kabupaten' => '02',
             'kode_sekolah' => '0010',
+            'nama_tes' => 'Simulasi Ujian CBT Semester Genap',
             'hari_tanggal' => 'Senin, 02 November 2026',
             'waktu_mulai' => '08:00',
             'waktu_selesai' => '09:45',
@@ -292,7 +294,8 @@ class DaftarHadirDanBeritaAcaraTest extends TestCase
 
         $res->assertStatus(200);
         $res->assertSee('BERITA ACARA PELAKSANAAN');
-        $res->assertSee('TES KEMAMPUAN AKADEMIK SMK');
+        $res->assertSee($this->sekolah->logo_sekolah_url);
+        $res->assertSee('SIMULASI UJIAN CBT SEMESTER GENAP');
         $res->assertSee('K24020010-AS4K');
         $res->assertSee('TK2402001000098-7, TK2402001000152-7');
         $res->assertSee('Izak Robinson Koroh, S.Pd.,Gr');

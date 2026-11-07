@@ -2185,6 +2185,7 @@ class AdminController extends Controller
             'id_server' => 'nullable|string|max:80',
             'kode_kabupaten' => 'nullable|string|max:30',
             'kode_sekolah' => 'nullable|string|max:30',
+            'nama_tes' => 'nullable|string|max:150',
             'hari_tanggal' => 'required|string|max:100',
             'waktu_mulai' => 'nullable|string|max:30',
             'waktu_selesai' => 'nullable|string|max:30',
@@ -2245,6 +2246,7 @@ class AdminController extends Controller
             ],
             [
                 'nomor_surat' => $request->input('nomor_surat', '421.5/024/SMKN1.KB/' . date('Y')),
+                'nama_tes' => $request->input('nama_tes', $jadwal->nama_ujian),
                 'hari_tanggal' => $data['hari_tanggal'],
                 'waktu_mulai' => $data['waktu_mulai'] ?? '08:00',
                 'waktu_selesai' => $data['waktu_selesai'] ?? '09:45',
@@ -2401,6 +2403,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'kelas_id' => 'nullable|exists:kelas,id',
             'nomor_surat' => 'required|string|max:100',
+            'nama_tes' => 'nullable|string|max:150',
             'hari_tanggal' => 'required|string|max:100',
             'waktu_mulai' => 'nullable|string|max:30',
             'waktu_selesai' => 'nullable|string|max:30',
@@ -2481,6 +2484,7 @@ class AdminController extends Controller
                 'jadwal_ujian_id' => $jadwalId,
                 'kelas_id' => $kelasId,
                 'nomor_surat' => '421.5/024/SMKN1.KB/' . date('Y'),
+                'nama_tes' => $jadwal->nama_ujian,
                 'hari_tanggal' => Carbon::now()->isoFormat('dddd, D MMMM Y'),
                 'waktu_mulai' => '08:00',
                 'waktu_selesai' => '09:45',
