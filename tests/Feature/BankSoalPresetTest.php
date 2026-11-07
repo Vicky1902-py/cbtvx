@@ -185,4 +185,43 @@ class BankSoalPresetTest extends TestCase
         $this->assertEquals(100.0, (float)$this->bank->butirSoal()->sum('bobot'));
         unlink($tmp40);
     }
+
+    public function test_bank_soal_index_renders_edit_button_and_modal()
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.bank_soal'));
+        $response->assertStatus(200);
+        $response->assertSee('editBankSoal(');
+        $response->assertSee('modalEditBank');
+        $response->assertSee('formEditBank');
+    }
+
+    public function test_admin_can_update_bank_soal_mapel_and_details()
+    {
+        $newMapel = MataPelajaran::create([
+            'kode_mapel' => 'C2-TITL-X',
+            'nama_mapel' => 'Dasar Listrik',
+            'jurusan' => 'Teknik Instalasi Tenaga Listrik',
+            'tingkat' => '10',
+        ]);
+
+        $response = $this->actingAs($this->admin)->post(route('admin.bank_soal.update', $this->bank->id), [
+            'kode_bank' => 'BS-TITL-40-BARU',
+            'nama_bank' => 'Bank Soal TITL Terstandar',
+            'mata_pelajaran_id' => $newMapel->id,
+            'tingkat' => '10',
+            'standar_preset' => '40',
+            'kkm' => 80,
+            'status' => 'aktif',
+        ]);
+
+        $response->assertRedirect();
+        $this->bank->refresh();
+
+        $this->assertEquals('BS-TITL-40-BARU', $this->bank->kode_bank);
+        $this->assertEquals('Bank Soal TITL Terstandar', $this->bank->nama_bank);
+        $this->assertEquals($newMapel->id, $this->bank->mata_pelajaran_id);
+        $this->assertEquals('40_soal', $this->bank->standar_bobot);
+        $this->assertEquals(80.0, (float)$this->bank->kkm);
+        $this->assertEquals('aktif', $this->bank->status);
+    }
 }

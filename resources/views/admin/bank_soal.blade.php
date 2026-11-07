@@ -108,6 +108,10 @@
                         <a href="{{ route('admin.bank_soal.detail', $b->id) }}" class="btn btn-primary btn-sm" style="padding: 4px 8px; font-size: 11.5px;">
                             Kelola Butir Soal
                         </a>
+                        <button type="button" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11.5px; background: #f8fafc; border-color: #cbd5e1; color: #0284c7; font-weight: 600;" onclick="editBankSoal({{ json_encode($b) }})" title="Ubah data paket bank soal, mapel, jurusan, tingkat, atau preset">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 2px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                            Edit
+                        </button>
                         <a href="{{ route('admin.bank_soal.pratinjau', $b->id) }}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 11.5px;" title="Pratinjau antarmuka ujian siswa ANBK" target="_blank">
                             Pratinjau
                         </a>
@@ -203,6 +207,97 @@
         </form>
     </div>
 </div>
+
+<!-- Modal Edit Paket Bank Soal -->
+<div id="modalEditBank" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 620px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--primary);">Ubah Data Paket Bank Soal</h3>
+            <button type="button" onclick="closeModal('modalEditBank')" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <form id="formEditBank" method="POST">
+            @csrf
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Kode Bank Soal (Unik) *</label>
+                    <input type="text" name="kode_bank" id="edit_kode_bank" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nama Paket Asesmen</label>
+                    <input type="text" name="nama_bank" id="edit_nama_bank" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Mata Pelajaran (Mengikuti Input Mapel &amp; Jurusan Sasaran) *</label>
+                <select name="mata_pelajaran_id" id="edit_mata_pelajaran_id" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px;">
+                    <option value="">-- Pilih Mata Pelajaran --</option>
+                    @foreach ($mapelList as $m)
+                        <option value="{{ $m->id }}">
+                            [{{ $m->kode_mapel }}] {{ $m->nama_mapel }} &mdash; {{ $m->jurusan }} ({{ $m->tingkat === 'Semua' ? 'Lintas Tingkat' : 'Kls ' . $m->tingkat }}) &bull; Pengampu: {{ $m->guru ? $m->guru->name : 'Belum Ada' }}
+                        </option>
+                    @endforeach
+                </select>
+                <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+                    Pilih mata pelajaran yang tepat sesuai kompetensi keahlian/jurusan SMK.
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Tingkat Sasaran *</label>
+                    <select name="tingkat" id="edit_tingkat" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                        <option value="Semua">Semua Tingkat (Lintas Kelas)</option>
+                        <option value="10">Kelas 10 (Fase E)</option>
+                        <option value="11">Kelas 11 (Fase F)</option>
+                        <option value="12">Kelas 12 (Fase F)</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Guru Pembuat / Pengampu</label>
+                    <select name="guru_id" id="edit_guru_id" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                        <option value="">-- Ikuti Guru Mapel --</option>
+                        @foreach ($guruList as $g)
+                            <option value="{{ $g->id }}">{{ $g->name }} ({{ ucfirst($g->role) }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Standar Preset Soal *</label>
+                    <select name="standar_preset" id="edit_standar_preset" onchange="updateEditPresetInfo()" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px;">
+                        <option value="25">Standar 25 Nomor (100 Poin)</option>
+                        <option value="40">Standar 40 Nomor (100 Poin)</option>
+                        <option value="kustom">Mode Kustom</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">KKM *</label>
+                    <input type="number" name="kkm" id="edit_kkm" required min="0" max="100" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Status Paket *</label>
+                    <select name="status" id="edit_status" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                        <option value="aktif">Aktif</option>
+                        <option value="draft">Draft</option>
+                        <option value="arsip">Arsip</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 10px 12px; border-radius: var(--radius-sm); margin-bottom: 20px; font-size: 12px; color: #166534;" id="editPresetInfoBox">
+                <strong>Standar Preset:</strong> Komposisi bobot otomatis dikelola sesuai ketentuan Pusmendik ANBK/TKA.
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalEditBank')">Batal</button>
+                <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
@@ -218,6 +313,42 @@
             box.innerHTML = '<strong>Standar 40 Nomor:</strong> 10 Benar/Salah (bobot 1 = 10 poin) + 20 Pilihan Ganda (bobot 2 = 40 poin) + 10 Uraian (bobot 5 = 50 poin). Akumulasi total: <strong>100 Poin</strong>.';
         } else {
             box.innerHTML = '<strong>Mode Kustom:</strong> Guru bebas menentukan komposisi butir soal dan bobot per butir hingga mencapai target 100 Poin.';
+        }
+    }
+
+    function editBankSoal(b) {
+        document.getElementById('edit_kode_bank').value = b.kode_bank || '';
+        document.getElementById('edit_nama_bank').value = b.nama_bank || '';
+        document.getElementById('edit_mata_pelajaran_id').value = b.mata_pelajaran_id || '';
+        document.getElementById('edit_guru_id').value = b.guru_id || '';
+        document.getElementById('edit_tingkat').value = b.tingkat || 'Semua';
+        document.getElementById('edit_kkm').value = b.kkm || 75;
+        document.getElementById('edit_status').value = b.status || 'aktif';
+
+        let preset = '25';
+        if (b.standar_bobot === '40_soal') {
+            preset = '40';
+        } else if (b.standar_bobot === '25_soal') {
+            preset = '25';
+        } else {
+            preset = 'kustom';
+        }
+        document.getElementById('edit_standar_preset').value = preset;
+        updateEditPresetInfo();
+
+        document.getElementById('formEditBank').action = '/admin/bank-soal/' + b.id + '/update';
+        openModal('modalEditBank');
+    }
+
+    function updateEditPresetInfo() {
+        const val = document.getElementById('edit_standar_preset').value;
+        const box = document.getElementById('editPresetInfoBox');
+        if (val === '25') {
+            box.innerHTML = '<strong>Standar 25 Nomor:</strong> 5 Benar/Salah (bobot 4 = 20 poin) + 15 Pilihan Ganda (bobot 2 = 30 poin) + 5 Uraian (bobot 10 = 50 poin). Akumulasi: <strong>100 Poin</strong>.';
+        } else if (val === '40') {
+            box.innerHTML = '<strong>Standar 40 Nomor:</strong> 10 Benar/Salah (bobot 1 = 10 poin) + 20 Pilihan Ganda (bobot 2 = 40 poin) + 10 Uraian (bobot 5 = 50 poin). Akumulasi: <strong>100 Poin</strong>.';
+        } else {
+            box.innerHTML = '<strong>Mode Kustom:</strong> Bobot per butir soal dikelola manual hingga target 100 Poin tercapai.';
         }
     }
 </script>

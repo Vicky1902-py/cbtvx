@@ -829,6 +829,7 @@ class AdminController extends Controller
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
         $mapelList = MataPelajaran::with('guru')->orderBy('nama_mapel')->get();
+        $guruList = User::whereIn('role', ['admin', 'guru'])->orderBy('name')->get();
 
         $query = BankSoal::with(['mataPelajaran.guru', 'guru', 'butirSoal']);
 
@@ -841,7 +842,7 @@ class AdminController extends Controller
 
         $bankList = $query->latest()->get();
 
-        return view('admin.bank_soal', compact('sekolah', 'mapelList', 'bankList'));
+        return view('admin.bank_soal', compact('sekolah', 'mapelList', 'bankList', 'guruList'));
     }
 
     public function simpanBankSoal(Request $request)
@@ -908,6 +909,71 @@ class AdminController extends Controller
         return redirect()->route('admin.bank_soal.detail', $bank->id)->with('success', 'Paket Bank Soal ' . $bank->kode_bank . ' berhasil dibuat. Silahkan kelola butir soal.');
     }
 
+    public function updateBankSoal(Request $request, $id)
+    {
+        $bank = BankSoal::findOrFail($id);
+
+        $data = $request->validate([
+            'kode_bank' => 'required|string|max:50|unique:bank_soal,kode_bank,' . $bank->id,
+            'nama_bank' => 'nullable|string|max:150',
+            'mata_pelajaran_id' => 'required|exists:mata_pelajaran,id',
+            'guru_id' => 'nullable|exists:users,id',
+            'tingkat' => 'required|in:Semua,10,11,12',
+            'standar_preset' => 'required|in:25,40,kustom',
+            'kkm' => 'required|numeric|min:0|max:100',
+            'status' => 'required|in:aktif,draft,arsip',
+        ]);
+
+        $mapel = MataPelajaran::findOrFail($data['mata_pelajaran_id']);
+
+        if ($data['standar_preset'] === '25') {
+            $standarBobot = '25_soal';
+            $jumlahPg = 15;
+            $bobotPg = 30.00;
+            $jumlahBs = 5;
+            $bobotBs = 20.00;
+            $jumlahUraian = 5;
+            $bobotUraian = 50.00;
+        } elseif ($data['standar_preset'] === '40') {
+            $standarBobot = '40_soal';
+            $jumlahPg = 20;
+            $bobotPg = 40.00;
+            $jumlahBs = 10;
+            $bobotBs = 10.00;
+            $jumlahUraian = 10;
+            $bobotUraian = 50.00;
+        } else {
+            $standarBobot = 'kustom';
+            $jumlahPg = $bank->jumlah_soal_pg;
+            $bobotPg = $bank->bobot_pg;
+            $jumlahBs = $bank->jumlah_soal_bs ?? 0;
+            $bobotBs = $bank->bobot_bs ?? 0;
+            $jumlahUraian = $bank->jumlah_soal_uraian;
+            $bobotUraian = $bank->bobot_uraian;
+        }
+
+        $namaBank = $data['nama_bank'] ?: ($mapel->nama_mapel . ' (' . $mapel->jurusan . ')');
+
+        $bank->update([
+            'kode_bank' => $data['kode_bank'],
+            'nama_bank' => $namaBank,
+            'mata_pelajaran_id' => $mapel->id,
+            'guru_id' => $data['guru_id'] ?? ($mapel->guru_id ?? $bank->guru_id),
+            'tingkat' => $data['tingkat'],
+            'standar_bobot' => $standarBobot,
+            'jumlah_soal_pg' => $jumlahPg,
+            'jumlah_soal_bs' => $jumlahBs,
+            'jumlah_soal_uraian' => $jumlahUraian,
+            'bobot_pg' => $bobotPg,
+            'bobot_bs' => $bobotBs,
+            'bobot_uraian' => $bobotUraian,
+            'kkm' => $data['kkm'],
+            'status' => $data['status'],
+        ]);
+
+        return back()->with('success', 'Paket Bank Soal ' . $bank->kode_bank . ' berhasil diperbarui.');
+    }
+
     public function detailBankSoal(Request $request, $id)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
@@ -950,11 +1016,15 @@ class AdminController extends Controller
             $saranBobotUraian = 10.0;
         }
 
+        $mapelList = MataPelajaran::with('guru')->orderBy('nama_mapel')->get();
+        $guruList = User::whereIn('role', ['admin', 'guru'])->orderBy('name')->get();
+
         return view('admin.bank_soal_detail', compact(
             'sekolah', 'bank', 'soalList', 'filterJenis',
             'countPg', 'countBs', 'countUraian',
             'bobotPgCurrent', 'bobotBsCurrent', 'bobotUraianCurrent', 'totalBobotCurrent',
-            'nextNomor', 'saranBobotPg', 'saranBobotBs', 'saranBobotUraian'
+            'nextNomor', 'saranBobotPg', 'saranBobotBs', 'saranBobotUraian',
+            'mapelList', 'guruList'
         ));
     }
 

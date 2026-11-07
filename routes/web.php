@@ -60,6 +60,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Bank Soal & Butir Soal (Roadmap Preset 25 & 40)
     Route::get('/bank-soal', [AdminController::class, 'bankSoal'])->name('bank_soal');
     Route::post('/bank-soal', [AdminController::class, 'simpanBankSoal'])->name('bank_soal.simpan');
+    Route::post('/bank-soal/{id}/update', [AdminController::class, 'updateBankSoal'])->name('bank_soal.update');
     Route::get('/bank-soal/{id}', [AdminController::class, 'detailBankSoal'])->name('bank_soal.detail');
     Route::post('/bank-soal/{id}/butir', [AdminController::class, 'simpanButirSoal'])->name('bank_soal.butir.simpan');
     Route::post('/butir-soal/{id}/update', [AdminController::class, 'updateButirSoal'])->name('bank_soal.butir.update');
