@@ -202,6 +202,27 @@ class SiswaController extends Controller
     }
 
     /**
+     * Catat Pelanggaran Ujian (Pindah Tab / Keluar Fullscreen)
+     */
+    public function catatPelanggaran(Request $request, $id)
+    {
+        $siswa = Auth::user()->siswa;
+        $peserta = UjianPeserta::where('jadwal_ujian_id', $id)
+            ->where('siswa_id', $siswa->id)
+            ->first();
+
+        if ($peserta && $peserta->status === 'berlangsung') {
+            $peserta->increment('jumlah_pelanggaran');
+            return response()->json([
+                'status' => 'success',
+                'pelanggaran' => $peserta->jumlah_pelanggaran,
+            ]);
+        }
+
+        return response()->json(['status' => 'ignored']);
+    }
+
+    /**
      * Selesai Ujian & Hitung Nilai Otomatis
      */
     public function selesaiUjian(Request $request, $id)

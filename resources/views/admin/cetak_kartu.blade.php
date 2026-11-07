@@ -170,14 +170,53 @@
 </head>
 <body>
 
-    <div class="no-print" style="padding: 12px; background: #0f2b48; color: #ffffff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+    <div class="no-print" style="padding: 12px 20px; background: #0f2b48; color: #ffffff; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;">
         <div>
-            <strong>Pratinjau Kartu Peserta Asesmen &bull; Format Standar A4 Dinas</strong>
-            <span style="font-size: 11px; opacity: 0.8; margin-left: 10px;">Total Peserta: {{ $daftarSiswa->count() }} Siswa</span>
+            <strong style="font-size: 13.5px;">Cetak Kartu Peserta Ujian &bull; Format A4 Dinas</strong>
+            <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">
+                Menampilkan: <strong>{{ $daftarSiswa->count() }} Siswa</strong>
+                @if (!empty($kelasId) && isset($kelasList) && ($kObj = $kelasList->firstWhere('id', $kelasId)))
+                    &bull; Kelas: <span style="color: #38bdf8; font-weight: 700;">{{ $kObj->nama_kelas }} ({{ $kObj->jurusan }})</span>
+                @else
+                    &bull; Kelas: <span style="color: #38bdf8;">Semua Kelas</span>
+                @endif
+                @if (!empty($sesi))
+                    &bull; Sesi: <span style="color: #facc15; font-weight: 700;">{{ $sesi }}</span>
+                @endif
+            </div>
         </div>
-        <button onclick="window.print()" style="background: #0077b6; color: #ffffff; border: none; padding: 8px 16px; font-weight: bold; cursor: pointer; border-radius: 4px;">
-            Cetak Dokumen Sekarang (Print / PDF)
-        </button>
+
+        <form action="{{ route('admin.cetak_kartu') }}" method="GET" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+            <select name="kelas_id" onchange="this.form.submit()" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #334155; background: #1e293b; color: #ffffff; font-size: 12px;">
+                <option value="">-- Semua Kelas / Rombel --</option>
+                @if (isset($kelasList))
+                    @foreach ($kelasList as $k)
+                        <option value="{{ $k->id }}" {{ (!empty($kelasId) && $kelasId == $k->id) ? 'selected' : '' }}>
+                            {{ $k->nama_kelas }} ({{ $k->jurusan }})
+                        </option>
+                    @endforeach
+                @endif
+            </select>
+
+            <select name="sesi" onchange="this.form.submit()" style="padding: 6px 12px; border-radius: 4px; border: 1px solid #334155; background: #1e293b; color: #ffffff; font-size: 12px;">
+                <option value="">-- Semua Sesi --</option>
+                <option value="Sesi 1" {{ (!empty($sesi) && $sesi == 'Sesi 1') ? 'selected' : '' }}>Sesi 1</option>
+                <option value="Sesi 2" {{ (!empty($sesi) && $sesi == 'Sesi 2') ? 'selected' : '' }}>Sesi 2</option>
+                <option value="Sesi 3" {{ (!empty($sesi) && $sesi == 'Sesi 3') ? 'selected' : '' }}>Sesi 3</option>
+            </select>
+
+            <button type="submit" style="background: #334155; color: #ffffff; border: none; padding: 6px 12px; font-size: 12px; font-weight: 600; border-radius: 4px; cursor: pointer;">
+                Terapkan
+            </button>
+            @if (!empty($kelasId) || !empty($sesi))
+                <a href="{{ route('admin.cetak_kartu') }}" style="color: #94a3b8; font-size: 12px; text-decoration: underline;">Reset</a>
+            @endif
+
+            <button type="button" onclick="window.print()" style="background: #0077b6; color: #ffffff; border: none; padding: 8px 18px; font-weight: bold; cursor: pointer; border-radius: 4px; display: inline-flex; align-items: center; gap: 6px; margin-left: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                Cetak Dokumen A4 Sekarang
+            </button>
+        </form>
     </div>
 
     <div class="cards-grid">

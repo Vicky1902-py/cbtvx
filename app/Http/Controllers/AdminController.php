@@ -2143,15 +2143,20 @@ class AdminController extends Controller
     public function cetakKartu(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
         $kelasId = $request->input('kelas_id');
+        $sesi = $request->input('sesi');
 
         $query = Siswa::with('kelas', 'user');
         if ($kelasId) {
             $query->where('kelas_id', $kelasId);
         }
-        $daftarSiswa = $query->orderBy('nama_lengkap')->get();
+        if ($sesi) {
+            $query->where('sesi_ujian', $sesi);
+        }
+        $daftarSiswa = $query->orderBy('kelas_id')->orderBy('nama_lengkap')->get();
 
-        return view('admin.cetak_kartu', compact('sekolah', 'daftarSiswa'));
+        return view('admin.cetak_kartu', compact('sekolah', 'kelasList', 'daftarSiswa', 'kelasId', 'sesi'));
     }
 
     /**

@@ -19,6 +19,7 @@ Route::middleware(['auth'])->prefix('siswa')->name('siswa.')->group(function () 
     Route::post('/mulai-ujian/{id}', [SiswaController::class, 'mulaiUjian'])->name('mulai');
     Route::get('/ujian/{id}', [SiswaController::class, 'kerjakan'])->name('ujian');
     Route::post('/ujian/{id}/simpan-jawaban', [SiswaController::class, 'simpanJawaban'])->name('simpan');
+    Route::post('/ujian/{id}/catat-pelanggaran', [SiswaController::class, 'catatPelanggaran'])->name('pelanggaran');
     Route::post('/ujian/{id}/selesai', [SiswaController::class, 'selesaiUjian'])->name('selesai');
 });
 

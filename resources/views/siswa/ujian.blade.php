@@ -617,11 +617,47 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" class="btn-nav btn-prev" onclick="closeFinishModal()">Batal & Periksa Lagi</button>
-                <form action="{{ route('siswa.selesai', $jadwal->id) }}" method="POST">
+                <form action="{{ route('siswa.selesai', $jadwal->id) }}" method="POST" onsubmit="isExamFinished = true;">
                     @csrf
                     <button type="submit" class="btn-nav btn-finish">Ya, Selesai Sekarang</button>
                 </form>
             </div>
+        </div>
+    </div>
+
+    <!-- OVERLAY FULLSCREEN LOCK (WAJIB LAYAR PENUH) -->
+    <div id="fullscreen-overlay" style="display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.96); z-index: 99999; align-items: center; justify-content: center; backdrop-filter: blur(6px);">
+        <div style="background: #ffffff; border-radius: 8px; max-width: 520px; width: 90%; padding: 32px 28px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border-top: 5px solid #0284c7;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: #e0f2fe; color: #0284c7; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px auto;">
+                <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+            </div>
+            <h2 style="font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">MODE UJIAN LAYAR PENUH (FULL-SCREEN LOCK)</h2>
+            <p style="font-size: 13.5px; color: #475569; line-height: 1.6; margin-bottom: 20px;">
+                Demi menjaga integritas ujian dan sesuai standar CBT Pusmendik, Anda <strong>WAJIB</strong> berada dalam mode layar penuh (Full-Screen). Seluruh akses ke jendela lain dinonaktifkan selama asesmen berlangsung.
+            </p>
+            <button type="button" id="btn-request-fullscreen" style="background: #0284c7; color: #ffffff; border: none; padding: 13px 28px; font-size: 14.5px; font-weight: 800; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path></svg>
+                MASUK MODE LAYAR PENUH & LANJUTKAN
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL PERINGATAN KECURANGAN: PINDAH TAB / MINIMIZE -->
+    <div id="warning-switch-modal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(153, 27, 27, 0.90); z-index: 99998; align-items: center; justify-content: center; backdrop-filter: blur(5px);">
+        <div style="background: #ffffff; border-radius: 8px; max-width: 480px; width: 90%; padding: 28px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); border-top: 5px solid #dc2626;">
+            <div style="width: 60px; height: 60px; border-radius: 50%; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center; margin: 0 auto 14px auto;">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+            </div>
+            <h3 style="font-size: 17px; font-weight: 800; color: #991b1b; margin-bottom: 8px;">PERINGATAN: TERDETEKSI PINDAH TAB / APLIKASI!</h3>
+            <p style="font-size: 13px; color: #475569; line-height: 1.6; margin-bottom: 14px;">
+                Sistem keamanan CBT mendeteksi Anda meninggalkan lembar ujian atau membuka aplikasi lain. Aktivitas ini telah <strong>DICATAT OLEH SISTEM</strong> dan dilaporkan ke Proktor Ujian!
+            </p>
+            <div style="background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; font-weight: 700; padding: 10px; border-radius: 6px; font-size: 13.5px; margin-bottom: 20px;">
+                Total Pelanggaran Anda: <span id="violation-count-badge" style="font-size: 16px;">1</span> kali
+            </div>
+            <button type="button" onclick="closeWarningSwitchModal()" style="background: #dc2626; color: #ffffff; border: none; padding: 11px 24px; font-weight: 700; font-size: 13.5px; border-radius: 4px; cursor: pointer;">
+                SAYA MENGERTI & KEMBALI MENGERJAKAN
+            </button>
         </div>
     </div>
 
@@ -916,7 +952,96 @@
             document.getElementById('finish-modal').style.display = 'none';
         }
 
-        window.onload = initApp;
+        // ==========================================
+        // SISTEM ANTI-CHEAT & FULL-SCREEN LOCK
+        // ==========================================
+        let violationCount = {{ $peserta->jumlah_pelanggaran ?? 0 }};
+        let isExamFinished = false;
+
+        function checkFullscreen() {
+            if (isExamFinished) return;
+            const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
+            const overlay = document.getElementById('fullscreen-overlay');
+            if (!isFull) {
+                overlay.style.display = 'flex';
+            } else {
+                overlay.style.display = 'none';
+            }
+        }
+
+        document.getElementById('btn-request-fullscreen').addEventListener('click', function () {
+            const el = document.documentElement;
+            const rfs = el.requestFullscreen || el.webkitRequestFullscreen || el.mozRequestFullScreen || el.msRequestFullscreen;
+            if (rfs) {
+                rfs.call(el).then(() => {
+                    document.getElementById('fullscreen-overlay').style.display = 'none';
+                }).catch(() => {
+                    document.getElementById('fullscreen-overlay').style.display = 'none';
+                });
+            } else {
+                document.getElementById('fullscreen-overlay').style.display = 'none';
+            }
+        });
+
+        document.addEventListener('fullscreenchange', checkFullscreen);
+        document.addEventListener('webkitfullscreenchange', checkFullscreen);
+        document.addEventListener('mozfullscreenchange', checkFullscreen);
+        document.addEventListener('MSFullscreenChange', checkFullscreen);
+
+        function triggerTabViolation() {
+            if (isExamFinished) return;
+            violationCount++;
+            document.getElementById('violation-count-badge').textContent = violationCount;
+            document.getElementById('warning-switch-modal').style.display = 'flex';
+
+            fetch('{{ route("siswa.pelanggaran", $jadwal->id) }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ type: 'tab_switch', count: violationCount })
+            }).catch(() => {});
+        }
+
+        document.addEventListener('visibilitychange', function () {
+            if (document.hidden) {
+                triggerTabViolation();
+            }
+        });
+
+        window.addEventListener('blur', function () {
+            if (!document.hidden) {
+                triggerTabViolation();
+            }
+        });
+
+        window.closeWarningSwitchModal = function () {
+            document.getElementById('warning-switch-modal').style.display = 'none';
+            checkFullscreen();
+        };
+
+        // Blokir klik kanan
+        document.addEventListener('contextmenu', function (e) {
+            e.preventDefault();
+            return false;
+        });
+
+        // Blokir kombinasi tombol curang (F12, DevTools, Copy, Paste, Print, View Source)
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'F12' ||
+                (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+                (e.ctrlKey && ['u', 'U', 'p', 'P', 's', 'S'].includes(e.key))
+            ) {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        window.onload = function() {
+            initApp();
+            checkFullscreen();
+        };
     </script>
 </body>
 </html>

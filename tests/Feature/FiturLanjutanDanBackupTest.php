@@ -354,4 +354,86 @@ class FiturLanjutanDanBackupTest extends TestCase
             unlink($tempJsonPath);
         }
     }
+
+    /** @test */
+    public function sistem_mencatat_pelanggaran_pindah_tab_siswa()
+    {
+        $userSiswa = User::factory()->create([
+            'username' => 'siswa_anticheat_01',
+            'role' => 'siswa',
+        ]);
+
+        $siswa = Siswa::create([
+            'user_id' => $userSiswa->id,
+            'nisn' => '0098765499',
+            'nama_lengkap' => 'Siswa Anti Cheat',
+            'kelas_id' => $this->kelas->id,
+            'jenis_kelamin' => 'L',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab Komputer 1',
+        ]);
+
+        $peserta = UjianPeserta::create([
+            'jadwal_ujian_id' => $this->jadwal->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'berlangsung',
+            'jumlah_pelanggaran' => 0,
+        ]);
+
+        $response = $this->actingAs($userSiswa)->postJson(route('siswa.pelanggaran', $this->jadwal->id), [
+            'type' => 'tab_switch',
+        ]);
+
+        $response->assertStatus(200);
+        $response->assertJson([
+            'status' => 'success',
+            'pelanggaran' => 1,
+        ]);
+
+        $peserta->refresh();
+        $this->assertEquals(1, $peserta->jumlah_pelanggaran);
+    }
+
+    /** @test */
+    public function cetak_kartu_bisa_difilter_per_kelas_dan_sesi()
+    {
+        $kelasLain = Kelas::create([
+            'kode_kelas' => 'XI-TKRO',
+            'nama_kelas' => 'XI TKRO',
+            'tingkat' => '11',
+            'jurusan' => 'TKRO',
+            'wali_kelas' => 'Guru TKRO',
+        ]);
+
+        $user1 = User::factory()->create(['username' => 's_titl_01', 'role' => 'siswa']);
+        $siswaTITL = Siswa::create([
+            'user_id' => $user1->id,
+            'nisn' => '0011111111',
+            'nama_lengkap' => 'Siswa TITL Saja',
+            'kelas_id' => $this->kelas->id,
+            'jenis_kelamin' => 'L',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab 1',
+        ]);
+
+        $user2 = User::factory()->create(['username' => 's_tkro_01', 'role' => 'siswa']);
+        $siswaTKRO = Siswa::create([
+            'user_id' => $user2->id,
+            'nisn' => '0022222222',
+            'nama_lengkap' => 'Siswa TKRO Saja',
+            'kelas_id' => $kelasLain->id,
+            'jenis_kelamin' => 'L',
+            'sesi_ujian' => 'Sesi 2',
+            'ruangan_ujian' => 'Lab 2',
+        ]);
+
+        // Filter per kelas TITL saja
+        $responseFilter = $this->actingAs($this->admin)->get(route('admin.cetak_kartu', [
+            'kelas_id' => $this->kelas->id,
+        ]));
+
+        $responseFilter->assertStatus(200);
+        $responseFilter->assertSee('SISWA TITL SAJA');
+        $responseFilter->assertDontSee('SISWA TKRO SAJA');
+    }
 }

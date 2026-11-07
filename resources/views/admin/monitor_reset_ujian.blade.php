@@ -9,7 +9,11 @@
         <h2 class="page-title">Monitor & Pusat Reset Ujian Siswa</h2>
         <p class="page-subtitle">Pantau status pengerjaan siswa secara langsung, reset sesi login yang terkunci, tambah waktu pengerjaan, atau reset tes untuk mengulang.</p>
     </div>
-    <div style="display: flex; gap: 8px;">
+    <div style="display: flex; gap: 8px; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #475569; background: #ffffff; border: 1px solid var(--border); padding: 6px 12px; border-radius: var(--radius-sm); cursor: pointer;" title="Perbarui data monitoring secara otomatis tanpa perlu tekan F5">
+            <input type="checkbox" id="toggleAutoRefresh" onchange="toggleRefresh(this.checked)">
+            Auto-Refresh (15d)
+        </label>
         <form action="{{ route('admin.reset_all_logins') }}" method="POST" onsubmit="return confirm('Reset seluruh sesi siswa yang berstatus login/terkunci?');">
             @csrf
             <button type="submit" class="btn btn-warning btn-sm">
@@ -129,6 +133,14 @@
                     @else
                         <span class="badge badge-neutral">BELUM MULAI</span>
                     @endif
+
+                    @if ($p->jumlah_pelanggaran > 0)
+                        <div style="margin-top: 4px;">
+                            <span class="badge badge-danger" style="font-weight: 800; font-size: 10px;" title="Terdeteksi meninggalkan jendela ujian atau berpindah tab">
+                                ⚠️ {{ $p->jumlah_pelanggaran }}x Pindah Tab
+                            </span>
+                        </div>
+                    @endif
                 </td>
                 <td>
                     @if ($p->status === 'berlangsung')
@@ -200,4 +212,28 @@
 </div>
 @endif
 
+@section('scripts')
+<script>
+    let refreshTimer = null;
+    function toggleRefresh(enabled) {
+        localStorage.setItem('cbt_monitor_refresh', enabled ? 'true' : 'false');
+        if (enabled) {
+            refreshTimer = setInterval(() => location.reload(), 15000);
+        } else {
+            clearInterval(refreshTimer);
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const isRef = localStorage.getItem('cbt_monitor_refresh') === 'true';
+        const chk = document.getElementById('toggleAutoRefresh');
+        if (chk) {
+            chk.checked = isRef;
+            if (isRef) {
+                refreshTimer = setInterval(() => location.reload(), 15000);
+            }
+        }
+    });
+</script>
+@endsection
 @endsection

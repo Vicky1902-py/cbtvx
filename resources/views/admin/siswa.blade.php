@@ -29,7 +29,7 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
             Ekspor ke XLSX
         </a>
-        <a href="{{ route('admin.cetak_kartu') }}" target="_blank" class="btn btn-secondary btn-sm">
+        <a href="{{ route('admin.cetak_kartu', ['kelas_id' => request('kelas_id')]) }}" target="_blank" class="btn btn-secondary btn-sm" title="Cetak Kartu Login A4 (Sesuai Filter Kelas / Semua)">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
             Cetak Kartu Login A4
         </a>

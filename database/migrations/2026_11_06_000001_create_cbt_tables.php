@@ -144,6 +144,7 @@ return new class extends Migration
             $table->integer('jawaban_salah')->default(0);
             $table->integer('jawaban_kosong')->default(0);
             $table->string('ip_pengerjaan', 45)->nullable();
+            $table->integer('jumlah_pelanggaran')->default(0);
             $table->timestamps();
         });
 
