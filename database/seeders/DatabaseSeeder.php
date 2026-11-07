@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
                 'kecamatan' => 'Kupang Barat',
                 'kabupaten' => 'Kabupaten Kupang',
                 'provinsi' => 'Nusa Tenggara Timur',
-                'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+                'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
                 'nip_kepala_sekolah' => '198501192011011005',
                 'ttd_kepala_sekolah' => 'images/ttd_kepsek.png',
                 'logo_sekolah' => 'images/logo_smk.png',
@@ -44,7 +44,7 @@ class DatabaseSeeder extends Seeder
         $admin = User::updateOrCreate(
             ['username' => 'admin'],
             [
-                'name' => 'Vicky Koroh, S.Pd., M.Kom. (Administrator)',
+                'name' => 'Vicky Koroh, S.Pd., Gr. (Administrator)',
                 'email' => 'admin@smkn1kupangbarat.sch.id',
                 'password' => Hash::make('admin'),
                 'role' => 'admin',

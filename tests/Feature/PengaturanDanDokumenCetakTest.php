@@ -55,7 +55,7 @@ class PengaturanDanDokumenCetakTest extends TestCase
         parent::setUp();
 
         $this->admin = User::create([
-            'name' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'name' => 'Vicky Koroh, S.Pd., Gr.',
             'username' => 'admin',
             'email' => 'admin@smkn1kupangbarat.sch.id',
             'password' => bcrypt('password'),
@@ -70,7 +70,7 @@ class PengaturanDanDokumenCetakTest extends TestCase
             'kabupaten' => 'Kabupaten Kupang',
             'provinsi' => 'Nusa Tenggara Timur',
             'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
-            'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
             'nip_kepala_sekolah' => '198501192011011005',
             'tahun_ajaran_aktif' => '2026/2027',
             'semester_aktif' => 'Genap',
@@ -88,7 +88,7 @@ class PengaturanDanDokumenCetakTest extends TestCase
         $response->assertSee('PEMERINTAH PROVINSI NUSA TENGGARA TIMUR');
         $response->assertSee('DINAS PENDIDIKAN DAN KEBUDAYAAN');
         $response->assertSee('SMK NEGERI 1 KUPANG BARAT');
-        $response->assertSee('Vicky Koroh, S.Pd., M.Kom.');
+        $response->assertSee('Vicky Koroh, S.Pd., Gr.');
     }
 
     public function test_simpan_pengaturan_memperbarui_data_dan_berkas()
@@ -106,7 +106,7 @@ class PengaturanDanDokumenCetakTest extends TestCase
             'kabupaten' => 'Kabupaten Kupang',
             'provinsi' => 'Nusa Tenggara Timur',
             'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN PROVINSI NTT',
-            'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
             'nip_kepala_sekolah' => '198501192011011005',
             'tahun_ajaran_aktif' => '2026/2027',
             'semester_aktif' => 'Genap',

@@ -28,7 +28,7 @@ class DapodikSeeder extends Seeder
                 'kabupaten' => 'Kabupaten Kupang',
                 'provinsi' => 'Nusa Tenggara Timur',
                 'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
-                'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+                'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
                 'nip_kepala_sekolah' => '198501192011011005',
                 'ttd_kepala_sekolah' => 'images/ttd_kepsek.png',
                 'logo_sekolah' => 'images/logo_smk.png',
@@ -1950,7 +1950,7 @@ class DapodikSeeder extends Seeder
                 'kelompok' => 'Dasar Program Keahlian (C2)',
                 'jurusan' => 'Semua Jurusan',
                 'tingkat' => '10',
-                'nip_guru' => '198501192011011005', // Vicky Koroh, S.Pd., M.Kom.
+                'nip_guru' => '198501192011011005', // Vicky Koroh, S.Pd., Gr.
                 'user_guru' => 'admin',
             ],
 

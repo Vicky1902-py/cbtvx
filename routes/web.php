@@ -33,6 +33,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/siswa/{id}/update', [AdminController::class, 'updateSiswa'])->name('siswa.update');
     Route::post('/siswa/{id}/hapus', [AdminController::class, 'hapusSiswa'])->name('siswa.hapus');
     Route::post('/siswa/import-xlsx', [AdminController::class, 'importSiswaXlsx'])->name('siswa.import_xlsx');
+    Route::post('/siswa/upload-foto-zip', [AdminController::class, 'uploadFotoZip'])->name('siswa.upload_foto_zip');
     Route::get('/siswa/export-xlsx', [AdminController::class, 'exportSiswaXlsx'])->name('siswa.export_xlsx');
     Route::get('/siswa/template-xlsx', [AdminController::class, 'downloadTemplateSiswaXlsx'])->name('siswa.template_xlsx');
 
@@ -108,8 +109,31 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Petugas & Pengawas Ujian
     Route::get('/petugas-ujian', [AdminController::class, 'petugasUjian'])->name('petugas_ujian');
     Route::post('/petugas-ujian', [AdminController::class, 'simpanPetugasUjian'])->name('petugas_ujian.simpan');
+    Route::post('/petugas-ujian/{id}/update', [AdminController::class, 'updatePetugasUjian'])->name('petugas_ujian.update');
     Route::post('/petugas-ujian/{id}/hapus', [AdminController::class, 'hapusPetugasUjian'])->name('petugas_ujian.hapus');
     Route::get('/cetak-kartu-petugas', [AdminController::class, 'cetakKartuPetugas'])->name('cetak_kartu_petugas');
+
+    // Modul Laporan & Analisis (Nilai, Analisis Butir Soal, Monitor & Reset Siswa)
+    Route::get('/laporan/nilai', [AdminController::class, 'laporanNilai'])->name('laporan.nilai');
+    Route::get('/laporan/nilai/cetak', [AdminController::class, 'cetakLaporanNilai'])->name('laporan.nilai.cetak');
+    Route::get('/laporan/nilai/export-xlsx', [AdminController::class, 'exportLaporanNilaiXlsx'])->name('laporan.nilai.export_xlsx');
+
+    Route::get('/laporan/analisis-soal', [AdminController::class, 'analisisButirSoal'])->name('laporan.analisis_soal');
+    Route::get('/laporan/analisis-soal/cetak', [AdminController::class, 'cetakAnalisisSoal'])->name('laporan.analisis_soal.cetak');
+    Route::get('/laporan/analisis-soal/export-xlsx', [AdminController::class, 'exportAnalisisSoalXlsx'])->name('laporan.analisis_soal.export_xlsx');
+
+    Route::get('/laporan/reset-ujian', [AdminController::class, 'monitorResetUjian'])->name('laporan.reset_ujian');
+    Route::post('/reset-ujian/{pesertaId}/tambah-waktu', [AdminController::class, 'tambahWaktuPeserta'])->name('reset_ujian.tambah_waktu');
+    Route::post('/reset-ujian/{pesertaId}/reset-tes', [AdminController::class, 'resetTesPeserta'])->name('reset_ujian.reset_tes');
+    Route::post('/reset-ujian/{pesertaId}/force-finish', [AdminController::class, 'forceFinishPeserta'])->name('reset_ujian.force_finish');
+
+    // Backup & Pemulihan (Database & Bank Soal)
+    Route::get('/backup', [AdminController::class, 'backupIndex'])->name('backup');
+    Route::post('/backup/database', [AdminController::class, 'backupDatabase'])->name('backup.database');
+    Route::get('/backup/database/unduh/{filename}', [AdminController::class, 'downloadBackupDatabase'])->name('backup.database.unduh');
+    Route::post('/backup/database/hapus/{filename}', [AdminController::class, 'hapusBackupDatabase'])->name('backup.database.hapus');
+    Route::get('/backup/bank-soal/{id}/export-json', [AdminController::class, 'exportBankSoalJson'])->name('backup.bank_soal.export_json');
+    Route::post('/backup/bank-soal/import-json', [AdminController::class, 'importBankSoalJson'])->name('backup.bank_soal.import_json');
 
     // Pengaturan
     Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');

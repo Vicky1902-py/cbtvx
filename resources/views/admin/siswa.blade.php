@@ -13,6 +13,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             Tambah Siswa
         </button>
+        <button type="button" class="btn btn-accent btn-sm" onclick="openModal('modalUploadFotoZip')" title="Unggah Foto Siswa Massal Berkas ZIP">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            Upload Foto ZIP (NISN)
+        </button>
         <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('modalImportSiswa')">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
             Impor XLSX / CSV
@@ -78,7 +82,19 @@
                 <td>{{ $siswaList->firstItem() + $idx }}</td>
                 <td><code>{{ $s->nomor_peserta ?? '-' }}</code></td>
                 <td><strong>{{ $s->nisn }}</strong></td>
-                <td>{{ $s->nama_lengkap }}</td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        @if ($s->foto && file_exists(public_path($s->foto)))
+                            <img src="{{ asset($s->foto) }}" alt="Foto {{ $s->nama_lengkap }}" style="width: 28px; height: 34px; object-fit: cover; border-radius: 3px; border: 1px solid var(--border);">
+                        @else
+                            <div style="width: 28px; height: 34px; background: #f1f5f9; color: #94a3b8; font-size: 8px; display: flex; align-items: center; justify-content: center; border-radius: 3px; border: 1px dashed #cbd5e1; text-align: center; line-height: 1;">No Foto</div>
+                        @endif
+                        <div>
+                            <strong>{{ $s->nama_lengkap }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted);">NIS: {{ $s->nis ?: '-' }}</div>
+                        </div>
+                    </div>
+                </td>
                 <td><span class="badge badge-neutral">{{ $s->kelas->nama_kelas ?? '-' }}</span></td>
                 <td>{{ $s->jenis_kelamin }}</td>
                 <td>{{ $s->sesi_ujian }} &bull; {{ $s->ruangan_ujian }}</td>
@@ -136,7 +152,7 @@
             <button type="button" onclick="closeModal('modalTambahSiswa')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
         </div>
 
-        <form action="{{ route('admin.siswa.simpan') }}" method="POST">
+        <form action="{{ route('admin.siswa.simpan') }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
@@ -183,7 +199,7 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nomor Peserta Ujian</label>
                     <input type="text" name="nomor_peserta" placeholder="Otomatis jika kosong" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
@@ -192,6 +208,11 @@
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Kata Sandi (Default: 12345)</label>
                     <input type="text" name="password" value="12345" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
                 </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Foto Siswa (Opsional, JPG/PNG)</label>
+                <input type="file" name="foto" accept="image/*" style="width: 100%; font-size: 12px;">
             </div>
 
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
@@ -210,7 +231,7 @@
             <button type="button" onclick="closeModal('modalEditSiswa')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
         </div>
 
-        <form id="formEditSiswa" method="POST">
+        <form id="formEditSiswa" method="POST" enctype="multipart/form-data">
             @csrf
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
@@ -257,7 +278,7 @@
                 </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 20px;">
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 12px;">
                 <div>
                     <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nomor Peserta Ujian</label>
                     <input type="text" name="nomor_peserta" id="edit_nopes" style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
@@ -268,9 +289,49 @@
                 </div>
             </div>
 
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Ganti Foto Siswa (Opsional, JPG/PNG)</label>
+                <input type="file" name="foto" accept="image/*" style="width: 100%; font-size: 12px;">
+            </div>
+
             <div style="display: flex; justify-content: flex-end; gap: 8px;">
                 <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalEditSiswa')">Batal</button>
                 <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL UPLOAD FOTO ZIP -->
+<div id="modalUploadFotoZip" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 540px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--primary);">Upload Foto Siswa Massal (.ZIP)</h3>
+            <button type="button" onclick="closeModal('modalUploadFotoZip')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+
+        <p style="font-size: 12.5px; color: var(--text-muted); margin-bottom: 16px;">
+            Unggah satu berkas <strong>.ZIP</strong> yang berisi foto seluruh peserta ujian. Sistem akan otomatis mengekstrak dan mencocokkan foto dengan NISN siswa.
+        </p>
+
+        <div style="background: #f0fdf4; border-left: 4px solid #16a34a; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 16px; font-size: 12px; line-height: 1.6; color: #166534;">
+            <strong>Ketentuan Format Foto dalam ZIP:</strong><br>
+            &bull; Nama file foto <strong>WAJIB menggunakan NISN Siswa</strong> (Contoh: <code>0103841671.jpg</code> atau <code>0081234567.png</code>).<br>
+            &bull; Format gambar yang didukung: <code>.jpg</code>, <code>.jpeg</code>, <code>.png</code>, <code>.webp</code>.<br>
+            &bull; Semua foto langsung ditaruh di dalam arsip ZIP (atau dalam folder tunggal).<br>
+            &bull; Ukuran rasio pas foto disarankan 2x3 atau 3x4 formal.
+        </div>
+
+        <form action="{{ route('admin.siswa.upload_foto_zip') }}" method="POST" enctype="multipart/form-data">
+            @csrf
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; font-size: 12.5px; font-weight: 600; margin-bottom: 6px;">Pilih Berkas ZIP Foto Siswa:</label>
+                <input type="file" name="file_zip" accept=".zip,application/zip" required style="width: 100%; font-size: 13px; padding: 8px; border: 1px solid var(--border); border-radius: var(--radius-sm);">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalUploadFotoZip')">Batal</button>
+                <button type="submit" class="btn btn-primary btn-sm">Mulai Ekstrak & Pasangkan Foto</button>
             </div>
         </form>
     </div>

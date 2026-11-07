@@ -70,6 +70,9 @@
                 </td>
                 <td style="text-align: center;">
                     <div style="display: flex; gap: 6px; justify-content: center;">
+                        <button type="button" class="btn btn-warning btn-sm" onclick="editPetugas({{ json_encode($p) }})" title="Ubah Data Penugasan">
+                            Edit
+                        </button>
                         <a href="{{ route('admin.cetak_kartu_petugas', ['petugas_id' => $p->id]) }}" target="_blank" class="btn btn-secondary btn-sm" title="Cetak Kartu ID">
                             Cetak
                         </a>
@@ -156,4 +159,95 @@
         </form>
     </div>
 </div>
+
+<!-- MODAL EDIT PENUGASAN PETUGAS -->
+<div id="modalEditPetugas" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 520px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--primary);">Edit Penugasan Proktor / Pengawas</h3>
+            <button type="button" onclick="closeModal('modalEditPetugas')" style="background: none; border: none; font-size: 20px; cursor: pointer; color: #64748b;">&times;</button>
+        </div>
+
+        <form id="formEditPetugas" action="" method="POST">
+            @csrf
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Pilih Guru / Staf Sekolah *</label>
+                <select name="user_id" id="edit_user_id" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                    @foreach ($guruList as $g)
+                        <option value="{{ $g->id }}">
+                            {{ $g->name }} ({{ $g->nip ? 'NIP: ' . $g->nip : 'User: ' . $g->username }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Peran / Tugas *</label>
+                    <select name="jenis_petugas" id="edit_jenis_petugas" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                        <option value="pengawas">Pengawas Ruang</option>
+                        <option value="proktor">Proktor CBT</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Ruangan Ujian *</label>
+                    <input type="text" name="ruangan" id="edit_ruangan" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Sesi Ujian *</label>
+                    <input type="text" name="sesi" id="edit_sesi" required style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nomor SK Penugasan</label>
+                    <input type="text" name="nomor_sk" id="edit_nomor_sk" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jadwal Ujian Terkait (Opsional)</label>
+                <select name="jadwal_ujian_id" id="edit_jadwal_ujian_id" style="width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                    <option value="">-- Berlaku untuk Semua Jadwal Ujian --</option>
+                    @foreach ($jadwalList as $j)
+                        <option value="{{ $j->id }}">{{ $j->nama_ujian }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-light); padding-top: 14px;">
+                <button type="button" class="btn btn-secondary" onclick="closeModal('modalEditPetugas')">Batal</button>
+                <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section('scripts')
+<script>
+    function openModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.style.display = 'flex';
+    }
+
+    function closeModal(id) {
+        const m = document.getElementById(id);
+        if (m) m.style.display = 'none';
+    }
+
+    function editPetugas(p) {
+        const form = document.getElementById('formEditPetugas');
+        form.action = '/admin/petugas-ujian/' + p.id + '/update';
+        document.getElementById('edit_user_id').value = p.user_id;
+        document.getElementById('edit_jenis_petugas').value = p.jenis_petugas;
+        document.getElementById('edit_ruangan').value = p.ruangan;
+        document.getElementById('edit_sesi').value = p.sesi;
+        document.getElementById('edit_nomor_sk').value = p.nomor_sk || '';
+        document.getElementById('edit_jadwal_ujian_id').value = p.jadwal_ujian_id || '';
+        openModal('modalEditPetugas');
+    }
+</script>
+@endsection
 @endsection

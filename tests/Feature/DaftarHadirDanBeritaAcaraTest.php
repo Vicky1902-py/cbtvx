@@ -30,7 +30,7 @@ class DaftarHadirDanBeritaAcaraTest extends TestCase
         parent::setUp();
 
         $this->admin = User::create([
-            'name' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'name' => 'Vicky Koroh, S.Pd., Gr.',
             'username' => 'admin',
             'email' => 'admin@smkn1kupangbarat.sch.id',
             'password' => bcrypt('password123'),
@@ -47,7 +47,7 @@ class DaftarHadirDanBeritaAcaraTest extends TestCase
             'kabupaten' => 'Kabupaten Kupang',
             'provinsi' => 'Nusa Tenggara Timur',
             'dinas_pendidikan' => 'DINAS PENDIDIKAN DAN KEBUDAYAAN',
-            'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
             'nip_kepala_sekolah' => '198501192011011005',
         ]);
 

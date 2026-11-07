@@ -198,7 +198,15 @@
 
             <div class="card-body">
                 <div class="photo-box">
-                    FOTO<br>2 x 3
+                    @if ($siswa->foto && file_exists(public_path($siswa->foto)))
+                        <img src="{{ asset($siswa->foto) }}" alt="Foto {{ $siswa->nama_lengkap }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
+                    @elseif (file_exists(public_path('storage/foto_siswa/' . $siswa->nisn . '.jpg')))
+                        <img src="{{ asset('storage/foto_siswa/' . $siswa->nisn . '.jpg') }}" alt="Foto {{ $siswa->nama_lengkap }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
+                    @elseif (file_exists(public_path('storage/foto_siswa/' . $siswa->nisn . '.png')))
+                        <img src="{{ asset('storage/foto_siswa/' . $siswa->nisn . '.png') }}" alt="Foto {{ $siswa->nama_lengkap }}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 2px;">
+                    @else
+                        FOTO<br>2 x 3
+                    @endif
                 </div>
                 <div style="flex: 1;">
                     <table class="data-table">

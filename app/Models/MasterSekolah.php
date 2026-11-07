@@ -154,7 +154,7 @@ class MasterSekolah extends Model
      */
     public function getKepalaSekolahAttribute($value): string
     {
-        return $value ?: 'Vicky Koroh, S.Pd., M.Kom.';
+        return $value ?: 'Vicky Koroh, S.Pd., Gr.';
     }
 
     /**

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -172,6 +174,7 @@ class AdminController extends Controller
             'ruangan_ujian' => 'required|string',
             'nomor_peserta' => 'nullable|string|max:40|unique:siswa,nomor_peserta',
             'password' => 'nullable|string|min:4',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
         ]);
 
         $username = trim($data['nisn']);
@@ -185,6 +188,18 @@ class AdminController extends Controller
             'status' => 'aktif',
         ]);
 
+        $fotoPath = null;
+        if ($request->hasFile('foto')) {
+            $fotoFile = $request->file('foto');
+            $fotoName = $data['nisn'] . '.' . $fotoFile->getClientOriginalExtension();
+            $targetDir = public_path('storage/foto_siswa');
+            if (!\Illuminate\Support\Facades\File::exists($targetDir)) {
+                \Illuminate\Support\Facades\File::makeDirectory($targetDir, 0755, true);
+            }
+            $fotoFile->move($targetDir, $fotoName);
+            $fotoPath = 'storage/foto_siswa/' . $fotoName;
+        }
+
         Siswa::create([
             'user_id' => $user->id,
             'nisn' => $data['nisn'],
@@ -195,6 +210,7 @@ class AdminController extends Controller
             'sesi_ujian' => $data['sesi_ujian'],
             'ruangan_ujian' => $data['ruangan_ujian'],
             'nomor_peserta' => $data['nomor_peserta'] ?: ('26-24-05-' . str_pad($user->id, 5, '0', STR_PAD_LEFT)),
+            'foto' => $fotoPath,
             'status_login' => 'offline',
         ]);
 
@@ -215,9 +231,10 @@ class AdminController extends Controller
             'ruangan_ujian' => 'required|string',
             'nomor_peserta' => 'nullable|string|max:40|unique:siswa,nomor_peserta,' . $siswa->id,
             'password' => 'nullable|string|min:4',
+            'foto' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
         ]);
 
-        $siswa->update([
+        $updateData = [
             'nisn' => $data['nisn'],
             'nis' => $data['nis'],
             'nama_lengkap' => $data['nama_lengkap'],
@@ -226,7 +243,20 @@ class AdminController extends Controller
             'sesi_ujian' => $data['sesi_ujian'],
             'ruangan_ujian' => $data['ruangan_ujian'],
             'nomor_peserta' => $data['nomor_peserta'],
-        ]);
+        ];
+
+        if ($request->hasFile('foto')) {
+            $fotoFile = $request->file('foto');
+            $fotoName = $data['nisn'] . '.' . $fotoFile->getClientOriginalExtension();
+            $targetDir = public_path('storage/foto_siswa');
+            if (!\Illuminate\Support\Facades\File::exists($targetDir)) {
+                \Illuminate\Support\Facades\File::makeDirectory($targetDir, 0755, true);
+            }
+            $fotoFile->move($targetDir, $fotoName);
+            $updateData['foto'] = 'storage/foto_siswa/' . $fotoName;
+        }
+
+        $siswa->update($updateData);
 
         $userData = [
             'name' => $data['nama_lengkap'],
@@ -240,6 +270,76 @@ class AdminController extends Controller
         $siswa->user()->update($userData);
 
         return back()->with('success', 'Data siswa ' . $siswa->nama_lengkap . ' berhasil diperbarui.');
+    }
+
+    public function uploadFotoZip(Request $request)
+    {
+        $request->validate([
+            'file_zip' => 'required|file|mimes:zip|max:51200',
+        ]);
+
+        $zipFile = $request->file('file_zip');
+        $zip = new \ZipArchive();
+
+        if ($zip->open($zipFile->getRealPath()) !== true) {
+            return back()->with('error', 'Gagal membuka berkas ZIP. Pastikan berkas adalah arsip .zip yang valid.');
+        }
+
+        $targetDir = public_path('storage/foto_siswa');
+        if (!\Illuminate\Support\Facades\File::exists($targetDir)) {
+            \Illuminate\Support\Facades\File::makeDirectory($targetDir, 0755, true);
+        }
+
+        $totalExtracted = 0;
+        $matchedCount = 0;
+        $unmatchedList = [];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp'];
+
+        for ($i = 0; $i < $zip->numFiles; $i++) {
+            $filename = $zip->getNameIndex($i);
+
+            if (str_ends_with($filename, '/') || str_contains($filename, '__MACOSX')) {
+                continue;
+            }
+
+            $baseName = basename($filename);
+            $extension = strtolower(pathinfo($baseName, PATHINFO_EXTENSION));
+
+            if (!in_array($extension, $allowedExtensions)) {
+                continue;
+            }
+
+            $nisn = pathinfo($baseName, PATHINFO_FILENAME);
+            $cleanFileName = $nisn . '.' . $extension;
+            $destinationPath = $targetDir . DIRECTORY_SEPARATOR . $cleanFileName;
+
+            $stream = $zip->getStream($filename);
+            if ($stream) {
+                file_put_contents($destinationPath, stream_get_contents($stream));
+                fclose($stream);
+                $totalExtracted++;
+
+                $siswa = Siswa::where('nisn', $nisn)->first();
+                if ($siswa) {
+                    $siswa->update([
+                        'foto' => 'storage/foto_siswa/' . $cleanFileName,
+                    ]);
+                    $matchedCount++;
+                } else {
+                    $unmatchedList[] = $nisn;
+                }
+            }
+        }
+
+        $zip->close();
+
+        $msg = "Proses upload foto massal selesai! Berhasil mengekstrak {$totalExtracted} foto, dan {$matchedCount} foto berhasil dicocokkan dengan data siswa.";
+        if (count($unmatchedList) > 0) {
+            $sampleUnmatched = array_slice($unmatchedList, 0, 5);
+            $msg .= " (Catatan: Ada " . count($unmatchedList) . " foto yang NISN-nya tidak ditemukan di data siswa: " . implode(', ', $sampleUnmatched) . (count($unmatchedList) > 5 ? '...' : '') . ")";
+        }
+
+        return redirect()->route('admin.siswa')->with('success', $msg);
     }
 
     public function hapusSiswa($id)
@@ -2579,6 +2679,27 @@ class AdminController extends Controller
         return back()->with('success', 'Petugas Ujian (' . ucfirst($data['jenis_petugas']) . ') berhasil ditambahkan.');
     }
 
+    public function updatePetugasUjian(Request $request, $id)
+    {
+        $petugas = PetugasUjian::findOrFail($id);
+        $data = $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'jadwal_ujian_id' => 'nullable|exists:jadwal_ujian,id',
+            'jenis_petugas' => 'required|in:proktor,pengawas',
+            'ruangan' => 'required|string|max:50',
+            'sesi' => 'required|string|max:30',
+            'nomor_sk' => 'nullable|string|max:100',
+        ]);
+
+        $petugas->update($data);
+
+        if ($data['jenis_petugas'] === 'proktor') {
+            User::where('id', $data['user_id'])->update(['role' => 'proktor']);
+        }
+
+        return back()->with('success', 'Penugasan petugas (' . ucfirst($data['jenis_petugas']) . ') berhasil diperbarui.');
+    }
+
     public function hapusPetugasUjian($id)
     {
         $petugas = PetugasUjian::findOrFail($id);
@@ -2683,5 +2804,825 @@ class AdminController extends Controller
         $sekolah->save();
 
         return back()->with('success', 'Pengaturan sekolah, logo kop dinas, dan tanda tangan kepala sekolah berhasil diperbarui.');
+    }
+
+    // ==========================================
+    // MODUL LAPORAN & REKAP NILAI (FASE 8)
+    // ==========================================
+
+    public function laporanNilai(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalList = JadwalUjian::with('bankSoal.mataPelajaran')->orderBy('id', 'desc')->get();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
+
+        $selectedJadwalId = $request->input('jadwal_id', $jadwalList->first()?->id);
+        $selectedKelasId = $request->input('kelas_id');
+        $statusKelulusan = $request->input('status_kelulusan'); // 'semua', 'tuntas', 'belum_tuntas'
+
+        $selectedJadwal = $selectedJadwalId ? JadwalUjian::with('bankSoal.mataPelajaran')->find($selectedJadwalId) : null;
+        $kkm = $selectedJadwal?->bankSoal?->kkm ?? 75;
+
+        $pesertaQuery = UjianPeserta::with(['siswa.kelas', 'jadwalUjian.bankSoal.mataPelajaran'])
+            ->where('jadwal_ujian_id', $selectedJadwalId);
+
+        if ($selectedKelasId) {
+            $pesertaQuery->whereHas('siswa', function ($q) use ($selectedKelasId) {
+                $q->where('kelas_id', $selectedKelasId);
+            });
+        }
+
+        $allPeserta = $pesertaQuery->orderBy('total_nilai', 'desc')->get();
+
+        // Filter status kelulusan jika dipilih
+        if ($statusKelulusan === 'tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai >= $kkm);
+        } elseif ($statusKelulusan === 'belum_tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai < $kkm);
+        } else {
+            $pesertaList = $allPeserta;
+        }
+
+        // Statistik
+        $totalPeserta = $allPeserta->count();
+        $nilaiTertinggi = $totalPeserta > 0 ? $allPeserta->max('total_nilai') : 0;
+        $nilaiTerendah = $totalPeserta > 0 ? $allPeserta->min('total_nilai') : 0;
+        $nilaiRataRata = $totalPeserta > 0 ? round($allPeserta->avg('total_nilai'), 2) : 0;
+        $jumlahTuntas = $allPeserta->filter(fn($p) => $p->total_nilai >= $kkm)->count();
+        $persenTuntas = $totalPeserta > 0 ? round(($jumlahTuntas / $totalPeserta) * 100, 1) : 0;
+
+        $stats = [
+            'total' => $totalPeserta,
+            'tertinggi' => $nilaiTertinggi,
+            'terendah' => $nilaiTerendah,
+            'rata_rata' => $nilaiRataRata,
+            'tuntas' => $jumlahTuntas,
+            'persen_tuntas' => $persenTuntas,
+            'kkm' => $kkm,
+        ];
+
+        return view('admin.laporan_nilai', compact(
+            'sekolah',
+            'jadwalList',
+            'kelasList',
+            'selectedJadwalId',
+            'selectedKelasId',
+            'statusKelulusan',
+            'selectedJadwal',
+            'pesertaList',
+            'stats'
+        ));
+    }
+
+    public function cetakLaporanNilai(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalId = $request->input('jadwal_id');
+        $kelasId = $request->input('kelas_id');
+        $statusKelulusan = $request->input('status_kelulusan');
+
+        $jadwal = JadwalUjian::with('bankSoal.mataPelajaran')->findOrFail($jadwalId);
+        $kkm = $jadwal->bankSoal->kkm ?? 75;
+
+        $query = UjianPeserta::with(['siswa.kelas'])
+            ->where('jadwal_ujian_id', $jadwalId);
+
+        if ($kelasId) {
+            $query->whereHas('siswa', function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId);
+            });
+        }
+
+        $allPeserta = $query->orderBy('total_nilai', 'desc')->get();
+
+        if ($statusKelulusan === 'tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai >= $kkm);
+        } elseif ($statusKelulusan === 'belum_tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai < $kkm);
+        } else {
+            $pesertaList = $allPeserta;
+        }
+
+        $filterKelas = $kelasId ? Kelas::find($kelasId) : null;
+
+        $totalPeserta = $allPeserta->count();
+        $nilaiTertinggi = $totalPeserta > 0 ? $allPeserta->max('total_nilai') : 0;
+        $nilaiTerendah = $totalPeserta > 0 ? $allPeserta->min('total_nilai') : 0;
+        $nilaiRataRata = $totalPeserta > 0 ? round($allPeserta->avg('total_nilai'), 2) : 0;
+        $jumlahTuntas = $allPeserta->filter(fn($p) => $p->total_nilai >= $kkm)->count();
+        $persenTuntas = $totalPeserta > 0 ? round(($jumlahTuntas / $totalPeserta) * 100, 1) : 0;
+
+        $stats = [
+            'total' => $totalPeserta,
+            'tertinggi' => $nilaiTertinggi,
+            'terendah' => $nilaiTerendah,
+            'rata_rata' => $nilaiRataRata,
+            'tuntas' => $jumlahTuntas,
+            'persen_tuntas' => $persenTuntas,
+            'kkm' => $kkm,
+        ];
+
+        return view('admin.cetak_laporan_nilai', compact('sekolah', 'jadwal', 'filterKelas', 'pesertaList', 'stats'));
+    }
+
+    public function exportLaporanNilaiXlsx(Request $request)
+    {
+        $jadwalId = $request->input('jadwal_id');
+        $kelasId = $request->input('kelas_id');
+        $statusKelulusan = $request->input('status_kelulusan');
+
+        $jadwal = JadwalUjian::with('bankSoal.mataPelajaran')->findOrFail($jadwalId);
+        $kkm = $jadwal->bankSoal->kkm ?? 75;
+
+        $query = UjianPeserta::with(['siswa.kelas'])
+            ->where('jadwal_ujian_id', $jadwalId);
+
+        if ($kelasId) {
+            $query->whereHas('siswa', function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId);
+            });
+        }
+
+        $allPeserta = $query->orderBy('total_nilai', 'desc')->get();
+
+        if ($statusKelulusan === 'tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai >= $kkm);
+        } elseif ($statusKelulusan === 'belum_tuntas') {
+            $pesertaList = $allPeserta->filter(fn($p) => $p->total_nilai < $kkm);
+        } else {
+            $pesertaList = $allPeserta;
+        }
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Daftar Nilai Ujian');
+
+        $headers = [
+            'A1' => 'Peringkat',
+            'B1' => 'Nomor Peserta',
+            'C1' => 'NISN',
+            'D1' => 'Nama Siswa',
+            'E1' => 'Kelas / Rombel',
+            'F1' => 'Benar',
+            'G1' => 'Salah',
+            'H1' => 'Kosong',
+            'I1' => 'Skor PG/BS',
+            'J1' => 'Skor Uraian',
+            'K1' => 'Nilai Akhir',
+            'L1' => 'KKM',
+            'M1' => 'Status Kelulusan'
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $rowIdx = 2;
+        foreach ($pesertaList as $idx => $p) {
+            $status = $p->total_nilai >= $kkm ? 'TUNTAS' : 'BELUM TUNTAS';
+
+            $sheet->setCellValue('A' . $rowIdx, $idx + 1);
+            $sheet->setCellValue('B' . $rowIdx, $p->siswa->nomor_peserta ?? '-');
+            $sheet->setCellValueExplicit('C' . $rowIdx, $p->siswa->nisn ?? '-', \PhpOffice\PhpSpreadsheet\Cell\DataType::TYPE_STRING);
+            $sheet->setCellValue('D' . $rowIdx, $p->siswa->nama_lengkap ?? '-');
+            $sheet->setCellValue('E' . $rowIdx, $p->siswa->kelas->nama_kelas ?? '-');
+            $sheet->setCellValue('F' . $rowIdx, $p->jawaban_benar);
+            $sheet->setCellValue('G' . $rowIdx, $p->jawaban_salah);
+            $sheet->setCellValue('H' . $rowIdx, $p->jawaban_kosong);
+            $sheet->setCellValue('I' . $rowIdx, $p->nilai_pg);
+            $sheet->setCellValue('J' . $rowIdx, $p->nilai_uraian);
+            $sheet->setCellValue('K' . $rowIdx, $p->total_nilai);
+            $sheet->setCellValue('L' . $rowIdx, $kkm);
+            $sheet->setCellValue('M' . $rowIdx, $status);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Daftar_Nilai_' . Str::slug($jadwal->nama_ujian) . '.xlsx';
+        $tempPath = sys_get_temp_dir() . '/' . $fileName;
+        $writer->save($tempPath);
+
+        return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
+    }
+
+    // ==========================================
+    // ANALISIS BUTIR SOAL (ITEM ANALYSIS)
+    // ==========================================
+
+    public function analisisButirSoal(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalList = JadwalUjian::with('bankSoal.mataPelajaran')->orderBy('id', 'desc')->get();
+        $selectedJadwalId = $request->input('jadwal_id', $jadwalList->first()?->id);
+
+        $selectedJadwal = $selectedJadwalId ? JadwalUjian::with(['bankSoal.soalButir'])->find($selectedJadwalId) : null;
+        $analisisItems = [];
+        $totalPeserta = 0;
+
+        if ($selectedJadwal && $selectedJadwal->bankSoal) {
+            $pesertaList = UjianPeserta::where('jadwal_ujian_id', $selectedJadwalId)
+                ->whereIn('status', ['selesai', 'berlangsung'])
+                ->orderBy('total_nilai', 'desc')
+                ->get();
+
+            $totalPeserta = $pesertaList->count();
+            $soalList = $selectedJadwal->bankSoal->soalButir()->orderBy('nomor_urut')->get();
+
+            // Bagi kelompok atas dan bawah untuk Daya Pembeda (Top 30% vs Bottom 30%)
+            $kCount = max(1, (int) round($totalPeserta * 0.3));
+            $kelompokAtasIds = $pesertaList->take($kCount)->pluck('id')->toArray();
+            $kelompokBawahIds = $pesertaList->reverse()->take($kCount)->pluck('id')->toArray();
+
+            foreach ($soalList as $soal) {
+                $jawabans = UjianJawaban::whereIn('ujian_peserta_id', $pesertaList->pluck('id'))
+                    ->where('soal_butir_id', $soal->id)
+                    ->get();
+
+                $benarCount = $jawabans->where('is_benar', true)->count();
+                $salahCount = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
+                $kosongCount = $totalPeserta - ($benarCount + $salahCount);
+
+                // Frekuensi Opsi (Distraktor Analysis)
+                $opsiCount = [
+                    'A' => $jawabans->where('jawaban_siswa', 'A')->count(),
+                    'B' => $jawabans->where('jawaban_siswa', 'B')->count(),
+                    'C' => $jawabans->where('jawaban_siswa', 'C')->count(),
+                    'D' => $jawabans->where('jawaban_siswa', 'D')->count(),
+                    'E' => $jawabans->where('jawaban_siswa', 'E')->count(),
+                ];
+
+                // Tingkat Kesukaran P = Benar / Total Peserta
+                $pIndex = $totalPeserta > 0 ? round($benarCount / $totalPeserta, 2) : 0;
+                if ($pIndex >= 0.70) {
+                    $kategoriKesukaran = 'Mudah';
+                    $badgeKesukaran = 'badge-success';
+                } elseif ($pIndex >= 0.30) {
+                    $kategoriKesukaran = 'Sedang';
+                    $badgeKesukaran = 'badge-info';
+                } else {
+                    $kategoriKesukaran = 'Sukar';
+                    $badgeKesukaran = 'badge-danger';
+                }
+
+                // Daya Pembeda D = (Benar Atas - Benar Bawah) / N Kelompok
+                $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->where('is_benar', true)->count();
+                $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->where('is_benar', true)->count();
+                $dIndex = $kCount > 0 ? round(($benarAtas - $benarBawah) / $kCount, 2) : 0;
+
+                if ($dIndex >= 0.40) {
+                    $kategoriPembeda = 'Sangat Baik';
+                    $rekomendasi = 'Diterima (Sangat Baik)';
+                    $badgePembeda = 'badge-success';
+                } elseif ($dIndex >= 0.30) {
+                    $kategoriPembeda = 'Baik';
+                    $rekomendasi = 'Diterima';
+                    $badgePembeda = 'badge-info';
+                } elseif ($dIndex >= 0.20) {
+                    $kategoriPembeda = 'Cukup';
+                    $rekomendasi = 'Perlu Revisi';
+                    $badgePembeda = 'badge-warning';
+                } else {
+                    $kategoriPembeda = 'Kurang / Jelek';
+                    $rekomendasi = 'Ditolak / Dibuang';
+                    $badgePembeda = 'badge-danger';
+                }
+
+                $analisisItems[] = [
+                    'soal' => $soal,
+                    'benar' => $benarCount,
+                    'salah' => $salahCount,
+                    'kosong' => max(0, $kosongCount),
+                    'opsi' => $opsiCount,
+                    'p_index' => $pIndex,
+                    'kategori_kesukaran' => $kategoriKesukaran,
+                    'badge_kesukaran' => $badgeKesukaran,
+                    'd_index' => $dIndex,
+                    'kategori_pembeda' => $kategoriPembeda,
+                    'badge_pembeda' => $badgePembeda,
+                    'rekomendasi' => $rekomendasi,
+                ];
+            }
+        }
+
+        return view('admin.analisis_soal', compact(
+            'sekolah',
+            'jadwalList',
+            'selectedJadwalId',
+            'selectedJadwal',
+            'analisisItems',
+            'totalPeserta'
+        ));
+    }
+
+    public function cetakAnalisisSoal(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalId = $request->input('jadwal_id');
+        $jadwal = JadwalUjian::with(['bankSoal.soalButir', 'bankSoal.mataPelajaran'])->findOrFail($jadwalId);
+
+        $pesertaList = UjianPeserta::where('jadwal_ujian_id', $jadwalId)
+            ->whereIn('status', ['selesai', 'berlangsung'])
+            ->orderBy('total_nilai', 'desc')
+            ->get();
+
+        $totalPeserta = $pesertaList->count();
+        $soalList = $jadwal->bankSoal->soalButir()->orderBy('nomor_urut')->get();
+
+        $kCount = max(1, (int) round($totalPeserta * 0.3));
+        $kelompokAtasIds = $pesertaList->take($kCount)->pluck('id')->toArray();
+        $kelompokBawahIds = $pesertaList->reverse()->take($kCount)->pluck('id')->toArray();
+
+        $analisisItems = [];
+        foreach ($soalList as $soal) {
+            $jawabans = UjianJawaban::whereIn('ujian_peserta_id', $pesertaList->pluck('id'))
+                ->where('soal_butir_id', $soal->id)
+                ->get();
+
+            $benarCount = $jawabans->where('is_benar', true)->count();
+            $salahCount = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
+            $kosongCount = max(0, $totalPeserta - ($benarCount + $salahCount));
+
+            $pIndex = $totalPeserta > 0 ? round($benarCount / $totalPeserta, 2) : 0;
+            $kategoriKesukaran = $pIndex >= 0.70 ? 'Mudah' : ($pIndex >= 0.30 ? 'Sedang' : 'Sukar');
+
+            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->where('is_benar', true)->count();
+            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->where('is_benar', true)->count();
+            $dIndex = $kCount > 0 ? round(($benarAtas - $benarBawah) / $kCount, 2) : 0;
+            $rekomendasi = $dIndex >= 0.40 ? 'Diterima (Sangat Baik)' : ($dIndex >= 0.30 ? 'Diterima' : ($dIndex >= 0.20 ? 'Perlu Revisi' : 'Dibuang / Diganti'));
+
+            $analisisItems[] = [
+                'nomor' => $soal->nomor_urut,
+                'tipe' => strtoupper($soal->tipe_soal),
+                'kunci' => $soal->kunci_jawaban,
+                'benar' => $benarCount,
+                'salah' => $salahCount,
+                'kosong' => $kosongCount,
+                'p_index' => $pIndex,
+                'kesukaran' => $kategoriKesukaran,
+                'd_index' => $dIndex,
+                'rekomendasi' => $rekomendasi,
+            ];
+        }
+
+        return view('admin.cetak_analisis_soal', compact('sekolah', 'jadwal', 'totalPeserta', 'analisisItems'));
+    }
+
+    public function exportAnalisisSoalXlsx(Request $request)
+    {
+        $jadwalId = $request->input('jadwal_id');
+        $jadwal = JadwalUjian::with(['bankSoal.soalButir', 'bankSoal.mataPelajaran'])->findOrFail($jadwalId);
+
+        $pesertaList = UjianPeserta::where('jadwal_ujian_id', $jadwalId)
+            ->whereIn('status', ['selesai', 'berlangsung'])
+            ->orderBy('total_nilai', 'desc')
+            ->get();
+
+        $totalPeserta = $pesertaList->count();
+        $soalList = $jadwal->bankSoal->soalButir()->orderBy('nomor_urut')->get();
+
+        $kCount = max(1, (int) round($totalPeserta * 0.3));
+        $kelompokAtasIds = $pesertaList->take($kCount)->pluck('id')->toArray();
+        $kelompokBawahIds = $pesertaList->reverse()->take($kCount)->pluck('id')->toArray();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Analisis Butir Soal');
+
+        $headers = [
+            'A1' => 'No. Butir',
+            'B1' => 'Tipe Soal',
+            'C1' => 'Kunci',
+            'D1' => 'Benar (N)',
+            'E1' => 'Salah (N)',
+            'F1' => 'Kosong (N)',
+            'G1' => 'Tingkat Kesukaran (P)',
+            'H1' => 'Kategori Kesukaran',
+            'I1' => 'Daya Pembeda (D)',
+            'J1' => 'Rekomendasi Butir'
+        ];
+
+        foreach ($headers as $cell => $val) {
+            $sheet->setCellValue($cell, $val);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        $rowIdx = 2;
+        foreach ($soalList as $soal) {
+            $jawabans = UjianJawaban::whereIn('ujian_peserta_id', $pesertaList->pluck('id'))
+                ->where('soal_butir_id', $soal->id)
+                ->get();
+
+            $benar = $jawabans->where('is_benar', true)->count();
+            $salah = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
+            $kosong = max(0, $totalPeserta - ($benar + $salah));
+
+            $pIndex = $totalPeserta > 0 ? round($benar / $totalPeserta, 2) : 0;
+            $kategoriKesukaran = $pIndex >= 0.70 ? 'Mudah' : ($pIndex >= 0.30 ? 'Sedang' : 'Sukar');
+
+            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->where('is_benar', true)->count();
+            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->where('is_benar', true)->count();
+            $dIndex = $kCount > 0 ? round(($benarAtas - $benarBawah) / $kCount, 2) : 0;
+            $rekomendasi = $dIndex >= 0.40 ? 'Diterima (Sangat Baik)' : ($dIndex >= 0.30 ? 'Diterima' : ($dIndex >= 0.20 ? 'Perlu Revisi' : 'Dibuang / Diganti'));
+
+            $sheet->setCellValue('A' . $rowIdx, $soal->nomor_urut);
+            $sheet->setCellValue('B' . $rowIdx, strtoupper($soal->tipe_soal));
+            $sheet->setCellValue('C' . $rowIdx, $soal->kunci_jawaban);
+            $sheet->setCellValue('D' . $rowIdx, $benar);
+            $sheet->setCellValue('E' . $rowIdx, $salah);
+            $sheet->setCellValue('F' . $rowIdx, $kosong);
+            $sheet->setCellValue('G' . $rowIdx, $pIndex);
+            $sheet->setCellValue('H' . $rowIdx, $kategoriKesukaran);
+            $sheet->setCellValue('I' . $rowIdx, $dIndex);
+            $sheet->setCellValue('J' . $rowIdx, $rekomendasi);
+            $rowIdx++;
+        }
+
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        $writer = new Xlsx($spreadsheet);
+        $fileName = 'Analisis_Soal_' . Str::slug($jadwal->nama_ujian) . '.xlsx';
+        $tempPath = sys_get_temp_dir() . '/' . $fileName;
+        $writer->save($tempPath);
+
+        return response()->download($tempPath, $fileName)->deleteFileAfterSend(true);
+    }
+
+    // ==========================================
+    // MONITOR & PUSAT RESET UJIAN SISWA
+    // ==========================================
+
+    public function monitorResetUjian(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalList = JadwalUjian::with('bankSoal.mataPelajaran')->orderBy('id', 'desc')->get();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
+
+        $selectedJadwalId = $request->input('jadwal_id', $jadwalList->first()?->id);
+        $selectedKelasId = $request->input('kelas_id');
+        $statusFilter = $request->input('status'); // 'belum', 'berlangsung', 'selesai'
+
+        $selectedJadwal = $selectedJadwalId ? JadwalUjian::with('bankSoal')->find($selectedJadwalId) : null;
+
+        $pesertaQuery = UjianPeserta::with(['siswa.kelas', 'jadwalUjian.bankSoal'])
+            ->where('jadwal_ujian_id', $selectedJadwalId);
+
+        if ($selectedKelasId) {
+            $pesertaQuery->whereHas('siswa', function ($q) use ($selectedKelasId) {
+                $q->where('kelas_id', $selectedKelasId);
+            });
+        }
+
+        if ($statusFilter) {
+            $pesertaQuery->where('status', $statusFilter);
+        }
+
+        $pesertaList = $pesertaQuery->orderBy('status', 'asc')->orderBy('id', 'asc')->get();
+
+        return view('admin.monitor_reset_ujian', compact(
+            'sekolah',
+            'jadwalList',
+            'kelasList',
+            'selectedJadwalId',
+            'selectedKelasId',
+            'statusFilter',
+            'selectedJadwal',
+            'pesertaList'
+        ));
+    }
+
+    public function tambahWaktuPeserta(Request $request, $pesertaId)
+    {
+        $peserta = UjianPeserta::with('siswa')->findOrFail($pesertaId);
+        $menit = (int) $request->input('menit', 15);
+        $tambahanDetik = $menit * 60;
+
+        $peserta->sisa_detik = max(0, $peserta->sisa_detik) + $tambahanDetik;
+        $peserta->save();
+
+        return back()->with('success', "Waktu ujian peserta {$peserta->siswa->nama_lengkap} berhasil ditambah {$menit} menit.");
+    }
+
+    public function resetTesPeserta($pesertaId)
+    {
+        $peserta = UjianPeserta::with(['siswa', 'jadwalUjian'])->findOrFail($pesertaId);
+
+        // Hapus seluruh jawaban peserta
+        UjianJawaban::where('ujian_peserta_id', $pesertaId)->delete();
+
+        // Kembalikan peserta ke kondisi awal sebelum ujian
+        $durasiDetik = ($peserta->jadwalUjian->durasi_menit ?? 60) * 60;
+        $peserta->update([
+            'status' => 'belum',
+            'waktu_mulai' => null,
+            'waktu_selesai' => null,
+            'sisa_detik' => $durasiDetik,
+            'nilai_pg' => 0.00,
+            'nilai_uraian' => 0.00,
+            'total_nilai' => 0.00,
+            'jawaban_benar' => 0,
+            'jawaban_salah' => 0,
+            'jawaban_kosong' => 0,
+            'ip_pengerjaan' => null,
+        ]);
+
+        // Reset status login siswa
+        $peserta->siswa->update([
+            'status_login' => 'offline',
+            'ip_address' => null,
+        ]);
+
+        return back()->with('success', "Ujian peserta {$peserta->siswa->nama_lengkap} berhasil di-reset total. Siswa dapat login dan mengerjakan ulang dari awal.");
+    }
+
+    public function forceFinishPeserta($pesertaId)
+    {
+        $peserta = UjianPeserta::with(['siswa', 'jadwalUjian.bankSoal'])->findOrFail($pesertaId);
+
+        // Hitung nilai akhir otomatis
+        $soalList = SoalButir::where('bank_soal_id', $peserta->jadwalUjian->bank_soal_id)->get();
+        $jawabans = UjianJawaban::where('ujian_peserta_id', $pesertaId)->get();
+
+        $benar = 0;
+        $salah = 0;
+        $kosong = 0;
+        $nilaiPg = 0.0;
+
+        foreach ($soalList as $s) {
+            $jw = $jawabans->firstWhere('soal_butir_id', $s->id);
+            if (!$jw || empty($jw->jawaban_siswa)) {
+                $kosong++;
+            } elseif ($jw->is_benar) {
+                $benar++;
+                $nilaiPg += (float) $s->bobot_nilai;
+            } else {
+                $salah++;
+            }
+        }
+
+        $peserta->update([
+            'status' => 'selesai',
+            'waktu_selesai' => now(),
+            'jawaban_benar' => $benar,
+            'jawaban_salah' => $salah,
+            'jawaban_kosong' => $kosong,
+            'nilai_pg' => $nilaiPg,
+            'total_nilai' => $nilaiPg + (float)$peserta->nilai_uraian,
+        ]);
+
+        $peserta->siswa->update(['status_login' => 'offline']);
+
+        return back()->with('success', "Ujian peserta {$peserta->siswa->nama_lengkap} berhasil diselesaikan paksa oleh Admin.");
+    }
+
+    // ==========================================
+    // BACKUP DATABASE DAN BACKUP BANK SOAL (FASE 9)
+    // ==========================================
+
+    public function backupIndex()
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $backupDir = storage_path('app/backups');
+
+        if (!File::exists($backupDir)) {
+            File::makeDirectory($backupDir, 0755, true);
+        }
+
+        $files = File::files($backupDir);
+        $backupList = [];
+
+        foreach ($files as $file) {
+            $backupList[] = [
+                'name' => $file->getFilename(),
+                'size' => round($file->getSize() / 1024, 2) . ' KB',
+                'date' => date('d-m-Y H:i:s', $file->getMTime()),
+            ];
+        }
+
+        // Urutkan backup terbaru di atas
+        usort($backupList, fn($a, $b) => strcmp($b['date'], $a['date']));
+
+        $bankSoalList = BankSoal::with('mataPelajaran')->withCount('soalButir')->get();
+
+        return view('admin.backup', compact('sekolah', 'backupList', 'bankSoalList'));
+    }
+
+    public function backupDatabase()
+    {
+        $backupDir = storage_path('app/backups');
+        if (!File::exists($backupDir)) {
+            File::makeDirectory($backupDir, 0755, true);
+        }
+
+        $filename = 'cbt_database_' . date('Y-m-d_His') . '.sql';
+        $filePath = $backupDir . DIRECTORY_SEPARATOR . $filename;
+
+        // Generate dump SQL dari seluruh tabel
+        $tables = [
+            'master_sekolah',
+            'kelas',
+            'mata_pelajaran',
+            'users',
+            'siswa',
+            'bank_soal',
+            'soal_butir',
+            'jadwal_ujian',
+            'jadwal_ujian_kelas',
+            'ujian_peserta',
+            'ujian_jawaban',
+            'petugas_ujian',
+            'berita_acara',
+            'daftar_hadir',
+        ];
+
+        $sqlContent = "-- CBT SMKN 1 Kupang Barat Database Backup\n";
+        $sqlContent .= "-- Tanggal Backup: " . date('Y-m-d H:i:s') . "\n";
+        $sqlContent .= "-- Dikeluarkan oleh: Administrator (Vicky Koroh, S.Pd., Gr.)\n\n";
+
+        foreach ($tables as $table) {
+            if (!Schema::hasTable($table)) {
+                continue;
+            }
+
+            $rows = DB::table($table)->get();
+            $sqlContent .= "-- Struktur & Data Tabel: `{$table}`\n";
+
+            if ($rows->count() > 0) {
+                foreach ($rows as $row) {
+                    $rowArray = (array) $row;
+                    $keys = array_map(fn($k) => "`{$k}`", array_keys($rowArray));
+                    $values = array_map(function ($val) {
+                        if (is_null($val)) return 'NULL';
+                        return "'" . addslashes((string) $val) . "'";
+                    }, array_values($rowArray));
+
+                    $sqlContent .= "INSERT INTO `{$table}` (" . implode(', ', $keys) . ") VALUES (" . implode(', ', $values) . ");\n";
+                }
+            }
+            $sqlContent .= "\n";
+        }
+
+        File::put($filePath, $sqlContent);
+
+        return back()->with('success', "Cadangan database berhasil dibuat dengan nama {$filename} (" . round(filesize($filePath) / 1024, 2) . " KB).");
+    }
+
+    public function downloadBackupDatabase($filename)
+    {
+        $cleanName = basename($filename);
+        $filePath = storage_path('app/backups/' . $cleanName);
+
+        if (!File::exists($filePath)) {
+            return back()->with('error', 'Berkas cadangan tidak ditemukan di server.');
+        }
+
+        return response()->download($filePath, $cleanName);
+    }
+
+    public function hapusBackupDatabase($filename)
+    {
+        $cleanName = basename($filename);
+        $filePath = storage_path('app/backups/' . $cleanName);
+
+        if (File::exists($filePath)) {
+            File::delete($filePath);
+            return back()->with('success', "Berkas cadangan {$cleanName} berhasil dihapus.");
+        }
+
+        return back()->with('error', 'Berkas cadangan tidak ditemukan.');
+    }
+
+    public function exportBankSoalJson($id)
+    {
+        $bank = BankSoal::with(['mataPelajaran', 'soalButir'])->findOrFail($id);
+
+        $exportData = [
+            'app' => 'CBT SMKN 1 Kupang Barat',
+            'version' => '2.0',
+            'exported_at' => now()->toIso8601String(),
+            'bank_soal' => [
+                'kode_bank' => $bank->kode_bank,
+                'nama_bank' => $bank->nama_bank,
+                'kkm' => $bank->kkm,
+                'standar_preset' => $bank->standar_preset,
+                'keterangan' => $bank->keterangan,
+                'acak_soal' => $bank->acak_soal,
+                'acak_opsi' => $bank->acak_opsi,
+                'mapel' => [
+                    'nama_mapel' => $bank->mataPelajaran->nama_mapel ?? null,
+                    'kode_mapel' => $bank->mataPelajaran->kode_mapel ?? null,
+                    'kelompok' => $bank->mataPelajaran->kelompok ?? null,
+                    'jurusan' => $bank->mataPelajaran->jurusan ?? null,
+                ],
+            ],
+            'butir_soal' => $bank->soalButir->map(function ($s) {
+                return [
+                    'nomor_urut' => $s->nomor_urut,
+                    'tipe_soal' => $s->tipe_soal,
+                    'pertanyaan' => $s->pertanyaan,
+                    'gambar' => $s->gambar,
+                    'pilihan_a' => $s->pilihan_a,
+                    'pilihan_b' => $s->pilihan_b,
+                    'pilihan_c' => $s->pilihan_c,
+                    'pilihan_d' => $s->pilihan_d,
+                    'pilihan_e' => $s->pilihan_e,
+                    'kunci_jawaban' => $s->kunci_jawaban,
+                    'bobot_nilai' => $s->bobot_nilai,
+                    'pembahasan' => $s->pembahasan,
+                ];
+            })->toArray(),
+        ];
+
+        $jsonContent = json_encode($exportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $fileName = 'BankSoal_' . Str::slug($bank->kode_bank ?: $bank->nama_bank) . '_' . date('Ymd_His') . '.json';
+
+        return response($jsonContent, 200, [
+            'Content-Type' => 'application/json',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
+
+    public function importBankSoalJson(Request $request)
+    {
+        $request->validate([
+            'file_json' => 'required|file|max:20480', // max 20MB
+        ]);
+
+        $content = file_get_contents($request->file('file_json')->getRealPath());
+        $data = json_decode($content, true);
+
+        if (!is_array($data) || !isset($data['bank_soal'])) {
+            return back()->with('error', 'Format berkas JSON tidak valid atau bukan berkas cadangan Bank Soal resmi CBT.');
+        }
+
+        $bsInfo = $data['bank_soal'];
+        $mapelInfo = $bsInfo['mapel'] ?? [];
+
+        // Cari atau buat mata pelajaran terkait
+        $mapel = null;
+        if (!empty($mapelInfo['nama_mapel'])) {
+            $mapel = MataPelajaran::where('nama_mapel', $mapelInfo['nama_mapel'])->first();
+            if (!$mapel) {
+                $mapel = MataPelajaran::create([
+                    'nama_mapel' => $mapelInfo['nama_mapel'],
+                    'kode_mapel' => $mapelInfo['kode_mapel'] ?? Str::slug($mapelInfo['nama_mapel']),
+                    'kelompok' => $mapelInfo['kelompok'] ?? 'Umum',
+                    'jurusan' => $mapelInfo['jurusan'] ?? 'Semua',
+                ]);
+            }
+        }
+
+        if (!$mapel) {
+            $mapel = MataPelajaran::first();
+        }
+
+        // Generate kode bank unik jika kode sudah ada
+        $baseKode = $bsInfo['kode_bank'] ?: 'BS-RESTORE';
+        $uniqueKode = $baseKode;
+        $counter = 1;
+        while (BankSoal::where('kode_bank', $uniqueKode)->exists()) {
+            $uniqueKode = $baseKode . '-RESTORE-' . $counter++;
+        }
+
+        $newBank = BankSoal::create([
+            'mata_pelajaran_id' => $mapel?->id ?? 1,
+            'guru_id' => auth()->id() ?? 1,
+            'kode_bank' => $uniqueKode,
+            'nama_bank' => ($bsInfo['nama_bank'] ?? 'Bank Soal Restore') . ' (Restored)',
+            'kkm' => $bsInfo['kkm'] ?? 75,
+            'standar_preset' => $bsInfo['standar_preset'] ?? 40,
+            'keterangan' => $bsInfo['keterangan'] ?? 'Dipulihkan dari berkas cadangan JSON',
+            'acak_soal' => $bsInfo['acak_soal'] ?? true,
+            'acak_opsi' => $bsInfo['acak_opsi'] ?? true,
+            'status' => 'aktif',
+        ]);
+
+        $butirCount = 0;
+        if (isset($data['butir_soal']) && is_array($data['butir_soal'])) {
+            foreach ($data['butir_soal'] as $item) {
+                SoalButir::create([
+                    'bank_soal_id' => $newBank->id,
+                    'nomor_urut' => $item['nomor_urut'] ?? ($butirCount + 1),
+                    'jenis_soal' => $item['jenis_soal'] ?? ($item['tipe_soal'] ?? 'pg'),
+                    'konten_soal' => $item['konten_soal'] ?? ($item['pertanyaan'] ?? ''),
+                    'opsi_a' => $item['opsi_a'] ?? ($item['pilihan_a'] ?? null),
+                    'opsi_b' => $item['opsi_b'] ?? ($item['pilihan_b'] ?? null),
+                    'opsi_c' => $item['opsi_c'] ?? ($item['pilihan_c'] ?? null),
+                    'opsi_d' => $item['opsi_d'] ?? ($item['pilihan_d'] ?? null),
+                    'opsi_e' => $item['opsi_e'] ?? ($item['pilihan_e'] ?? null),
+                    'kunci_jawaban' => $item['kunci_jawaban'] ?? 'A',
+                    'bobot' => $item['bobot'] ?? ($item['bobot_nilai'] ?? 2.5),
+                ]);
+                $butirCount++;
+            }
+        }
+
+        return back()->with('success', "Bank Soal '{$newBank->nama_bank}' berhasil dipulihkan dengan {$butirCount} butir soal lengkap!");
     }
 }

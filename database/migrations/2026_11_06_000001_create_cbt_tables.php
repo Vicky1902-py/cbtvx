@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('kecamatan')->default('Kupang Barat');
             $table->string('kabupaten')->default('Kab. Kupang');
             $table->string('provinsi')->default('Nusa Tenggara Timur');
-            $table->string('kepala_sekolah')->default('Vicky Koroh, S.Pd., M.Kom.');
+            $table->string('kepala_sekolah')->default('Vicky Koroh, S.Pd., Gr.');
             $table->string('nip_kepala_sekolah')->nullable()->default('198501192011011005');
             $table->string('ttd_kepala_sekolah')->nullable()->default('images/ttd_kepsek.png');
             $table->string('logo_sekolah')->nullable()->default('images/logo_smk.png');
@@ -105,7 +105,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('bank_soal_id')->constrained('bank_soal')->onDelete('cascade');
             $table->string('nama_ujian', 150);
-            $table->enum('jenis_ujian', ['TKA', 'ANBK', 'UTS', 'UAS', 'UH', 'TRYOUT'])->default('TKA');
+            $table->string('jenis_ujian', 50)->default('TKA');
             $table->string('token_ujian', 10)->default('SMK01');
             $table->boolean('acak_token')->default(false);
             $table->dateTime('waktu_mulai');

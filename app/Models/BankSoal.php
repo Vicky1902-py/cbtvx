@@ -24,6 +24,11 @@ class BankSoal extends Model
         return $this->hasMany(SoalButir::class, 'bank_soal_id')->orderBy('nomor_urut');
     }
 
+    public function soalButir()
+    {
+        return $this->hasMany(SoalButir::class, 'bank_soal_id')->orderBy('nomor_urut');
+    }
+
     public function jadwalUjian()
     {
         return $this->hasMany(JadwalUjian::class);

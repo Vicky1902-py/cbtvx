@@ -17,7 +17,7 @@ class MasterSekolahTest extends TestCase
             'kecamatan' => 'Kupang Barat',
             'kabupaten' => 'Kabupaten Kupang',
             'npsn' => '69727541',
-            'kepala_sekolah' => 'Vicky Koroh, S.Pd., M.Kom.',
+            'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
             'nip_kepala_sekolah' => '198501192011011005',
             'logo_pemprov' => 'images/logo_pemprov_ntt.svg',
             'logo_sekolah' => 'images/logo_smk.png',
@@ -33,7 +33,7 @@ class MasterSekolahTest extends TestCase
         $this->assertStringContainsString('logo_pemprov', $sekolah->logo_pemprov_url);
         $this->assertStringContainsString('logo_smk', $sekolah->logo_sekolah_url);
         $this->assertStringContainsString('ttd_kepsek', $sekolah->ttd_kepala_sekolah_url);
-        $this->assertEquals('Vicky Koroh, S.Pd., M.Kom.', $sekolah->kepala_sekolah);
+        $this->assertEquals('Vicky Koroh, S.Pd., Gr.', $sekolah->kepala_sekolah);
         $this->assertEquals('198501192011011005', $sekolah->nip_kepala_sekolah);
     }
 

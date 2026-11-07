@@ -613,12 +613,40 @@
             </li>
         </ul>
 
+        <div class="nav-group-title">Laporan & Analisis</div>
+        <ul class="nav-menu">
+            <li class="nav-item {{ request()->routeIs('admin.laporan.nilai*') ? 'active' : '' }}" title="Laporan Hasil Ujian & Rekap Nilai">
+                <a href="{{ route('admin.laporan.nilai') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+                    <span>Hasil Ujian & Nilai</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.laporan.analisis_soal*') ? 'active' : '' }}" title="Analisis Butir Soal">
+                <a href="{{ route('admin.laporan.analisis_soal') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    <span>Analisis Butir Soal</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.laporan.reset_ujian*') ? 'active' : '' }}" title="Monitor & Reset Ujian Siswa">
+                <a href="{{ route('admin.laporan.reset_ujian') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                    <span>Monitor & Reset Siswa</span>
+                </a>
+            </li>
+        </ul>
+
         <div class="nav-group-title">Sistem & Profil</div>
         <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}" title="Pengaturan & TTD Kepsek">
                 <a href="{{ route('admin.pengaturan') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                     <span>Data Sekolah & TTD Kepsek</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.backup*') ? 'active' : '' }}" title="Backup & Pemulihan">
+                <a href="{{ route('admin.backup') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    <span>Backup Database & Soal</span>
                 </a>
             </li>
         </ul>
@@ -695,6 +723,27 @@
                     const currentState = document.body.classList.contains('sidebar-collapsed');
                     localStorage.setItem('cbt_sidebar_collapsed', currentState);
                 });
+            }
+        });
+        // Helper Modal Universal
+        window.openModal = function (modalId) {
+            const m = document.getElementById(modalId);
+            if (m) {
+                m.style.display = 'flex';
+            }
+        };
+
+        window.closeModal = function (modalId) {
+            const m = document.getElementById(modalId);
+            if (m) {
+                m.style.display = 'none';
+            }
+        };
+
+        // Close on clicking backdrop
+        window.addEventListener('click', function (e) {
+            if (e.target && e.target.id && e.target.id.startsWith('modal') && e.target.style.display === 'flex') {
+                e.target.style.display = 'none';
             }
         });
     </script>
