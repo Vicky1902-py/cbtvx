@@ -2054,27 +2054,360 @@ class AdminController extends Controller
         return view('admin.cetak_kartu', compact('sekolah', 'daftarSiswa'));
     }
 
-    public function formBeritaAcara($jadwalId)
+    /**
+     * Halaman Utama Menu: Daftar Hadir Asesmen (Filter per Jadwal, Kelas, Sesi)
+     */
+    public function daftarHadirIndex(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas.siswa'])->findOrFail($jadwalId);
-        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
-        $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
-        $totalPeserta = Siswa::whereIn('kelas_id', $jadwal->kelas->pluck('id'))->count();
+        $jadwalList = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas'])->orderByDesc('id')->get();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
 
-        return view('admin.berita_acara_form', compact('sekolah', 'jadwal', 'beritaAcara', 'guruList', 'totalPeserta'));
+        $selectedJadwalId = $request->query('jadwal_id', $jadwalList->first()?->id);
+        $selectedKelasId = $request->query('kelas_id');
+        $selectedSesi = $request->query('sesi');
+
+        $activeJadwal = $jadwalList->firstWhere('id', $selectedJadwalId);
+
+        $sesiRows = [];
+        if ($activeJadwal) {
+            $targetKelas = $activeJadwal->kelas;
+            if ($selectedKelasId) {
+                $targetKelas = $targetKelas->where('id', $selectedKelasId);
+            }
+
+            foreach ($targetKelas as $kls) {
+                $availableSessions = ['Sesi 1', 'Sesi 2', 'Sesi 3'];
+                if ($selectedSesi) {
+                    $availableSessions = array_filter($availableSessions, function ($s) use ($selectedSesi) {
+                        return strcasecmp(trim($s), trim($selectedSesi)) === 0 || strcasecmp(trim(str_replace('Sesi ', '', $s)), trim($selectedSesi)) === 0;
+                    });
+                }
+
+                foreach ($availableSessions as $sesiName) {
+                    $cleanSesi = strtolower(str_replace(' ', '', $sesiName));
+                    $siswaCount = Siswa::where('kelas_id', $kls->id)
+                        ->where(function ($q) use ($cleanSesi) {
+                            $q->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])
+                              ->orWhereNull('sesi_ujian')
+                              ->orWhere('sesi_ujian', '');
+                        })
+                        ->count();
+
+                    $ba = BeritaAcara::where('jadwal_ujian_id', $activeJadwal->id)
+                        ->where('kelas_id', $kls->id)
+                        ->where(function ($q) use ($sesiName) {
+                            $q->where('sesi', $sesiName)
+                              ->orWhere('sesi', str_replace('Sesi ', '', $sesiName));
+                        })
+                        ->first();
+
+                    if (!$ba) {
+                        $baFallback = BeritaAcara::where('jadwal_ujian_id', $activeJadwal->id)->first();
+                    } else {
+                        $baFallback = $ba;
+                    }
+
+                    $sesiRows[] = [
+                        'jadwal' => $activeJadwal,
+                        'kelas' => $kls,
+                        'sesi' => $sesiName,
+                        'total_siswa' => $siswaCount,
+                        'berita_acara' => $ba,
+                        'proktor' => $ba ? $ba->nama_proktor : ($baFallback?->nama_proktor ?? 'Izak Robinson Koroh, S.Pd.,Gr'),
+                        'pengawas' => $ba ? $ba->nama_pengawas : ($baFallback?->nama_pengawas ?? 'Mike Amin Imanuel Modok'),
+                        'hadir' => $ba ? $ba->jumlah_peserta_hadir : $siswaCount,
+                        'tidak_hadir' => $ba ? $ba->jumlah_peserta_tidak_hadir : 0,
+                        'status' => $ba ? 'Tersimpan' : 'Siap Diisi',
+                    ];
+                }
+            }
+        }
+
+        return view('admin.daftar_hadir', compact(
+            'sekolah', 'jadwalList', 'kelasList', 'selectedJadwalId', 'selectedKelasId', 'selectedSesi', 'activeJadwal', 'sesiRows'
+        ));
     }
 
+    /**
+     * Form Isi Daftar Hadir Per-Kelas dan Per-Sesi
+     */
+    public function formDaftarHadir(Request $request, $jadwalId)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas'])->findOrFail($jadwalId);
+
+        $kelasId = $request->query('kelas_id', $jadwal->kelas->first()?->id);
+        $sesi = $request->query('sesi', 'Sesi 1');
+        $sesiFormatted = stripos($sesi, 'Sesi') === false ? 'Sesi ' . $sesi : $sesi;
+        $sesiNumeric = str_replace(['Sesi ', 'sesi '], '', $sesiFormatted);
+
+        $kelas = Kelas::find($kelasId) ?? $jadwal->kelas->first();
+
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)
+            ->where(function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId)->orWhereNull('kelas_id');
+            })
+            ->where(function ($q) use ($sesiFormatted, $sesiNumeric) {
+                $q->where('sesi', $sesiFormatted)->orWhere('sesi', $sesiNumeric);
+            })
+            ->first();
+
+        $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
+
+        $cleanSesi = strtolower(str_replace(' ', '', $sesiFormatted));
+        $siswaQuery = Siswa::with('user', 'kelas');
+        if ($kelas) {
+            $siswaQuery->where('kelas_id', $kelas->id);
+        }
+        $matchSesi = (clone $siswaQuery)->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])->count();
+        if ($matchSesi > 0) {
+            $siswaQuery->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi]);
+        }
+        $siswaList = $siswaQuery->orderBy('nama_lengkap')->get();
+
+        return view('admin.daftar_hadir_form', compact(
+            'sekolah', 'jadwal', 'kelas', 'sesiFormatted', 'beritaAcara', 'guruList', 'siswaList'
+        ));
+    }
+
+    /**
+     * Simpan Presensi & Data Daftar Hadir
+     */
+    public function simpanDaftarHadir(Request $request, $jadwalId)
+    {
+        $jadwal = JadwalUjian::findOrFail($jadwalId);
+
+        $data = $request->validate([
+            'kelas_id' => 'required|exists:kelas,id',
+            'sesi' => 'required|string|max:30',
+            'ruangan' => 'nullable|string|max:50',
+            'id_server' => 'nullable|string|max:80',
+            'kode_kabupaten' => 'nullable|string|max:30',
+            'kode_sekolah' => 'nullable|string|max:30',
+            'hari_tanggal' => 'required|string|max:100',
+            'waktu_mulai' => 'nullable|string|max:30',
+            'waktu_selesai' => 'nullable|string|max:30',
+            'proktor_id' => 'nullable|exists:users,id',
+            'nama_proktor' => 'required|string|max:150',
+            'nip_proktor' => 'nullable|string|max:40',
+            'pengawas_id' => 'nullable|exists:users,id',
+            'nama_pengawas' => 'required|string|max:150',
+            'nip_pengawas' => 'nullable|string|max:40',
+            'catatan_pelaksanaan' => 'nullable|string',
+            'kehadiran' => 'nullable|array',
+            'keterangan_siswa' => 'nullable|array',
+        ]);
+
+        $kelasId = $data['kelas_id'];
+        $sesi = $data['sesi'];
+        $kehadiran = $request->input('kehadiran', []);
+        $keteranganSiswa = $request->input('keterangan_siswa', []);
+
+        $cleanSesi = strtolower(str_replace(' ', '', $sesi));
+        $siswaQuery = Siswa::with('user')->where('kelas_id', $kelasId);
+        $matchSesi = (clone $siswaQuery)->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])->count();
+        if ($matchSesi > 0) {
+            $siswaQuery->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi]);
+        }
+        $siswaList = $siswaQuery->get();
+
+        $seharusnya = $siswaList->count();
+        $hadir = 0;
+        $tidakHadir = 0;
+        $tidakHadirList = [];
+        $presensiData = [];
+
+        foreach ($siswaList as $s) {
+            $status = $kehadiran[$s->id] ?? 'hadir';
+            $ket = $keteranganSiswa[$s->id] ?? '';
+            $presensiData[$s->id] = [
+                'status' => $status,
+                'keterangan' => $ket,
+                'username' => $s->user->username ?? $s->nomor_peserta ?? $s->nisn,
+                'nama' => $s->nama_lengkap,
+            ];
+
+            if ($status === 'hadir') {
+                $hadir++;
+            } else {
+                $tidakHadir++;
+                $usr = $s->user->username ?? $s->nomor_peserta ?? $s->nisn;
+                $tidakHadirList[] = $usr . ($ket ? " ($ket)" : '');
+            }
+        }
+
+        $beritaAcara = BeritaAcara::updateOrCreate(
+            [
+                'jadwal_ujian_id' => $jadwalId,
+                'kelas_id' => $kelasId,
+                'sesi' => $sesi,
+            ],
+            [
+                'nomor_surat' => $request->input('nomor_surat', '421.5/024/SMKN1.KB/' . date('Y')),
+                'hari_tanggal' => $data['hari_tanggal'],
+                'waktu_mulai' => $data['waktu_mulai'] ?? '08:00',
+                'waktu_selesai' => $data['waktu_selesai'] ?? '09:45',
+                'ruangan' => $data['ruangan'] ?? 'Lab Komputer 1',
+                'id_server' => $data['id_server'] ?? 'K24020010-AS4K',
+                'kode_kabupaten' => $data['kode_kabupaten'] ?? '02',
+                'kode_sekolah' => $data['kode_sekolah'] ?? '0010',
+                'proktor_id' => $data['proktor_id'] ?? null,
+                'nama_proktor' => $data['nama_proktor'],
+                'nip_proktor' => $data['nip_proktor'] ?? null,
+                'pengawas_id' => $data['pengawas_id'] ?? null,
+                'nama_pengawas' => $data['nama_pengawas'],
+                'nip_pengawas' => $data['nip_pengawas'] ?? null,
+                'penanggung_jawab_nama' => $request->input('penanggung_jawab_nama', $jadwal->bankSoal->user->name ?? 'Apolos Kofan, S.Pd.,MM'),
+                'penanggung_jawab_nip' => $request->input('penanggung_jawab_nip', '196704062006041009'),
+                'jumlah_peserta_seharusnya' => $seharusnya,
+                'jumlah_peserta_hadir' => $hadir,
+                'jumlah_peserta_tidak_hadir' => $tidakHadir,
+                'daftar_tidak_hadir' => count($tidakHadirList) > 0 ? implode(', ', $tidakHadirList) : '-',
+                'catatan_pelaksanaan' => $data['catatan_pelaksanaan'] ?? 'UJIAN BERJALAN AMAN DAN LANCAR',
+                'presensi_data' => $presensiData,
+            ]
+        );
+
+        return redirect()->route('admin.daftar_hadir.form', ['id' => $jadwalId, 'kelas_id' => $kelasId, 'sesi' => $sesi])
+            ->with('success', 'Daftar Hadir Asesmen berhasil disimpan. Data rekapitulasi kehadiran otomatis tersinkron.');
+    }
+
+    /**
+     * Halaman Utama Menu: Berita Acara Asesmen (Filter per Jadwal, Kelas, Sesi)
+     */
+    public function beritaAcaraIndex(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwalList = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas'])->orderByDesc('id')->get();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
+
+        $selectedJadwalId = $request->query('jadwal_id', $jadwalList->first()?->id);
+        $selectedKelasId = $request->query('kelas_id');
+        $selectedSesi = $request->query('sesi');
+
+        $activeJadwal = $jadwalList->firstWhere('id', $selectedJadwalId);
+
+        $sesiRows = [];
+        if ($activeJadwal) {
+            $targetKelas = $activeJadwal->kelas;
+            if ($selectedKelasId) {
+                $targetKelas = $targetKelas->where('id', $selectedKelasId);
+            }
+
+            foreach ($targetKelas as $kls) {
+                $availableSessions = ['Sesi 1', 'Sesi 2', 'Sesi 3'];
+                if ($selectedSesi) {
+                    $availableSessions = array_filter($availableSessions, function ($s) use ($selectedSesi) {
+                        return strcasecmp(trim($s), trim($selectedSesi)) === 0 || strcasecmp(trim(str_replace('Sesi ', '', $s)), trim($selectedSesi)) === 0;
+                    });
+                }
+
+                foreach ($availableSessions as $sesiName) {
+                    $cleanSesi = strtolower(str_replace(' ', '', $sesiName));
+                    $siswaCount = Siswa::where('kelas_id', $kls->id)
+                        ->where(function ($q) use ($cleanSesi) {
+                            $q->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])
+                              ->orWhereNull('sesi_ujian')
+                              ->orWhere('sesi_ujian', '');
+                        })
+                        ->count();
+
+                    $ba = BeritaAcara::where('jadwal_ujian_id', $activeJadwal->id)
+                        ->where('kelas_id', $kls->id)
+                        ->where(function ($q) use ($sesiName) {
+                            $q->where('sesi', $sesiName)
+                              ->orWhere('sesi', str_replace('Sesi ', '', $sesiName));
+                        })
+                        ->first();
+
+                    if (!$ba) {
+                        $baFallback = BeritaAcara::where('jadwal_ujian_id', $activeJadwal->id)->first();
+                    } else {
+                        $baFallback = $ba;
+                    }
+
+                    $sesiRows[] = [
+                        'jadwal' => $activeJadwal,
+                        'kelas' => $kls,
+                        'sesi' => $sesiName,
+                        'total_siswa' => $siswaCount,
+                        'berita_acara' => $ba,
+                        'nomor_surat' => $ba ? $ba->nomor_surat : ('421.5/024/SMKN1.KB/' . date('Y')),
+                        'ruangan' => $ba ? $ba->ruangan : 'Lab Komputer 1',
+                        'id_server' => $ba ? $ba->id_server : 'K24020010-AS4K',
+                        'proktor' => $ba ? $ba->nama_proktor : ($baFallback?->nama_proktor ?? 'Izak Robinson Koroh, S.Pd.,Gr'),
+                        'pengawas' => $ba ? $ba->nama_pengawas : ($baFallback?->nama_pengawas ?? 'Mike Amin Imanuel Modok'),
+                        'penanggung_jawab' => $ba ? $ba->penanggung_jawab_nama : $sekolah->kepala_sekolah,
+                        'hadir' => $ba ? $ba->jumlah_peserta_hadir : $siswaCount,
+                        'tidak_hadir' => $ba ? $ba->jumlah_peserta_tidak_hadir : 0,
+                        'status' => $ba ? 'Lengkap' : 'Belum Dibuat',
+                    ];
+                }
+            }
+        }
+
+        return view('admin.berita_acara', compact(
+            'sekolah', 'jadwalList', 'kelasList', 'selectedJadwalId', 'selectedKelasId', 'selectedSesi', 'activeJadwal', 'sesiRows'
+        ));
+    }
+
+    /**
+     * Form Isi Berita Acara (Support Per-Kelas & Per-Sesi)
+     */
+    public function formBeritaAcara(Request $request, $jadwalId)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas'])->findOrFail($jadwalId);
+
+        $kelasId = $request->query('kelas_id', $jadwal->kelas->first()?->id);
+        $sesi = $request->query('sesi', 'Sesi 1');
+        $sesiFormatted = stripos($sesi, 'Sesi') === false ? 'Sesi ' . $sesi : $sesi;
+        $sesiNumeric = str_replace(['Sesi ', 'sesi '], '', $sesiFormatted);
+
+        $kelas = Kelas::find($kelasId) ?? $jadwal->kelas->first();
+
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)
+            ->where(function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId)->orWhereNull('kelas_id');
+            })
+            ->where(function ($q) use ($sesiFormatted, $sesiNumeric) {
+                $q->where('sesi', $sesiFormatted)->orWhere('sesi', $sesiNumeric);
+            })
+            ->first();
+
+        $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
+
+        $cleanSesi = strtolower(str_replace(' ', '', $sesiFormatted));
+        $siswaQuery = Siswa::where('kelas_id', $kelasId);
+        $matchSesi = (clone $siswaQuery)->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])->count();
+        if ($matchSesi > 0) {
+            $siswaQuery->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi]);
+        }
+        $totalPeserta = $siswaQuery->count();
+
+        return view('admin.berita_acara_form', compact(
+            'sekolah', 'jadwal', 'kelas', 'sesiFormatted', 'beritaAcara', 'guruList', 'totalPeserta'
+        ));
+    }
+
+    /**
+     * Simpan Berita Acara (Support Per-Kelas & Per-Sesi)
+     */
     public function simpanBeritaAcara(Request $request, $jadwalId)
     {
         $jadwal = JadwalUjian::findOrFail($jadwalId);
 
         $data = $request->validate([
+            'kelas_id' => 'nullable|exists:kelas,id',
             'nomor_surat' => 'required|string|max:100',
             'hari_tanggal' => 'required|string|max:100',
             'waktu_mulai' => 'nullable|string|max:30',
             'waktu_selesai' => 'nullable|string|max:30',
             'ruangan' => 'nullable|string|max:50',
+            'id_server' => 'nullable|string|max:80',
+            'kode_kabupaten' => 'nullable|string|max:30',
+            'kode_sekolah' => 'nullable|string|max:30',
             'sesi' => 'nullable|string|max:30',
             'proktor_id' => 'nullable|exists:users,id',
             'nama_proktor' => 'required|string|max:150',
@@ -2082,6 +2415,9 @@ class AdminController extends Controller
             'pengawas_id' => 'nullable|exists:users,id',
             'nama_pengawas' => 'required|string|max:150',
             'nip_pengawas' => 'nullable|string|max:40',
+            'penanggung_jawab_id' => 'nullable|exists:users,id',
+            'penanggung_jawab_nama' => 'required|string|max:150',
+            'penanggung_jawab_nip' => 'nullable|string|max:50',
             'jumlah_peserta_seharusnya' => 'required|integer|min:0',
             'jumlah_peserta_hadir' => 'required|integer|min:0',
             'jumlah_peserta_tidak_hadir' => 'nullable|integer|min:0',
@@ -2089,64 +2425,123 @@ class AdminController extends Controller
             'catatan_pelaksanaan' => 'nullable|string',
         ]);
 
-        $data['jadwal_ujian_id'] = $jadwalId;
+        $kelasId = $data['kelas_id'] ?? null;
+        $sesi = $data['sesi'] ?? 'Sesi 1';
 
-        BeritaAcara::updateOrCreate(
-            ['jadwal_ujian_id' => $jadwalId],
+        $beritaAcara = BeritaAcara::updateOrCreate(
+            [
+                'jadwal_ujian_id' => $jadwalId,
+                'kelas_id' => $kelasId,
+                'sesi' => $sesi,
+            ],
             $data
         );
 
-        return redirect()->route('admin.berita_acara.form', $jadwalId)->with('success', 'Berita Acara Ujian berhasil disimpan. Anda dapat langsung mencetak lembar dokumen.');
+        return redirect()->route('admin.berita_acara.form', ['id' => $jadwalId, 'kelas_id' => $kelasId, 'sesi' => $sesi])
+            ->with('success', 'Berita Acara Asesmen berhasil disimpan. Anda dapat langsung mencetak lembar dokumen A4.');
     }
 
-    public function cetakBeritaAcara($jadwalId)
-    {
-        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'peserta.siswa.kelas', 'kelas.siswa'])->findOrFail($jadwalId);
-        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
-
-        // Jika belum pernah disimpan, buat objek default agar lembar cetak langsung valid
-        if (!$beritaAcara) {
-            $totalPeserta = Siswa::whereIn('kelas_id', $jadwal->kelas->pluck('id'))->count();
-            $proktor = User::where('role', 'proktor')->first() ?? User::where('username', '199002192020121003')->first();
-            $pengawas = User::where('role', 'guru')->first() ?? User::where('username', '198911042024212044')->first();
-
-            $beritaAcara = new BeritaAcara([
-                'nomor_surat' => '421.5/024/SMKN1.KB/' . date('Y'),
-                'hari_tanggal' => Carbon::now()->isoFormat('dddd, D MMMM Y'),
-                'waktu_mulai' => '08:00',
-                'waktu_selesai' => '09:30',
-                'ruangan' => 'Lab Komputer 1',
-                'sesi' => 'Sesi 1',
-                'nama_proktor' => $proktor ? $proktor->name : 'Izak Robinson Koroh, S.Pd',
-                'nip_proktor' => $proktor ? ($proktor->nip ?: $proktor->username) : '199002192020121003',
-                'nama_pengawas' => $pengawas ? $pengawas->name : 'Potifera Buan, S.Pd',
-                'nip_pengawas' => $pengawas ? ($pengawas->nip ?: $pengawas->username) : '198911042024212044',
-                'jumlah_peserta_seharusnya' => $totalPeserta ?: 89,
-                'jumlah_peserta_hadir' => $totalPeserta ?: 89,
-                'jumlah_peserta_tidak_hadir' => 0,
-                'daftar_tidak_hadir' => '-',
-                'catatan_pelaksanaan' => 'Pelaksanaan asesmen CBT berjalan tertib, aman, dan lancar sesuai standar teknis Pusmendik/ANBK.',
-            ]);
-        }
-
-        return view('admin.cetak_berita_acara', compact('sekolah', 'jadwal', 'beritaAcara'));
-    }
-
-    public function cetakDaftarHadir($jadwalId)
+    /**
+     * Cetak Berita Acara Format A4 Presisi Pusmendik Kemendikdasmen (BA_LAB_1_BINDO_S1.pdf)
+     */
+    public function cetakBeritaAcara(Request $request, $jadwalId)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
         $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas.siswa'])->findOrFail($jadwalId);
-        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)->first();
 
-        // Ambil seluruh siswa dari rombel kelas yang ditugaskan
-        $kelasIds = $jadwal->kelas->pluck('id');
-        $siswaList = Siswa::with('kelas')
-            ->whereIn('kelas_id', $kelasIds)
-            ->orderBy('nama_lengkap')
-            ->get();
+        $kelasId = $request->query('kelas_id', $jadwal->kelas->first()?->id);
+        $sesi = $request->query('sesi', 'Sesi 1');
+        $sesiFormatted = stripos($sesi, 'Sesi') === false ? 'Sesi ' . $sesi : $sesi;
+        $sesiNumeric = str_replace(['Sesi ', 'sesi '], '', $sesiFormatted);
 
-        return view('admin.cetak_daftar_hadir', compact('sekolah', 'jadwal', 'siswaList', 'beritaAcara'));
+        $kelas = Kelas::find($kelasId) ?? $jadwal->kelas->first();
+
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)
+            ->where(function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId)->orWhereNull('kelas_id');
+            })
+            ->where(function ($q) use ($sesiFormatted, $sesiNumeric) {
+                $q->where('sesi', $sesiFormatted)->orWhere('sesi', $sesiNumeric);
+            })
+            ->first();
+
+        if (!$beritaAcara) {
+            $cleanSesi = strtolower(str_replace(' ', '', $sesiFormatted));
+            $siswaQuery = Siswa::where('kelas_id', $kelasId);
+            $matchSesi = (clone $siswaQuery)->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])->count();
+            if ($matchSesi > 0) {
+                $siswaQuery->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi]);
+            }
+            $totalPeserta = $siswaQuery->count();
+
+            $proktor = User::where('role', 'proktor')->first() ?? User::where('username', '199002192020121003')->first();
+            $pengawas = User::where('role', 'guru')->first() ?? User::where('username', '8843778679130052')->first();
+
+            $beritaAcara = new BeritaAcara([
+                'jadwal_ujian_id' => $jadwalId,
+                'kelas_id' => $kelasId,
+                'nomor_surat' => '421.5/024/SMKN1.KB/' . date('Y'),
+                'hari_tanggal' => Carbon::now()->isoFormat('dddd, D MMMM Y'),
+                'waktu_mulai' => '08:00',
+                'waktu_selesai' => '09:45',
+                'ruangan' => 'TKA 1',
+                'id_server' => 'K24020010-AS4K',
+                'kode_kabupaten' => '02',
+                'kode_sekolah' => '0010',
+                'sesi' => $sesiNumeric,
+                'nama_proktor' => $proktor ? $proktor->name : 'Izak Robinson Koroh, S.Pd.,Gr',
+                'nip_proktor' => $proktor ? ($proktor->nip ?: $proktor->username) : '199002192020121003',
+                'nama_pengawas' => $pengawas ? $pengawas->name : 'Mike Amin Imanuel Modok',
+                'nip_pengawas' => $pengawas ? ($pengawas->nip ?: $pengawas->username) : '8843778679130052',
+                'penanggung_jawab_nama' => $sekolah->kepala_sekolah ?: 'Apolos Kofan, S.Pd.,MM',
+                'penanggung_jawab_nip' => $sekolah->nip_kepala_sekolah ?: '196704062006041009',
+                'jumlah_peserta_seharusnya' => $totalPeserta ?: 18,
+                'jumlah_peserta_hadir' => $totalPeserta ?: 18,
+                'jumlah_peserta_tidak_hadir' => 0,
+                'daftar_tidak_hadir' => '-',
+                'catatan_pelaksanaan' => 'UJIAN BERJALAN AMAN DAN LANCAR',
+            ]);
+        }
+
+        return view('admin.cetak_berita_acara', compact('sekolah', 'jadwal', 'kelas', 'beritaAcara'));
+    }
+
+    /**
+     * Cetak Daftar Hadir Format A4 Presisi Pusmendik Kemendikdasmen (DH_HARI_1_BINDO.pdf)
+     */
+    public function cetakDaftarHadir(Request $request, $jadwalId)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'kelas.siswa'])->findOrFail($jadwalId);
+
+        $kelasId = $request->query('kelas_id', $jadwal->kelas->first()?->id);
+        $sesi = $request->query('sesi', 'Sesi 1');
+        $sesiFormatted = stripos($sesi, 'Sesi') === false ? 'Sesi ' . $sesi : $sesi;
+        $sesiNumeric = str_replace(['Sesi ', 'sesi '], '', $sesiFormatted);
+
+        $kelas = Kelas::find($kelasId) ?? $jadwal->kelas->first();
+
+        $beritaAcara = BeritaAcara::where('jadwal_ujian_id', $jadwalId)
+            ->where(function ($q) use ($kelasId) {
+                $q->where('kelas_id', $kelasId)->orWhereNull('kelas_id');
+            })
+            ->where(function ($q) use ($sesiFormatted, $sesiNumeric) {
+                $q->where('sesi', $sesiFormatted)->orWhere('sesi', $sesiNumeric);
+            })
+            ->first();
+
+        $cleanSesi = strtolower(str_replace(' ', '', $sesiFormatted));
+        $siswaQuery = Siswa::with('user', 'kelas');
+        if ($kelas) {
+            $siswaQuery->where('kelas_id', $kelas->id);
+        }
+        $matchSesi = (clone $siswaQuery)->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi])->count();
+        if ($matchSesi > 0) {
+            $siswaQuery->whereRaw("LOWER(REPLACE(sesi_ujian, ' ', '')) = ?", [$cleanSesi]);
+        }
+        $siswaList = $siswaQuery->orderBy('nama_lengkap')->get();
+
+        return view('admin.cetak_daftar_hadir', compact('sekolah', 'jadwal', 'kelas', 'sesiFormatted', 'sesiNumeric', 'siswaList', 'beritaAcara'));
     }
 
     public function petugasUjian(Request $request)

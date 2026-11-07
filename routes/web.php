@@ -88,12 +88,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/jadwal/{id}/rekap-nilai', [AdminController::class, 'rekapNilai'])->name('rekap_nilai');
     Route::get('/jadwal/{id}/export-nilai', [AdminController::class, 'exportRekapNilaiXlsx'])->name('export_nilai');
 
-    // Dokumen Cetak & Berita Acara
+    // Dokumen Cetak, Daftar Hadir & Berita Acara
     Route::get('/cetak-kartu', [AdminController::class, 'cetakKartu'])->name('cetak_kartu');
-    Route::get('/jadwal/{id}/berita-acara', [AdminController::class, 'formBeritaAcara'])->name('berita_acara.form');
-    Route::post('/jadwal/{id}/berita-acara', [AdminController::class, 'simpanBeritaAcara'])->name('berita_acara.simpan');
-    Route::get('/cetak-berita-acara/{id}', [AdminController::class, 'cetakBeritaAcara'])->name('cetak_berita_acara');
+
+    // Daftar Hadir Ujian (Index, Form Isi Per-Kelas/Sesi, Simpan, Cetak A4)
+    Route::get('/daftar-hadir', [AdminController::class, 'daftarHadirIndex'])->name('daftar_hadir');
+    Route::get('/daftar-hadir/{id}/isi', [AdminController::class, 'formDaftarHadir'])->name('daftar_hadir.form');
+    Route::post('/daftar-hadir/{id}/simpan', [AdminController::class, 'simpanDaftarHadir'])->name('daftar_hadir.simpan');
     Route::get('/cetak-daftar-hadir/{id}', [AdminController::class, 'cetakDaftarHadir'])->name('cetak_daftar_hadir');
+
+    // Berita Acara Ujian (Index, Form Isi Per-Kelas/Sesi, Simpan, Cetak A4)
+    Route::get('/berita-acara', [AdminController::class, 'beritaAcaraIndex'])->name('berita_acara');
+    Route::get('/berita-acara/{id}/isi', [AdminController::class, 'formBeritaAcara'])->name('berita_acara.form');
+    Route::post('/berita-acara/{id}/simpan', [AdminController::class, 'simpanBeritaAcara'])->name('berita_acara.simpan');
+    Route::get('/jadwal/{id}/berita-acara', [AdminController::class, 'formBeritaAcara']);
+    Route::post('/jadwal/{id}/berita-acara', [AdminController::class, 'simpanBeritaAcara']);
+    Route::get('/cetak-berita-acara/{id}', [AdminController::class, 'cetakBeritaAcara'])->name('cetak_berita_acara');
 
     // Petugas & Pengawas Ujian
     Route::get('/petugas-ujian', [AdminController::class, 'petugasUjian'])->name('petugas_ujian');

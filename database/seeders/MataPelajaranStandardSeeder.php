@@ -65,10 +65,10 @@ class MataPelajaranStandardSeeder extends Seeder
                 'tingkat' => '10',
             ],
             [
-                'kode' => 'DKK-TP-X',
-                'nama' => 'DKK TP',
+                'kode' => 'DKK-TPFL-X',
+                'nama' => 'DKK TPFL',
                 'kelompok' => 'Dasar Program Keahlian (DKK)',
-                'jurusan' => 'Teknik Pemesinan',
+                'jurusan' => 'Teknik Pengelasan dan Fabrikasi Logam',
                 'tingkat' => '10',
             ],
         ];
@@ -91,13 +91,13 @@ class MataPelajaranStandardSeeder extends Seeder
             ['kode' => 'KK-TITL-XI', 'nama' => 'KK TITL XI', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Instalasi Tenaga Listrik', 'tingkat' => '11'],
             ['kode' => 'KK-DPIB-XI', 'nama' => 'KK DPIB XI', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Desain Pemodelan dan Informasi Bangunan', 'tingkat' => '11'],
             ['kode' => 'KK-TKRO-XI', 'nama' => 'KK TKRO XI', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Kendaraan Ringan', 'tingkat' => '11'],
-            ['kode' => 'KK-TP-XI', 'nama' => 'KK TP XI', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Pemesinan', 'tingkat' => '11'],
+            ['kode' => 'KK-TP-XI', 'nama' => 'KK TP XI', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Pengelasan', 'tingkat' => '11'],
 
             // Kelas XII
             ['kode' => 'KK-TITL-XII', 'nama' => 'KK TITL XII', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Instalasi Tenaga Listrik', 'tingkat' => '12'],
             ['kode' => 'KK-DPIB-XII', 'nama' => 'KK DPIB XII', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Desain Pemodelan dan Informasi Bangunan', 'tingkat' => '12'],
             ['kode' => 'KK-TKRO-XII', 'nama' => 'KK TKRO XII', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Kendaraan Ringan', 'tingkat' => '12'],
-            ['kode' => 'KK-TP-XII', 'nama' => 'KK TP XII', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Pemesinan', 'tingkat' => '12'],
+            ['kode' => 'KK-TP-XII', 'nama' => 'KK TP XII', 'kelompok' => 'Konsentrasi Keahlian (KK)', 'jurusan' => 'Teknik Pengelasan', 'tingkat' => '12'],
         ];
 
         foreach ($mapelKk as $m) {
@@ -130,12 +130,12 @@ class MataPelajaranStandardSeeder extends Seeder
             ['kode' => 'MPP-TITL-XI', 'nama' => 'Mata Pelajaran Pilihan (TITL XI)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Instalasi Tenaga Listrik', 'tingkat' => '11'],
             ['kode' => 'MPP-DPIB-XI', 'nama' => 'Mata Pelajaran Pilihan (DPIB XI)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Desain Pemodelan dan Informasi Bangunan', 'tingkat' => '11'],
             ['kode' => 'MPP-TKRO-XI', 'nama' => 'Mata Pelajaran Pilihan (TKRO XI)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Kendaraan Ringan', 'tingkat' => '11'],
-            ['kode' => 'MPP-TP-XI', 'nama' => 'Mata Pelajaran Pilihan (TP XI)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Pemesinan', 'tingkat' => '11'],
+            ['kode' => 'MPP-TP-XI', 'nama' => 'Mata Pelajaran Pilihan (TP XI)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Pengelasan', 'tingkat' => '11'],
 
             ['kode' => 'MPP-TITL-XII', 'nama' => 'Mata Pelajaran Pilihan (TITL XII)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Instalasi Tenaga Listrik', 'tingkat' => '12'],
             ['kode' => 'MPP-DPIB-XII', 'nama' => 'Mata Pelajaran Pilihan (DPIB XII)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Desain Pemodelan dan Informasi Bangunan', 'tingkat' => '12'],
             ['kode' => 'MPP-TKRO-XII', 'nama' => 'Mata Pelajaran Pilihan (TKRO XII)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Kendaraan Ringan', 'tingkat' => '12'],
-            ['kode' => 'MPP-TP-XII', 'nama' => 'Mata Pelajaran Pilihan (TP XII)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Pemesinan', 'tingkat' => '12'],
+            ['kode' => 'MPP-TP-XII', 'nama' => 'Mata Pelajaran Pilihan (TP XII)', 'kelompok' => 'Mata Pelajaran Pilihan (MPP)', 'jurusan' => 'Teknik Pengelasan', 'tingkat' => '12'],
         ];
 
         foreach ($mppLanjutan as $m) {
@@ -168,17 +168,28 @@ class MataPelajaranStandardSeeder extends Seeder
             $bankKka->save();
         }
 
-        // 6. Bersihkan mapel C2 & C3 lama jika tidak dipakai di Bank Soal manapun
+        // 6. Bersihkan mapel C2 & C3 lama dan mapel Pemesinan jika tidak dipakai di Bank Soal manapun
         $oldCodes = [
             'C2-DPIB-X', 'C3-DPIB-XI', 'C3-DPIB-XII',
             'C2-TITL-X', 'C3-TITL-XI', 'C3-TITL-XII',
             'C2-TO-X', 'C3-TKR-XI', 'C3-TKR-XII',
             'C2-TP-X', 'C3-TP-XI', 'C3-TPFL-XII',
+            'DKK-TP-X',
         ];
         foreach ($oldCodes as $oc) {
             $oldM = MataPelajaran::where('kode_mapel', $oc)->first();
             if ($oldM && $oldM->bankSoal()->count() == 0) {
                 $oldM->delete();
+            }
+        }
+
+        // Hapus semua sisa mapel bertuliskan Pemesinan yang tidak digunakan di Bank Soal
+        $pemesinanMapels = MataPelajaran::where('jurusan', 'like', '%Pemesinan%')
+            ->orWhere('nama_mapel', 'like', '%Pemesinan%')
+            ->get();
+        foreach ($pemesinanMapels as $pm) {
+            if ($pm->bankSoal()->count() == 0) {
+                $pm->delete();
             }
         }
     }

@@ -109,7 +109,7 @@ class DapodikSeeder extends Seeder
     'kode' => 'XI-TP',
     'nama' => 'XI TP',
     'tingkat' => '11',
-    'jurusan' => 'Teknik Pemesinan',
+    'jurusan' => 'Teknik Pengelasan',
     'sheet' => '8. XI TP',
     'kode_rombel' => '008',
   ),
@@ -145,7 +145,7 @@ class DapodikSeeder extends Seeder
     'kode' => 'XII-TP',
     'nama' => 'XII TP',
     'tingkat' => '12',
-    'jurusan' => 'Teknik Pemesinan',
+    'jurusan' => 'Teknik Pengelasan',
     'sheet' => '12. XII TP',
     'kode_rombel' => '012',
   ),
@@ -1846,10 +1846,10 @@ class DapodikSeeder extends Seeder
                 'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
             ],
             [
-                'kode' => 'MTK-TP-X',
-                'nama' => 'Matematika Terapan (Pemesinan)',
+                'kode' => 'MTK-TPFL-X',
+                'nama' => 'Matematika Terapan (Pengelasan)',
                 'kelompok' => 'Muatan Umum (A)',
-                'jurusan' => 'Teknik Pemesinan',
+                'jurusan' => 'Teknik Pengelasan dan Fabrikasi Logam',
                 'tingkat' => '10',
                 'nip_guru' => '',
                 'user_guru' => '0945774675230212', // Yesti Yulisna Nomate, S.Pd
@@ -2037,19 +2037,19 @@ class DapodikSeeder extends Seeder
                 'user_guru' => '',
             ],
             [
-                'kode' => 'C2-TP-X',
-                'nama' => 'Dasar-dasar Teknik Mesin dan Perkakas Tangan',
+                'kode' => 'C2-TPFL-X',
+                'nama' => 'Dasar-dasar Teknik Pengelasan dan Perkakas Tangan',
                 'kelompok' => 'Dasar Program Keahlian (C2)',
-                'jurusan' => 'Teknik Pemesinan',
+                'jurusan' => 'Teknik Pengelasan dan Fabrikasi Logam',
                 'tingkat' => '10',
                 'nip_guru' => '199103082020121003', // Floribertus Dhae Goa, S.Pd
                 'user_guru' => '',
             ],
             [
                 'kode' => 'C3-TP-XI',
-                'nama' => 'Teknik Pemesinan Bubut dan Frais Presisi',
+                'nama' => 'Teknik Pengelasan SMAW dan GMAW Terapan',
                 'kelompok' => 'Konsentrasi Keahlian / Produktif (C3)',
-                'jurusan' => 'Teknik Pemesinan',
+                'jurusan' => 'Teknik Pengelasan',
                 'tingkat' => '11',
                 'nip_guru' => '199101182020121003', // Januario Pa Padja, S.Pd
                 'user_guru' => '',

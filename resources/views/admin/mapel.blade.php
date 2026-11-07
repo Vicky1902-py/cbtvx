@@ -56,8 +56,8 @@
                 <option value="Teknik Instalasi Tenaga Listrik" {{ request('jurusan') === 'Teknik Instalasi Tenaga Listrik' ? 'selected' : '' }}>TITL / TKL (Listrik)</option>
                 <option value="Teknik Kendaraan Ringan" {{ request('jurusan') === 'Teknik Kendaraan Ringan' ? 'selected' : '' }}>TKR (Otomotif Ringan)</option>
                 <option value="Teknik Otomotif" {{ request('jurusan') === 'Teknik Otomotif' ? 'selected' : '' }}>Teknik Otomotif (TO)</option>
-                <option value="Teknik Pemesinan" {{ request('jurusan') === 'Teknik Pemesinan' ? 'selected' : '' }}>Teknik Pemesinan (TP)</option>
-                <option value="Teknik Pengelasan dan Fabrikasi Logam" {{ request('jurusan') === 'Teknik Pengelasan dan Fabrikasi Logam' ? 'selected' : '' }}>TPFL (Pengelasan)</option>
+                <option value="Teknik Pengelasan" {{ request('jurusan') === 'Teknik Pengelasan' ? 'selected' : '' }}>Teknik Pengelasan (TP - Kelas XI & XII)</option>
+                <option value="Teknik Pengelasan dan Fabrikasi Logam" {{ request('jurusan') === 'Teknik Pengelasan dan Fabrikasi Logam' ? 'selected' : '' }}>TPFL (Teknik Pengelasan dan Fabrikasi Logam - Kelas X)</option>
             </select>
         </div>
         <div>
@@ -232,7 +232,7 @@
                     <option value="Teknik Instalasi Tenaga Listrik">
                     <option value="Teknik Kendaraan Ringan">
                     <option value="Teknik Otomotif">
-                    <option value="Teknik Pemesinan">
+                    <option value="Teknik Pengelasan">
                     <option value="Teknik Pengelasan dan Fabrikasi Logam">
                 </datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
@@ -314,7 +314,7 @@
                     <option value="Teknik Instalasi Tenaga Listrik">
                     <option value="Teknik Kendaraan Ringan">
                     <option value="Teknik Otomotif">
-                    <option value="Teknik Pemesinan">
+                    <option value="Teknik Pengelasan">
                     <option value="Teknik Pengelasan dan Fabrikasi Logam">
                 </datalist>
                 <div style="font-size: 11px; color: #64748b; margin-top: 3px;">

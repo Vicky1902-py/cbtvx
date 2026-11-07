@@ -128,6 +128,17 @@ class MasterSekolah extends Model
     }
 
     /**
+     * URL Logo Tut Wuri Handayani Resmi Kemendikdasmen / Pusmendik
+     */
+    public function getLogoTutwuriUrlAttribute(): string
+    {
+        if (file_exists(public_path('images/logo_tutwuri.jpg'))) {
+            return asset('images/logo_tutwuri.jpg');
+        }
+        return asset('images/logo_smk.png');
+    }
+
+    /**
      * URL Gambar Tanda Tangan & Cap Stempel Kepala Sekolah dengan fallback
      */
     public function getTtdKepalaSekolahUrlAttribute(): string

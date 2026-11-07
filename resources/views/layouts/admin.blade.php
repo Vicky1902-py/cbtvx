@@ -599,6 +599,18 @@
                     <span>Cetak Kartu Petugas A4</span>
                 </a>
             </li>
+            <li class="nav-item {{ request()->routeIs('admin.daftar_hadir*') ? 'active' : '' }}" title="Daftar Hadir Asesmen">
+                <a href="{{ route('admin.daftar_hadir') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect><path d="M9 14l2 2 4-4"></path></svg>
+                    <span>Daftar Hadir Asesmen</span>
+                </a>
+            </li>
+            <li class="nav-item {{ request()->routeIs('admin.berita_acara*') ? 'active' : '' }}" title="Berita Acara Asesmen">
+                <a href="{{ route('admin.berita_acara') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    <span>Berita Acara Asesmen</span>
+                </a>
+            </li>
         </ul>
 
         <div class="nav-group-title">Sistem & Profil</div>

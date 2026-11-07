@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Daftar Hadir Ujian CBT &bull; SMKN 1 Kupang Barat</title>
+    <title>Daftar Hadir Peserta &bull; {{ $kelas->nama_kelas ?? 'Kelas' }} - {{ $sesiFormatted }}</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 12mm 15mm;
+            margin: 10mm 15mm 12mm 15mm;
         }
 
         * {
@@ -17,226 +17,426 @@
 
         body {
             font-family: Arial, Helvetica, sans-serif;
-            font-size: 10pt;
-            line-height: 1.3;
+            font-size: 9.5pt;
+            line-height: 1.25;
             color: #000;
+            background: #fff;
         }
 
-        .kop-surat {
+        .no-print {
+            padding: 10px 16px;
+            background: #0f2b48;
+            color: #fff;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            border-bottom: 2.5px solid #000;
-            padding-bottom: 6px;
-            margin-bottom: 12px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 13px;
         }
 
-        .kop-surat img {
-            width: 50px;
-            height: 50px;
+        .header-top {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 14px;
+            position: relative;
+        }
+
+        .logo-left {
+            width: 65px;
+            height: 65px;
             object-fit: contain;
+            margin-right: 15px;
         }
 
-        .kop-text {
+        .judul-center {
             flex: 1;
             text-align: center;
-            padding: 0 8px;
+            padding-right: 80px; /* balance logo on left */
         }
 
-        .kop-text h4 {
-            font-size: 9pt;
-            font-weight: normal;
-        }
-
-        .kop-text h2 {
-            font-size: 12pt;
-            font-weight: bold;
-        }
-
-        .kop-text p {
-            font-size: 8pt;
-            color: #333;
-        }
-
-        .judul-dokumen {
-            text-align: center;
-            margin-bottom: 14px;
-        }
-
-        .judul-dokumen h3 {
+        .judul-center h2 {
             font-size: 11pt;
             font-weight: bold;
-            text-decoration: underline;
+            line-height: 1.3;
+            letter-spacing: 0.3px;
         }
 
-        .judul-dokumen p {
-            font-size: 9pt;
-        }
-
-        .table-info {
-            width: 100%;
-            margin-bottom: 12px;
-            font-size: 9pt;
-        }
-
-        .table-info td {
-            padding: 2px 0;
-            vertical-align: top;
-        }
-
-        .table-hadir {
+        /* METADATA 2 KOLOM BERGARIS */
+        .meta-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 9pt;
-            margin-bottom: 16px;
-        }
-
-        .table-hadir th {
-            background: #f0f0f0;
-            border: 1px solid #000;
-            padding: 6px 4px;
-            text-align: center;
+            font-size: 8.5pt;
             font-weight: bold;
+            margin-bottom: 10px;
         }
 
-        .table-hadir td {
-            border: 1px solid #000;
-            padding: 4px 6px;
+        .meta-table td {
+            padding: 2.5px 0;
             vertical-align: middle;
         }
 
-        .ttd-container {
+        .underline-field {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 180px;
+            padding-bottom: 1px;
+        }
+
+        .underline-field-sm {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 90px;
+            padding-bottom: 1px;
+        }
+
+        /* TABEL DAFTAR HADIR */
+        .table-peserta {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8.5pt;
+            margin-bottom: 10px;
+        }
+
+        .table-peserta th, .table-peserta td {
+            border: 1px solid #000;
+            padding: 3.5px 5px;
+        }
+
+        .table-peserta th {
+            background-color: #d8cdb8;
+            font-weight: bold;
+            text-align: center;
+            height: 24px;
+        }
+
+        .col-ttd-left {
+            width: 130px;
+            height: 22px;
+            vertical-align: middle;
+            font-size: 8pt;
+            padding-left: 8px;
+        }
+
+        .col-ttd-right {
+            width: 130px;
+            height: 22px;
+            vertical-align: middle;
+            font-size: 8pt;
+            padding-left: 60px;
+        }
+
+        /* AREA BAWAH: KETERANGAN & TTD */
+        .bottom-section {
             display: flex;
             justify-content: space-between;
-            font-size: 9pt;
-            margin-top: 14px;
+            align-items: flex-start;
+            margin-top: 6px;
+            font-size: 8pt;
             page-break-inside: avoid;
         }
 
-        .ttd-box {
-            width: 200px;
-            text-align: center;
+        .left-notes {
+            width: 52%;
         }
 
-        .ttd-img {
-            height: 38px;
-            margin: 2px auto;
-            display: block;
+        .left-notes ol {
+            padding-left: 14px;
+            margin-bottom: 8px;
+            line-height: 1.35;
+        }
+
+        .rekap-box {
+            border: 1px solid #000;
+            padding: 4px 8px;
+            font-size: 8pt;
+            width: 100%;
+            max-width: 310px;
+            line-height: 1.45;
+        }
+
+        .right-ttd {
+            width: 44%;
+            display: flex;
+            justify-content: space-around;
+            text-align: center;
+            margin-top: 18px;
+        }
+
+        .ttd-person {
+            width: 48%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 90px;
+        }
+
+        .ttd-title {
+            font-weight: normal;
+        }
+
+        .ttd-name {
+            margin-top: 45px;
+            font-weight: bold;
+        }
+
+        .ttd-nip {
+            font-size: 7.5pt;
+        }
+
+        /* FOOTER RESMI KEMENDIKDASMEN */
+        .footer-kementerian {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+
+        .footer-box-border {
+            border: 1.5px solid #000;
+            padding: 4px 10px;
+            flex: 1;
+            margin: 0 8px;
+            text-align: center;
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+
+        .footer-square {
+            width: 26px;
+            height: 22px;
+            border: 1.5px solid #000;
+            flex-shrink: 0;
         }
 
         @media print {
             .no-print {
                 display: none !important;
             }
+            body {
+                margin: 0;
+                padding: 0;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="no-print" style="padding: 10px; background: #0f2b48; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <span>Pratinjau Daftar Hadir Resmi Ujian (Format A4)</span>
-        <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 6px 14px; font-weight: bold; cursor: pointer; border-radius: 4px;">
-            Cetak Daftar Hadir (Print / PDF)
-        </button>
-    </div>
-
-    <div class="kop-surat">
-        <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov">
-        <div class="kop-text">
-            <h4>{{ $sekolah->kop_baris1 }}</h4>
-            <h4>{{ $sekolah->kop_baris2 }}</h4>
-            <h2>{{ $sekolah->kop_baris3 }}</h2>
-            <p>{{ $sekolah->kop_alamat_lengkap }}</p>
+    <div class="no-print">
+        <div>
+            <strong>Pratinjau Daftar Hadir Asesmen Terstandar A4</strong> &bull; {{ $kelas->nama_kelas ?? 'Kelas' }} &bull; {{ $sesiFormatted }}
         </div>
-        <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ route('admin.daftar_hadir.form', ['id' => $jadwal->id, 'kelas_id' => $kelas->id ?? '', 'sesi' => $sesiFormatted]) }}" style="background: #475569; color: #fff; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                &larr; Form Presensi
+            </a>
+            <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 5px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                Cetak Lembar Daftar Hadir (Print / PDF)
+            </button>
+        </div>
     </div>
 
-    <div class="judul-dokumen">
-        <h3>DAFTAR HADIR PESERTA ASESMEN / UJIAN CBT</h3>
-        <p>Tahun Pelajaran: {{ $sekolah->tahun_ajaran_aktif ?? '2026/2027' }} - Semester {{ $sekolah->semester_aktif ?? 'Genap' }}</p>
+    <!-- HEADER: LOGO TUT WURI & JUDUL RESMI -->
+    <div class="header-top">
+        <img src="{{ $sekolah->logo_tutwuri_url }}" alt="Logo Tut Wuri Handayani" class="logo-left">
+        <div class="judul-center">
+            <h2>DAFTAR HADIR PESERTA</h2>
+            <h2>TES KEMAMPUAN AKADEMIK SMK</h2>
+            <h2>TAHUN {{ date('Y') }}</h2>
+        </div>
     </div>
 
-    <table class="table-info">
+    @php
+        $rawDate = $beritaAcara->hari_tanggal ?? '';
+        $hari = 'Senin';
+        $tanggal = '02 November 2026';
+        if (!empty($rawDate)) {
+            if (strpos($rawDate, ',') !== false) {
+                $parts = explode(',', $rawDate, 2);
+                $hari = trim($parts[0]);
+                $tanggal = trim($parts[1]);
+            } else {
+                try {
+                    $c = \Carbon\Carbon::parse($rawDate);
+                    $hari = $c->isoFormat('dddd');
+                    $tanggal = $c->isoFormat('D MMMM Y');
+                } catch (\Exception $e) {
+                    $tanggal = $rawDate;
+                }
+            }
+        }
+    @endphp
+
+    <!-- METADATA 2 KOLOM PERSIS DOKUMEN TKA -->
+    <table class="meta-table">
         <tr>
-            <td style="width: 140px;">Mata Pelajaran</td>
-            <td style="width: 10px;">:</td>
-            <td><strong>{{ $jadwal->bankSoal->mataPelajaran->nama_mapel ?? '-' }}</strong></td>
-            <td style="width: 140px;">Hari / Tanggal</td>
-            <td style="width: 10px;">:</td>
-            <td>{{ \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</td>
+            <td style="width: 145px;">KOTA/KABUPATEN</td>
+            <td style="width: 12px;">:</td>
+            <td style="width: 250px;">
+                <span class="underline-field">{{ strtoupper($sekolah->kabupaten ?? 'KABUPATEN KUPANG') }}</span>
+            </td>
+            <td style="width: 65px;">KODE</td>
+            <td style="width: 12px;">:</td>
+            <td>
+                <span class="underline-field-sm">{{ $beritaAcara->kode_kabupaten ?? '02' }}</span>
+            </td>
         </tr>
         <tr>
-            <td>Nama Asesmen</td>
+            <td>SEKOLAH/MADRASAH</td>
             <td>:</td>
-            <td>{{ $jadwal->nama_ujian }}</td>
-            <td>Alokasi Waktu</td>
+            <td>
+                <span class="underline-field">{{ strtoupper($sekolah->nama_sekolah ?? 'SMKN 1 KUPANG BARAT') }}</span>
+            </td>
+            <td>KODE</td>
             <td>:</td>
-            <td>{{ $jadwal->durasi_menit }} Menit</td>
+            <td>
+                <span class="underline-field-sm">{{ $beritaAcara->kode_sekolah ?? '0010' }}</span>
+            </td>
         </tr>
         <tr>
-            <td>Token Ujian</td>
+            <td>ID SERVER / RUANG</td>
             <td>:</td>
-            <td><strong>{{ $jadwal->token_ujian }}</strong></td>
-            <td>Total Peserta</td>
+            <td>
+                <span class="underline-field">{{ $beritaAcara->id_server ?? 'K24020010-AS4K' }} / {{ $beritaAcara->ruangan ?? 'TKA 1' }}</span>
+            </td>
+            <td>SESI</td>
             <td>:</td>
-            <td>{{ $siswaList->count() }} Orang</td>
+            <td>
+                <span class="underline-field-sm">{{ $sesiNumeric }}</span>
+            </td>
+        </tr>
+        <tr>
+            <td>HARI</td>
+            <td>:</td>
+            <td colspan="4">
+                <span style="border-bottom: 1px solid #000; min-width: 90px; display: inline-block; padding-bottom: 1px;">
+                    {{ $hari }}
+                </span>
+                &nbsp;&nbsp;&nbsp;&nbsp;TANGGAL : 
+                <span style="border-bottom: 1px solid #000; min-width: 150px; display: inline-block; padding-bottom: 1px;">
+                    {{ $tanggal }}
+                </span>
+                &nbsp;&nbsp;&nbsp;&nbsp;PUKUL : 
+                <span style="border-bottom: 1px solid #000; min-width: 110px; display: inline-block; padding-bottom: 1px;">
+                    {{ $beritaAcara->waktu_mulai ?? '08:00' }}-{{ $beritaAcara->waktu_selesai ?? '09:45' }}
+                </span>
+            </td>
         </tr>
     </table>
 
-    <table class="table-hadir">
+    <!-- TABEL DAFTAR HADIR PESERTA -->
+    <table class="table-peserta">
         <thead>
             <tr>
-                <th style="width: 30px;">No.</th>
-                <th style="width: 110px;">No. Peserta</th>
-                <th style="width: 80px;">NISN</th>
-                <th>Nama Lengkap Peserta</th>
-                <th style="width: 80px;">Kelas</th>
-                <th style="width: 140px;" colspan="2">Tanda Tangan</th>
-                <th style="width: 70px;">Ket.</th>
+                <th style="width: 32px;">No.</th>
+                <th style="width: 135px;">Username</th>
+                <th>Nama Peserta</th>
+                <th style="width: 140px;">Tanda Tangan</th>
+                <th style="width: 150px;">Keterangan</th>
             </tr>
         </thead>
         <tbody>
-            @foreach ($siswaList as $idx => $s)
+            @php
+                $presensi = $beritaAcara->presensi_data ?? [];
+            @endphp
+            @forelse ($siswaList as $idx => $s)
+            @php
+                $rowNum = $idx + 1;
+                $status = $presensi[$s->id]['status'] ?? 'hadir';
+                $ket = $presensi[$s->id]['keterangan'] ?? '';
+                $usr = $s->user->username ?? $s->nomor_peserta ?? $s->nisn;
+            @endphp
             <tr>
-                <td style="text-align: center;">{{ $idx + 1 }}</td>
-                <td>{{ $s->nomor_peserta ?? '-' }}</td>
-                <td>{{ $s->nisn }}</td>
-                <td><strong>{{ strtoupper($s->nama_lengkap) }}</strong></td>
-                <td style="text-align: center;">{{ $s->kelas->nama_kelas ?? '-' }}</td>
-                @if (($idx + 1) % 2 != 0)
-                    <td style="width: 70px; height: 26px; vertical-align: top; font-size: 7.5pt; color: #555;">{{ $idx + 1 }}. ......</td>
-                    <td style="width: 70px;"></td>
+                <td style="text-align: center;">{{ $rowNum }}</td>
+                <td style="font-family: Arial, sans-serif;">{{ $usr }}</td>
+                <td>{{ ucwords(strtolower($s->nama_lengkap)) }}</td>
+                @if ($rowNum % 2 != 0)
+                    <td class="col-ttd-left">{{ $rowNum }}.</td>
                 @else
-                    <td style="width: 70px;"></td>
-                    <td style="width: 70px; height: 26px; vertical-align: top; font-size: 7.5pt; color: #555;">{{ $idx + 1 }}. ......</td>
+                    <td class="col-ttd-right">{{ $rowNum }}.</td>
                 @endif
-                <td style="text-align: center; font-size: 8pt;">Hadir</td>
+                <td style="font-size: 8pt; color: {{ $status !== 'hadir' ? '#b91c1c' : '#000' }}; font-weight: {{ $status !== 'hadir' ? 'bold' : 'normal' }};">
+                    @if ($status !== 'hadir')
+                        Tidak Hadir{{ $ket ? ' (' . $ket . ')' : '' }}
+                    @else
+                        {{ $ket }}
+                    @endif
+                </td>
             </tr>
-            @endforeach
+            @empty
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 20px;">Belum ada siswa pada rombel atau sesi ini.</td>
+            </tr>
+            @endforelse
         </tbody>
     </table>
 
-    <div class="ttd-container">
-        <div class="ttd-box">
-            <p>Pengawas Ruang,</p>
-            <div style="height: 45px;"></div>
-            <p><strong><u>{{ $beritaAcara->nama_pengawas ?? 'Potifera Buan, S.Pd' }}</u></strong></p>
-            <p style="font-size: 8pt;">NIP. {{ $beritaAcara->nip_pengawas ?? '198911042024212044' }}</p>
+    <!-- AREA BAWAH: KETERANGAN PUSMENDIK & TANDA TANGAN 2 PETUGAS -->
+    <div class="bottom-section">
+        <div class="left-notes">
+            <div style="font-weight: bold; margin-bottom: 2px;">Keterangan :</div>
+            <ol>
+                <li>Dibuat rangkap 3 (tiga), masing-masing untuk sekolah, kota/kab dan Provinsi.</li>
+                <li>Pengawas ruang menyilang Nama Peserta yang tidak hadir.</li>
+                <li>Daftar hadir untuk pusat di upload melalui laman TKA.</li>
+            </ol>
+
+            <div class="rekap-box">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr>
+                        <td style="width: 220px;">Jumlah Peserta yang Seharusnya Hadir</td>
+                        <td style="width: 10px;">:</td>
+                        <td><span style="border-bottom: 1px dotted #000; min-width: 30px; display: inline-block; text-align: center; font-weight: bold;">{{ $beritaAcara->jumlah_peserta_seharusnya ?? $siswaList->count() }}</span> peserta</td>
+                    </tr>
+                    <tr>
+                        <td>Jumlah Peserta yang Tidak Hadir</td>
+                        <td>:</td>
+                        <td><span style="border-bottom: 1px dotted #000; min-width: 30px; display: inline-block; text-align: center; font-weight: bold;">{{ $beritaAcara->jumlah_peserta_tidak_hadir ?? 0 }}</span> peserta</td>
+                    </tr>
+                    <tr>
+                        <td>Jumlah Peserta Hadir</td>
+                        <td>:</td>
+                        <td><span style="border-bottom: 1px dotted #000; min-width: 30px; display: inline-block; text-align: center; font-weight: bold;">{{ $beritaAcara->jumlah_peserta_hadir ?? $siswaList->count() }}</span> peserta</td>
+                    </tr>
+                </table>
+            </div>
         </div>
 
-        <div class="ttd-box">
-            <p>Proktor Ujian,</p>
-            <div style="height: 45px;"></div>
-            <p><strong><u>{{ $beritaAcara->nama_proktor ?? 'Izak Robinson Koroh, S.Pd' }}</u></strong></p>
-            <p style="font-size: 8pt;">NIP. {{ $beritaAcara->nip_proktor ?? '199002192020121003' }}</p>
-        </div>
+        <div class="right-ttd">
+            <!-- PROKTOR -->
+            <div class="ttd-person">
+                <div class="ttd-title">Proktor</div>
+                <div class="ttd-name">
+                    ( {{ $beritaAcara->nama_proktor ?? '....................................' }} )
+                </div>
+                <div class="ttd-nip">
+                    NIP. {{ $beritaAcara->nip_proktor ?? '.................................' }}
+                </div>
+            </div>
 
-        <div class="ttd-box">
-            <p>{{ $sekolah->titimangsa_lengkap }}</p>
-            <p>Mengetahui,<br>Kepala Sekolah,</p>
-            <img src="{{ $sekolah->ttd_kepala_sekolah_url }}" alt="TTD Kepsek" class="ttd-img">
-            <p><strong><u>{{ $sekolah->kepala_sekolah }}</u></strong></p>
-            <p style="font-size: 8pt;">NIP. {{ $sekolah->nip_kepala_sekolah }}</p>
+            <!-- PENGAWAS -->
+            <div class="ttd-person">
+                <div class="ttd-title">Pengawas</div>
+                <div class="ttd-name">
+                    ( {{ $beritaAcara->nama_pengawas ?? '....................................' }} )
+                </div>
+                <div class="ttd-nip">
+                    NIP. {{ $beritaAcara->nip_pengawas ?? '.................................' }}
+                </div>
+            </div>
         </div>
+    </div>
+
+    <!-- FOOTER RESMI KEMENDIKDASMEN -->
+    <div class="footer-kementerian">
+        <div class="footer-square"></div>
+        <div class="footer-box-border">
+            KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH
+        </div>
+        <div class="footer-square"></div>
     </div>
 
 </body>

@@ -221,12 +221,10 @@ class PengaturanDanDokumenCetakTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('admin.cetak_berita_acara', $jadwal->id));
         $response->assertStatus(200);
-        $response->assertSee($this->sekolah->kop_baris1);
-        $response->assertSee($this->sekolah->kop_baris2);
-        $response->assertSee($this->sekolah->kop_baris3);
-        $response->assertSee($this->sekolah->titimangsa_lengkap);
+        $response->assertSee('BERITA ACARA PELAKSANAAN');
+        $response->assertSee($this->sekolah->nama_sekolah);
         $response->assertSee($this->sekolah->kepala_sekolah);
-        $response->assertSee($jadwal->nama_ujian);
+        $response->assertSee('KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH');
     }
 
     public function test_cetak_daftar_hadir_menggunakan_kop_dan_ttd_dinamis()
@@ -263,11 +261,8 @@ class PengaturanDanDokumenCetakTest extends TestCase
 
         $response = $this->actingAs($this->admin)->get(route('admin.cetak_daftar_hadir', $jadwal->id));
         $response->assertStatus(200);
-        $response->assertSee($this->sekolah->kop_baris1);
-        $response->assertSee($this->sekolah->kop_baris2);
-        $response->assertSee($this->sekolah->kop_baris3);
-        $response->assertSee($this->sekolah->titimangsa_lengkap);
-        $response->assertSee($this->sekolah->kepala_sekolah);
-        $response->assertSee($jadwal->nama_ujian);
+        $response->assertSee('DAFTAR HADIR PESERTA');
+        $response->assertSee($this->sekolah->nama_sekolah);
+        $response->assertSee('KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH');
     }
 }

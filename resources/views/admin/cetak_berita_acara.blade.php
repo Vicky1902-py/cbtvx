@@ -2,11 +2,11 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Berita Acara Pelaksanaan Ujian CBT &bull; SMKN 1 Kupang Barat</title>
+    <title>Berita Acara Pelaksanaan &bull; {{ $kelas->nama_kelas ?? 'Kelas' }} - {{ $beritaAcara->sesi ?? 'Sesi 1' }}</title>
     <style>
         @page {
             size: A4 portrait;
-            margin: 15mm 20mm;
+            margin: 12mm 16mm 14mm 16mm;
         }
 
         * {
@@ -16,266 +16,388 @@
         }
 
         body {
-            font-family: "Times New Roman", Times, serif;
-            font-size: 11.5pt;
-            line-height: 1.45;
+            font-family: Arial, Helvetica, sans-serif;
+            font-size: 9.5pt;
+            line-height: 1.35;
             color: #000;
+            background: #fff;
         }
 
-        .kop-surat {
+        .no-print {
+            padding: 10px 16px;
+            background: #0f2b48;
+            color: #fff;
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            border-bottom: 3px double #000;
-            padding-bottom: 8px;
-            margin-bottom: 18px;
+            margin-bottom: 16px;
+            border-radius: 4px;
+            font-size: 13px;
         }
 
-        .kop-surat img {
-            width: 68px;
-            height: 68px;
+        .header-top {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .logo-left {
+            width: 65px;
+            height: 65px;
             object-fit: contain;
+            margin-right: 15px;
         }
 
-        .kop-text {
+        .judul-center {
             flex: 1;
             text-align: center;
-            padding: 0 10px;
+            padding-right: 80px;
         }
 
-        .kop-text h4 {
+        .judul-center h2 {
             font-size: 11pt;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            margin-bottom: 1px;
-        }
-
-        .kop-text h2 {
-            font-size: 14pt;
-            font-weight: 800;
-            letter-spacing: 0.8px;
-            margin: 2px 0;
-        }
-
-        .kop-text p {
-            font-size: 9.5pt;
-            font-style: italic;
-        }
-
-        .judul-dokumen {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .judul-dokumen h3 {
-            font-size: 12.5pt;
             font-weight: bold;
-            text-decoration: underline;
+            line-height: 1.3;
+            letter-spacing: 0.3px;
         }
 
-        .judul-dokumen p {
-            font-size: 10.5pt;
-            margin-top: 3px;
-        }
-
-        .paragraf {
+        .paragraf-pembuka {
             text-align: justify;
             margin-bottom: 12px;
-            text-indent: 30px;
+            line-height: 1.4;
         }
 
-        .table-info {
+        /* POIN 1: DATA PELAKSANAAN */
+        .poin-section {
+            margin-bottom: 10px;
+        }
+
+        .table-rincian {
             width: 100%;
-            margin-bottom: 14px;
             border-collapse: collapse;
+            font-size: 9pt;
+            margin-bottom: 6px;
         }
 
-        .table-info td {
-            padding: 3px 0;
+        .table-rincian td {
+            padding: 2px 0;
             vertical-align: top;
         }
 
-        .table-info td.label {
-            width: 230px;
+        .underline-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            min-width: 180px;
+            padding-bottom: 1px;
         }
 
-        .table-info td.colon {
-            width: 15px;
+        /* POIN 2: KOTAK CATATAN TES */
+        .box-catatan {
+            border: 1.5px solid #000;
+            padding: 8px 10px;
+            min-height: 68px;
+            font-size: 8.5pt;
+            line-height: 1.45;
+            margin-top: 4px;
+            margin-bottom: 16px;
         }
 
-        .table-rekap {
+        /* TANDA TANGAN 3 PIHAK */
+        .section-ttd-heading {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9pt;
+            margin-bottom: 8px;
+            padding-right: 70px;
+        }
+
+        .table-ttd {
             width: 100%;
             border-collapse: collapse;
+            font-size: 9pt;
             margin-bottom: 14px;
-            font-size: 10.5pt;
-        }
-
-        .table-rekap th, .table-rekap td {
-            border: 1px solid #000;
-            padding: 5px 8px;
-            text-align: center;
-        }
-
-        .table-rekap th {
-            background: #f1f5f9;
-            font-weight: bold;
-        }
-
-        .ttd-grid {
-            margin-top: 30px;
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 15px;
             page-break-inside: avoid;
         }
 
-        .ttd-box {
+        .table-ttd td {
+            padding: 4px 0;
+            vertical-align: middle;
+        }
+
+        .garis-ttd {
+            border-bottom: 1px solid #000;
+            width: 220px;
+            display: inline-block;
+            height: 18px;
+        }
+
+        /* KOTAK CATATAN RANGKAP 3 */
+        .box-rangkap {
+            border: 1.5px solid #000;
+            padding: 6px 10px;
+            width: 100%;
+            max-width: 480px;
+            font-size: 8pt;
+            line-height: 1.35;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+        }
+
+        /* FOOTER RESMI KEMENDIKDASMEN */
+        .footer-kementerian {
+            margin-top: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+
+        .footer-box-border {
+            border: 1.5px solid #000;
+            padding: 4px 10px;
+            flex: 1;
+            margin: 0 8px;
             text-align: center;
-            font-size: 10.5pt;
+            font-size: 8.5pt;
+            font-weight: bold;
+            letter-spacing: 0.5px;
         }
 
-        .ttd-img {
-            height: 55px;
-            margin: 2px auto;
-            display: block;
-        }
-
-        .ttd-space {
-            height: 60px;
+        .footer-square {
+            width: 26px;
+            height: 22px;
+            border: 1.5px solid #000;
+            flex-shrink: 0;
         }
 
         @media print {
             .no-print {
                 display: none !important;
             }
+            body {
+                margin: 0;
+                padding: 0;
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="no-print" style="padding: 12px 20px; background: #0f2b48; color: #fff; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; font-family: sans-serif; font-size: 13px; border-radius: 4px;">
+    <div class="no-print">
         <div>
-            <strong>Pratinjau Berita Acara Resmi Ujian CBT</strong> &bull; {{ $jadwal->nama_ujian }}
+            <strong>Pratinjau Berita Acara Pelaksanaan A4 (3 TTD)</strong> &bull; {{ $kelas->nama_kelas ?? 'Kelas' }} &bull; Sesi {{ $beritaAcara->sesi ?? '1' }}
         </div>
-        <div style="display: flex; gap: 10px;">
-            <a href="{{ route('admin.berita_acara.form', $jadwal->id) }}" style="background: #475569; color: #fff; text-decoration: none; padding: 6px 14px; font-weight: bold; border-radius: 4px;">
-                &larr; Edit Data Berita Acara
+        <div style="display: flex; gap: 8px;">
+            <a href="{{ route('admin.berita_acara.form', ['id' => $jadwal->id, 'kelas_id' => $kelas->id ?? '', 'sesi' => $beritaAcara->sesi ?? '1']) }}" style="background: #475569; color: #fff; padding: 5px 12px; text-decoration: none; border-radius: 4px; font-weight: bold;">
+                &larr; Form Berita Acara
             </a>
-            <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 6px 16px; font-weight: bold; cursor: pointer; border-radius: 4px;">
-                Cetak Dokumen (Print / PDF)
+            <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 5px 16px; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                Cetak Lembar Berita Acara (Print / PDF)
             </button>
         </div>
     </div>
 
-    <!-- KOP RESMI RESMI DINAS & SEKOLAH -->
-    <div class="kop-surat">
-        <img src="{{ $sekolah->logo_pemprov_url }}" alt="Logo Pemprov">
-        <div class="kop-text">
-            <h4>{{ $sekolah->kop_baris1 }}</h4>
-            <h4>{{ $sekolah->kop_baris2 }}</h4>
-            <h2>{{ $sekolah->kop_baris3 }}</h2>
-            <p>{{ $sekolah->kop_alamat_lengkap }}</p>
+    <!-- HEADER: LOGO TUT WURI & JUDUL -->
+    <div class="header-top">
+        <img src="{{ $sekolah->logo_tutwuri_url }}" alt="Logo Tut Wuri Handayani" class="logo-left">
+        <div class="judul-center">
+            <h2>BERITA ACARA PELAKSANAAN</h2>
+            <h2>TES KEMAMPUAN AKADEMIK SMK</h2>
+            <h2>TAHUN {{ date('Y') }}</h2>
         </div>
-        <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
     </div>
 
-    <div class="judul-dokumen">
-        <h3>BERITA ACARA PELAKSANAAN ASESMEN / UJIAN CBT</h3>
-        <p>Nomor: {{ $beritaAcara->nomor_surat ?? ('421.5/024/SMKN1.KB/' . date('Y')) }}</p>
+    @php
+        $rawDate = $beritaAcara->hari_tanggal ?? '';
+        $hariStr = 'Senin';
+        $tglStr = '02';
+        $blnStr = 'November';
+        $thnStr = date('Y');
+        if (!empty($rawDate)) {
+            if (preg_match('/([a-zA-Z]+),\s*(\d{1,2})\s+([a-zA-Z]+)\s+(\d{4})/', $rawDate, $m)) {
+                $hariStr = $m[1];
+                $tglStr = sprintf('%02d', $m[2]);
+                $blnStr = $m[3];
+                $thnStr = $m[4];
+            } else {
+                try {
+                    $c = \Carbon\Carbon::parse($rawDate);
+                    $hariStr = $c->isoFormat('dddd');
+                    $tglStr = sprintf('%02d', $c->day);
+                    $blnStr = $c->isoFormat('MMMM');
+                    $thnStr = $c->year;
+                } catch (\Exception $e) {
+                    // fallback default
+                }
+            }
+        }
+    @endphp
+
+    <!-- NARASI PEMBUKA -->
+    <p class="paragraf-pembuka">
+        Pada hari ini <strong>{{ $hariStr }}</strong> tanggal <strong>{{ $tglStr }}</strong> bulan <strong>{{ $blnStr }}</strong> tahun <strong>{{ $thnStr }}</strong>, di <strong>{{ strtoupper($sekolah->nama_sekolah ?? 'SMKN 1 KUPANG BARAT') }}</strong> telah diselenggarakan TES KEMAMPUAN AKADEMIK SMK, dari pukul {{ $beritaAcara->waktu_mulai ?? '08:00' }} sampai dengan pukul {{ $beritaAcara->waktu_selesai ?? '09:45' }}
+    </p>
+
+    <!-- POIN 1: IDENTITAS & JUMLAH PESERTA -->
+    <div class="poin-section">
+        <table class="table-rincian">
+            <tr>
+                <td style="width: 25px;">1.</td>
+                <td style="width: 215px;">Username</td>
+                <td style="width: 15px;">:</td>
+                <td>
+                    <span class="underline-line">{{ $beritaAcara->id_server ?? 'K24020010' }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Sekolah/Madrasah</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ strtoupper($sekolah->nama_sekolah ?? 'SMKN 1 KUPANG BARAT') }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>ID Server</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 140px;">{{ $beritaAcara->id_server ?? 'K24020010-AS4K' }}</span>
+                    &nbsp;&nbsp;&nbsp;&nbsp;Ruang : 
+                    <span class="underline-line" style="min-width: 240px;">{{ $beritaAcara->ruangan ?? 'TKA 1' }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Sesi</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ str_replace(['Sesi ', 'sesi '], '', $beritaAcara->sesi ?? '1') }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Jumlah Peserta Seharusnya</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ $beritaAcara->jumlah_peserta_seharusnya ?? 18 }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Jumlah Hadir (Ikut Ujian)</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ $beritaAcara->jumlah_peserta_hadir ?? 18 }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Jumlah Tidak Mengerjakan</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ $beritaAcara->jumlah_peserta_tidak_hadir ?? 0 }}</span>
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>Username Tidak Mengerjakan</td>
+                <td>:</td>
+                <td>
+                    <span class="underline-line" style="min-width: 380px;">{{ $beritaAcara->daftar_tidak_hadir ?? '-' }}</span>
+                </td>
+            </tr>
+        </table>
     </div>
 
-    <p class="paragraf">
-        Pada hari ini <strong>{{ $beritaAcara->hari_tanggal ?? \Carbon\Carbon::now()->isoFormat('dddd, D MMMM Y') }}</strong>, bertempat di <strong>{{ $sekolah->nama_sekolah }}</strong>, telah diselenggarakan Asesmen Berbasis Komputer (CBT) dengan ketentuan dan rincian pelaksanaan sebagai berikut:
-    </p>
+    <!-- POIN 2: CATATAN SELAMA TES -->
+    <div style="font-size: 9pt; font-weight: normal; margin-top: 4px;">
+        2. &nbsp;&nbsp;Catatan selama Tes :
+    </div>
+    <div class="box-catatan">
+        {{ $beritaAcara->catatan_pelaksanaan ?? 'UJIAN BERJALAN AMAN DAN LANCAR' }}
+    </div>
 
-    <table class="table-info">
+    <!-- PENGESAHAN: YANG MEMBUAT BERITA ACARA -->
+    <div class="section-ttd-heading">
+        <div>Yang membuat berita acara :</div>
+        <div style="font-weight: bold;">TTD</div>
+    </div>
+
+    <table class="table-ttd">
+        <!-- 1. PROKTOR -->
         <tr>
-            <td class="label">1. Nama Asesmen / Tes</td>
-            <td class="colon">:</td>
-            <td><strong>{{ $jadwal->nama_ujian }}</strong></td>
+            <td style="width: 25px; vertical-align: top;">1.</td>
+            <td style="width: 140px; vertical-align: top;">Proktor</td>
+            <td style="width: 250px; vertical-align: top;">
+                <strong>{{ $beritaAcara->nama_proktor ?? 'Izak Robinson Koroh, S.Pd.,Gr' }}</strong>
+            </td>
+            <td style="width: 30px; vertical-align: top;">1.</td>
+            <td style="vertical-align: top;">
+                <span class="garis-ttd"></span>
+            </td>
         </tr>
         <tr>
-            <td class="label">2. Mata Pelajaran</td>
-            <td class="colon">:</td>
-            <td>{{ $jadwal->bankSoal->mataPelajaran->nama_mapel ?? 'Semua Mapel Terpadu' }}</td>
+            <td></td>
+            <td style="font-size: 8.5pt;">NIP</td>
+            <td style="font-size: 8.5pt;">{{ $beritaAcara->nip_proktor ?? '199002192020121003' }}</td>
+            <td colspan="2"></td>
+        </tr>
+
+        <!-- 2. PENGAWAS -->
+        <tr>
+            <td style="vertical-align: top; padding-top: 8px;">2.</td>
+            <td style="vertical-align: top; padding-top: 8px;">Pengawas</td>
+            <td style="vertical-align: top; padding-top: 8px;">
+                <strong>{{ $beritaAcara->nama_pengawas ?? 'Mike Amin Imanuel Modok' }}</strong>
+            </td>
+            <td style="vertical-align: top; padding-top: 8px;">2.</td>
+            <td style="vertical-align: top; padding-top: 8px;">
+                <span class="garis-ttd"></span>
+            </td>
         </tr>
         <tr>
-            <td class="label">3. Alokasi Waktu Ujian</td>
-            <td class="colon">:</td>
-            <td>{{ $beritaAcara->waktu_mulai ?? '08:00' }} s/d {{ $beritaAcara->waktu_selesai ?? '09:30' }} WITA ({{ $jadwal->durasi_menit }} Menit)</td>
+            <td></td>
+            <td style="font-size: 8.5pt;">NIP</td>
+            <td style="font-size: 8.5pt;">{{ $beritaAcara->nip_pengawas ?? '8843778679130052' }}</td>
+            <td colspan="2"></td>
+        </tr>
+
+        <!-- 3. PENANGGUNG JAWAB -->
+        <tr>
+            <td style="vertical-align: top; padding-top: 8px;">3.</td>
+            <td style="vertical-align: top; padding-top: 8px;">Penanggung Jawab</td>
+            <td style="vertical-align: top; padding-top: 8px;">
+                <strong>{{ $beritaAcara->penanggung_jawab_nama ?? ($sekolah->kepala_sekolah ?: 'Apolos Kofan, S.Pd.,MM') }}</strong>
+            </td>
+            <td style="vertical-align: top; padding-top: 8px;">3.</td>
+            <td style="vertical-align: top; padding-top: 8px;">
+                <span class="garis-ttd"></span>
+            </td>
         </tr>
         <tr>
-            <td class="label">4. Ruangan & Sesi Ujian</td>
-            <td class="colon">:</td>
-            <td>{{ $beritaAcara->ruangan ?? 'Lab Komputer 1' }} / {{ $beritaAcara->sesi ?? 'Sesi 1' }}</td>
+            <td></td>
+            <td style="font-size: 8.5pt;">NIP</td>
+            <td style="font-size: 8.5pt;">{{ $beritaAcara->penanggung_jawab_nip ?? ($sekolah->nip_kepala_sekolah ?: '196704062006041009') }}</td>
+            <td colspan="2"></td>
         </tr>
-        <tr>
-            <td class="label">5. Token Ujian Rilis</td>
-            <td class="colon">:</td>
-            <td><strong>{{ $jadwal->token_ujian }}</strong></td>
-        </tr>
-        <tr>
-            <td class="label">6. Catatan Selama Pelaksanaan</td>
-            <td class="colon">:</td>
-            <td>{{ $beritaAcara->catatan_pelaksanaan ?? 'Asesmen CBT terlaksana secara tertib, lancar, dan aman didukung sarana komputer dan jaringan LAN sekolah.' }}</td>
-        </tr>
-        @if (!empty($beritaAcara->daftar_tidak_hadir) && $beritaAcara->daftar_tidak_hadir !== '-')
-        <tr>
-            <td class="label">7. Siswa Tidak Hadir</td>
-            <td class="colon">:</td>
-            <td>{{ $beritaAcara->daftar_tidak_hadir }}</td>
-        </tr>
-        @endif
     </table>
 
-    <table class="table-rekap">
-        <thead>
-            <tr>
-                <th>Jumlah Peserta Seharusnya</th>
-                <th>Jumlah Peserta Hadir</th>
-                <th>Jumlah Peserta Tidak Hadir</th>
-                <th>Keterangan Pelaksanaan</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>{{ $beritaAcara->jumlah_peserta_seharusnya ?? 89 }} Siswa</strong></td>
-                <td><strong style="color: #047857;">{{ $beritaAcara->jumlah_peserta_hadir ?? 89 }} Siswa</strong></td>
-                <td><strong>{{ $beritaAcara->jumlah_peserta_tidak_hadir ?? 0 }} Siswa</strong></td>
-                <td>Berjalan Sesuai POS / Juknis CBT</td>
-            </tr>
-        </tbody>
-    </table>
+    <!-- KOTAK CATATAN RANGKAP 3 -->
+    <div class="box-rangkap">
+        <div style="font-weight: bold; margin-bottom: 2px;">Catatan:</div>
+        <div>- Dibuat rangkap 3 (tiga), masing-masing untuk Sekolah, Kota/Kabupaten dan Provinsi</div>
+        <div>- Untuk pusat di upload melalui web TKA</div>
+    </div>
 
-    <p class="paragraf">
-        Demikian Berita Acara ini dibuat dengan sebenarnya dan ditandatangani oleh Pengawas Ruang, Proktor Ujian, serta diketahui oleh Kepala Sekolah untuk dipergunakan sebagaimana mestinya.
-    </p>
-
-    <!-- 3 KOLOM TANDA TANGAN OTOMATIS -->
-    <div class="ttd-grid">
-        <!-- 1. PENGAWAS RUANG -->
-        <div class="ttd-box">
-            <p>Pengawas Ruang,</p>
-            <div class="ttd-space"></div>
-            <p><strong><u>{{ $beritaAcara->nama_pengawas ?? 'Potifera Buan, S.Pd' }}</u></strong></p>
-            <p>NIP. {{ $beritaAcara->nip_pengawas ?? '198911042024212044' }}</p>
+    <!-- FOOTER RESMI KEMENDIKDASMEN -->
+    <div class="footer-kementerian">
+        <div class="footer-square"></div>
+        <div class="footer-box-border">
+            KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH
         </div>
-
-        <!-- 2. PROKTOR UJIAN -->
-        <div class="ttd-box">
-            <p>Proktor CBT,</p>
-            <div class="ttd-space"></div>
-            <p><strong><u>{{ $beritaAcara->nama_proktor ?? 'Izak Robinson Koroh, S.Pd' }}</u></strong></p>
-            <p>NIP. {{ $beritaAcara->nip_proktor ?? '199002192020121003' }}</p>
-        </div>
-
-        <!-- 3. KEPALA SEKOLAH -->
-        <div class="ttd-box">
-            <p>{{ $sekolah->titimangsa_lengkap }}</p>
-            <p>Mengetahui,<br><strong>Kepala Sekolah</strong></p>
-            <img src="{{ $sekolah->ttd_kepala_sekolah_url }}" alt="TTD Kepsek" class="ttd-img">
-            <p><strong><u>{{ $sekolah->kepala_sekolah }}</u></strong></p>
-            <p>NIP. {{ $sekolah->nip_kepala_sekolah }}</p>
-        </div>
+        <div class="footer-square"></div>
     </div>
 
 </body>
