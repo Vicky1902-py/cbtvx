@@ -172,7 +172,7 @@
 
     <div class="no-print" style="padding: 12px 20px; background: #0f2b48; color: #ffffff; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 16px;">
         <div>
-            <strong style="font-size: 13.5px;">Cetak Kartu Peserta Ujian &bull; Format A4 Dinas</strong>
+            <strong style="font-size: 13.5px;">Cetak Kartu Peserta {{ $sekolah->nama_ujian_aktif ?? 'Ujian' }} &bull; Format A4 Dinas</strong>
             <div style="font-size: 11px; opacity: 0.8; margin-top: 2px;">
                 Menampilkan: <strong>{{ $daftarSiswa->count() }} Siswa</strong>
                 @if (!empty($kelasId) && isset($kelasList) && ($kObj = $kelasList->firstWhere('id', $kelasId)))
@@ -233,7 +233,7 @@
                 <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
             </div>
 
-            <div class="card-title">KARTU PESERTA ASESMEN / CBT TP. {{ $sekolah->tahun_ajaran_aktif ?? '2026/2027' }}</div>
+            <div class="card-title">KARTU PESERTA {{ strtoupper($sekolah->nama_ujian_aktif ?? 'SIMULASI SUMATIF AKHIR SEMESTER') }} TP. {{ $sekolah->tahun_ajaran_aktif ?? '2026/2027' }}</div>
 
             <div class="card-body">
                 <div class="photo-box">

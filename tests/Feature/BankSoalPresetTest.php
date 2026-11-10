@@ -224,4 +224,248 @@ class BankSoalPresetTest extends TestCase
         $this->assertEquals(80.0, (float)$this->bank->kkm);
         $this->assertEquals('aktif', $this->bank->status);
     }
+
+    public function test_sample_questions_kka_kelas_x_sesuai_materi_dan_tanpa_python()
+    {
+        $controller = new \App\Http\Controllers\AdminController();
+        $questions = $controller->getSampleQuestionsKKA25(4.0, 2.0, 10.0);
+
+        $this->assertCount(25, $questions);
+
+        $totalBobot = 0;
+        $combinedText = '';
+
+        foreach ($questions as $q) {
+            $nomor = $q[0];
+            $jenis = $q[1];
+            $soal = $q[2];
+            $bobot = $q[10];
+
+            $totalBobot += $bobot;
+            $combinedText .= ' ' . $soal . ' ' . $q[3] . ' ' . $q[4] . ' ' . $q[5] . ' ' . $q[6] . ' ' . $q[7];
+
+            if ($nomor <= 5) {
+                $this->assertEquals('BENAR_SALAH', $jenis);
+                $this->assertEquals(4.0, $bobot);
+            } elseif ($nomor <= 20) {
+                $this->assertEquals('PG', $jenis);
+                $this->assertEquals(2.0, $bobot);
+            } else {
+                $this->assertEquals('URAIAN', $jenis);
+                $this->assertEquals(10.0, $bobot);
+            }
+        }
+
+        // Total nilai harus 100 poin penuh
+        $this->assertEquals(100.0, $totalBobot);
+
+        // Verifikasi topik sesuai instruksi user:
+        // 1. Pengertian dan sejarah AI (John McCarthy / Dartmouth 1956)
+        $this->assertStringContainsString('Artificial Intelligence', $combinedText);
+        $this->assertStringContainsString('John McCarthy', $combinedText);
+        $this->assertStringContainsString('1956', $combinedText);
+
+        // 2. Isian algoritma sehari-hari (berangkat sekolah)
+        $this->assertStringContainsString('berangkat ke sekolah', $combinedText);
+
+        // 3. Kode dasar HTML (tag dasar HTML)
+        $this->assertStringContainsString('HTML', $combinedText);
+        $this->assertStringContainsString('HyperText Markup Language', $combinedText);
+        $this->assertStringContainsString('<body>', $combinedText);
+        $this->assertStringContainsString('<h1>', $combinedText);
+
+        // 4. Simbol-simbol flowchart (Terminator, Process, Input/Output, Decision)
+        $this->assertStringContainsString('Terminator', $combinedText);
+        $this->assertStringContainsString('Persegi Panjang', $combinedText);
+        $this->assertStringContainsString('Jajar Genjang', $combinedText);
+        $this->assertStringContainsString('flowchart', strtolower($combinedText));
+
+        // 5. TIDAK BOLEH memuat kata Python sama sekali (sesuai instruksi user: "jangan python")
+        $this->assertStringNotContainsStringIgnoringCase('python', $combinedText);
+    }
+
+    public function test_pratinjau_bank_soal_kka_merender_soal_dan_kunci_dengan_tepat()
+    {
+        // Seeder KKA
+        $seeder = new \Database\Seeders\BankSoalPresetSeeder();
+        $seeder->run();
+
+        $bankKka = BankSoal::where('kode_bank', 'BS-KKA-X-25')->first();
+        $this->assertNotNull($bankKka);
+        $this->assertEquals(25, $bankKka->butirSoal()->count());
+
+        $response = $this->actingAs($this->admin)->get(route('admin.bank_soal.pratinjau', $bankKka->id));
+        $response->assertStatus(200);
+        $response->assertSee('safeRenderText');
+        $response->assertSee('Kunci Jawaban & Rubrik Penilaian Resmi', false);
+        $response->assertSee('Artificial Intelligence');
+        $response->assertSee('John McCarthy');
+    }
+
+    public function test_halaman_ujian_siswa_tidak_membocorkan_kunci_jawaban_dan_rubrik()
+    {
+        $seeder = new \Database\Seeders\BankSoalPresetSeeder();
+        $seeder->run();
+
+        $bankKka = BankSoal::where('kode_bank', 'BS-KKA-X-25')->first();
+        $this->assertNotNull($bankKka);
+
+        $kelas = \App\Models\Kelas::create([
+            'kode_kelas' => 'X-RPL',
+            'nama_kelas' => 'X RPL',
+            'tingkat' => 10,
+            'jurusan' => 'RPL',
+        ]);
+
+        $userSiswa = User::factory()->create([
+            'username' => 'siswa_kka_01',
+            'role' => 'siswa',
+        ]);
+
+        $siswa = \App\Models\Siswa::create([
+            'user_id' => $userSiswa->id,
+            'nisn' => '0098765411',
+            'nama_lengkap' => 'Siswa Penguji KKA',
+            'kelas_id' => $kelas->id,
+            'jenis_kelamin' => 'L',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab Komputer 1',
+        ]);
+
+        $jadwal = \App\Models\JadwalUjian::create([
+            'nama_ujian' => 'Ujian Akhir KKA',
+            'bank_soal_id' => $bankKka->id,
+            'kelas_id' => $kelas->id,
+            'waktu_mulai' => now()->subHour(),
+            'waktu_selesai' => now()->addHour(),
+            'durasi_menit' => 90,
+            'token' => 'KKA123',
+            'status' => 'aktif',
+        ]);
+
+        $peserta = \App\Models\UjianPeserta::create([
+            'jadwal_ujian_id' => $jadwal->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'berlangsung',
+            'sisa_detik' => 5400,
+            'waktu_mulai' => now(),
+        ]);
+
+        $response = $this->actingAs($userSiswa)->get(route('siswa.ujian', $jadwal->id));
+        $response->assertStatus(200);
+
+        // 1. Tampilan siswa TIDAK BOLEH memuat badge dan teks rubrik kunci jawaban
+        $response->assertDontSee('Kunci Jawaban & Rubrik Penilaian Resmi');
+        $response->assertDontSee('✓ Kunci Jawaban');
+
+        // 2. Kunci jawaban juga disembunyikan dari JSON payload (makeHidden)
+        $response->assertDontSee('"kunci_jawaban"');
+        $response->assertDontSee('"rubrik_penilaian"');
+    }
+
+    public function test_satu_lab_beda_kelas_beda_mapel_hanya_menampilkan_ujian_kelasnya_masing_masing()
+    {
+        $seeder = new \Database\Seeders\BankSoalPresetSeeder();
+        $seeder->run();
+
+        // 1. Setup 2 Kelas berbeda
+        $kelasRpl = \App\Models\Kelas::create([
+            'kode_kelas' => 'X-RPL-A',
+            'nama_kelas' => 'X RPL A',
+            'tingkat' => 10,
+            'jurusan' => 'RPL',
+        ]);
+
+        $kelasDpib = \App\Models\Kelas::create([
+            'kode_kelas' => 'X-DPIB-A',
+            'nama_kelas' => 'X DPIB A',
+            'tingkat' => 10,
+            'jurusan' => 'DPIB',
+        ]);
+
+        // 2. Setup 2 Mapel & Bank Soal berbeda
+        $bankKka = BankSoal::where('kode_bank', 'BS-KKA-X-25')->first();
+
+        $mapelDpib = MataPelajaran::create([
+            'kode_mapel' => 'DPIB-GT',
+            'nama_mapel' => 'Gambar Teknik Bangunan',
+            'jurusan' => 'DPIB',
+            'tingkat' => '10',
+        ]);
+
+        $bankDpib = BankSoal::create([
+            'kode_bank' => 'BS-GT-10',
+            'nama_bank' => 'Bank Soal Gambar Teknik',
+            'mata_pelajaran_id' => $mapelDpib->id,
+            'guru_id' => $this->admin->id,
+            'standar_bobot' => '25_soal',
+            'status' => 'aktif',
+        ]);
+
+        // 3. Setup 2 Jadwal Ujian yang berbeda
+        $jadwalKka = \App\Models\JadwalUjian::create([
+            'nama_ujian' => 'Penilaian Harian KKA RPL',
+            'bank_soal_id' => $bankKka->id,
+            'waktu_mulai' => now()->subHour(),
+            'waktu_selesai' => now()->addHour(),
+            'durasi_menit' => 90,
+            'token' => 'KKA001',
+            'status' => 'aktif',
+        ]);
+        $jadwalKka->kelas()->sync([$kelasRpl->id]);
+
+        $jadwalDpib = \App\Models\JadwalUjian::create([
+            'nama_ujian' => 'Penilaian Harian Gambar Teknik DPIB',
+            'bank_soal_id' => $bankDpib->id,
+            'waktu_mulai' => now()->subHour(),
+            'waktu_selesai' => now()->addHour(),
+            'durasi_menit' => 90,
+            'token' => 'DPIB01',
+            'status' => 'aktif',
+        ]);
+        $jadwalDpib->kelas()->sync([$kelasDpib->id]);
+
+        // 4. Setup 2 Siswa di Lab yang SAMA (Lab Komputer 1) dan Sesi yang SAMA (Sesi 1)
+        $userSiswaRpl = User::factory()->create(['role' => 'siswa', 'username' => 'siswa_rpl_01']);
+        $siswaRpl = \App\Models\Siswa::create([
+            'user_id' => $userSiswaRpl->id,
+            'nisn' => '0011223344',
+            'nama_lengkap' => 'Siswa RPL Lab 1',
+            'kelas_id' => $kelasRpl->id,
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab Komputer 1',
+        ]);
+
+        $userSiswaDpib = User::factory()->create(['role' => 'siswa', 'username' => 'siswa_dpib_01']);
+        $siswaDpib = \App\Models\Siswa::create([
+            'user_id' => $userSiswaDpib->id,
+            'nisn' => '0055667788',
+            'nama_lengkap' => 'Siswa DPIB Lab 1',
+            'kelas_id' => $kelasDpib->id,
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab Komputer 1',
+        ]);
+
+        // Verifikasi Siswa RPL: Hanya melihat Penilaian Harian KKA RPL
+        $resRpl = $this->actingAs($userSiswaRpl)->get(route('siswa.dashboard'));
+        $resRpl->assertStatus(200);
+        $resRpl->assertSee('Penilaian Harian KKA RPL');
+        $resRpl->assertDontSee('Penilaian Harian Gambar Teknik DPIB');
+
+        // Siswa RPL tidak boleh mengakses jadwal DPIB langsung via URL
+        $bypassRpl = $this->actingAs($userSiswaRpl)->get(route('siswa.konfirmasi', $jadwalDpib->id));
+        $bypassRpl->assertRedirect(route('siswa.dashboard'));
+        $bypassRpl->assertSessionHas('error', 'Ujian ini bukan untuk kelas Anda.');
+
+        // Verifikasi Siswa DPIB: Hanya melihat Penilaian Harian Gambar Teknik DPIB
+        $resDpib = $this->actingAs($userSiswaDpib)->get(route('siswa.dashboard'));
+        $resDpib->assertStatus(200);
+        $resDpib->assertSee('Penilaian Harian Gambar Teknik DPIB');
+        $resDpib->assertDontSee('Penilaian Harian KKA RPL');
+
+        // Siswa DPIB tidak boleh mengakses jadwal KKA langsung via URL
+        $bypassDpib = $this->actingAs($userSiswaDpib)->get(route('siswa.konfirmasi', $jadwalKka->id));
+        $bypassDpib->assertRedirect(route('siswa.dashboard'));
+        $bypassDpib->assertSessionHas('error', 'Ujian ini bukan untuk kelas Anda.');
+    }
 }

@@ -530,6 +530,196 @@ class AdminController extends Controller
     }
 
     // ==========================================
+    // MODUL PENGATURAN SESI & RUANG LAB
+    // ==========================================
+
+    public function pengaturanSesi(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
+
+        $query = Siswa::with('kelas');
+
+        // Filter Kelas
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+
+        // Filter Sesi
+        if ($request->filled('sesi')) {
+            $query->where('sesi_ujian', $request->sesi);
+        }
+
+        // Filter Ruangan / Lab
+        if ($request->filled('ruangan')) {
+            $query->where('ruangan_ujian', $request->ruangan);
+        }
+
+        // Filter Pencarian
+        if ($request->filled('q')) {
+            $q = trim($request->q);
+            $query->where(function ($w) use ($q) {
+                $w->where('nama_lengkap', 'like', "%{$q}%")
+                  ->orWhere('nisn', 'like', "%{$q}%")
+                  ->orWhere('nis', 'like', "%{$q}%")
+                  ->orWhere('nomor_peserta', 'like', "%{$q}%");
+            });
+        }
+
+        $daftarSiswa = $query->orderBy('kelas_id')->orderBy('nama_lengkap')->get();
+
+        // Statistik Keseluruhan
+        $totalSiswa = Siswa::count();
+        $totalSesi1 = Siswa::where('sesi_ujian', 'Sesi 1')->count();
+        $totalSesi2 = Siswa::where('sesi_ujian', 'Sesi 2')->count();
+        $totalLab1 = Siswa::where('ruangan_ujian', 'Lab Komputer 1')->count();
+        $totalLab2 = Siswa::where('ruangan_ujian', 'Lab Komputer 2')->count();
+
+        // Daftar Unik Ruangan & Sesi yang ada di database
+        $listSesiDb = Siswa::select('sesi_ujian')->distinct()->pluck('sesi_ujian')->filter()->values();
+        $listRuanganDb = Siswa::select('ruangan_ujian')->distinct()->pluck('ruangan_ujian')->filter()->values();
+
+        return view('admin.sesi', compact(
+            'sekolah',
+            'kelasList',
+            'daftarSiswa',
+            'totalSiswa',
+            'totalSesi1',
+            'totalSesi2',
+            'totalLab1',
+            'totalLab2',
+            'listSesiDb',
+            'listRuanganDb'
+        ));
+    }
+
+    public function updateSesiMassal(Request $request)
+    {
+        $request->validate([
+            'siswa_ids' => 'required|array|min:1',
+            'siswa_ids.*' => 'exists:siswa,id',
+            'sesi_ujian' => 'required|string|max:50',
+            'ruangan_ujian' => 'required|string|max:50',
+        ], [
+            'siswa_ids.required' => 'Pilih minimal satu siswa untuk diatur sesinya.',
+            'sesi_ujian.required' => 'Pilih sesi ujian.',
+            'ruangan_ujian.required' => 'Pilih ruangan lab ujian.',
+        ]);
+
+        $count = count($request->siswa_ids);
+        Siswa::whereIn('id', $request->siswa_ids)->update([
+            'sesi_ujian' => $request->sesi_ujian,
+            'ruangan_ujian' => $request->ruangan_ujian,
+        ]);
+
+        return back()->with('success', "Berhasil memperbarui {$count} siswa ke {$request->sesi_ujian} ({$request->ruangan_ujian}). Seluruh administrasi (kartu login, presensi, berita acara) otomatis tersinkron.");
+    }
+
+    public function autoSplitSesi(Request $request)
+    {
+        $request->validate([
+            'siswa_ids' => 'required|array|min:2',
+            'siswa_ids.*' => 'exists:siswa,id',
+            'sesi_ujian' => 'required|string|max:50',
+            'lab_a' => 'required|string|max:50',
+            'lab_b' => 'required|string|max:50',
+        ]);
+
+        $ids = $request->siswa_ids;
+        $total = count($ids);
+        $half = (int)ceil($total / 2);
+
+        $chunk1 = array_slice($ids, 0, $half);
+        $chunk2 = array_slice($ids, $half);
+
+        Siswa::whereIn('id', $chunk1)->update([
+            'sesi_ujian' => $request->sesi_ujian,
+            'ruangan_ujian' => $request->lab_a,
+        ]);
+
+        if (!empty($chunk2)) {
+            Siswa::whereIn('id', $chunk2)->update([
+                'sesi_ujian' => $request->sesi_ujian,
+                'ruangan_ujian' => $request->lab_b,
+            ]);
+        }
+
+        $countA = count($chunk1);
+        $countB = count($chunk2);
+
+        return back()->with('success', "Pembagian otomatis sukses! {$total} siswa di {$request->sesi_ujian} dibagi rata: {$countA} siswa di {$request->lab_a} dan {$countB} siswa di {$request->lab_b}.");
+    }
+
+    public function cetakSesi(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $kelasList = Kelas::orderBy('tingkat')->orderBy('nama_kelas')->get();
+
+        $query = Siswa::with('kelas');
+
+        if ($request->filled('kelas_id')) {
+            $query->where('kelas_id', $request->kelas_id);
+        }
+        if ($request->filled('sesi')) {
+            $query->where('sesi_ujian', $request->sesi);
+        }
+        if ($request->filled('ruangan')) {
+            $query->where('ruangan_ujian', $request->ruangan);
+        }
+        if ($request->filled('q')) {
+            $q = trim($request->q);
+            $query->where(function ($w) use ($q) {
+                $w->where('nama_lengkap', 'like', "%{$q}%")
+                  ->orWhere('nisn', 'like', "%{$q}%")
+                  ->orWhere('nis', 'like', "%{$q}%")
+                  ->orWhere('nomor_peserta', 'like', "%{$q}%");
+            });
+        }
+
+        $daftarSiswa = $query->orderBy('ruangan_ujian')
+            ->orderBy('sesi_ujian')
+            ->orderBy('kelas_id')
+            ->orderBy('nama_lengkap')
+            ->get();
+
+        // Ambil data Ketua Panitia dari data petugas / user
+        $ketuaPetugas = PetugasUjian::with('user')
+            ->where(function ($q) {
+                $q->where('jenis_petugas', 'like', '%ketua%')
+                  ->orWhere('jenis_petugas', 'like', '%panitia%');
+            })
+            ->first();
+
+        $namaKetua = $ketuaPetugas->user->name ?? 'Messakh Paulus Adu, S.Pd';
+        $nipKetua = $ketuaPetugas->user->nip ?: ($ketuaPetugas->user->nuptk ?: '198403172010011028');
+
+        // Ambil data Proktor dari data petugas / user
+        $proktorPetugas = PetugasUjian::with('user')
+            ->where('jenis_petugas', 'like', '%proktor%')
+            ->first();
+
+        $namaProktor = $proktorPetugas->user->name ?? 'Izak Robinson Koroh, S.Pd.,Gr';
+        $nipProktor = $proktorPetugas->user->nip ?: ($proktorPetugas->user->nuptk ?: '199002192020121003');
+
+        $kelasFilter = $request->filled('kelas_id') ? Kelas::find($request->kelas_id) : null;
+        $sesiFilter = $request->input('sesi', 'Semua Sesi');
+        $ruanganFilter = $request->input('ruangan', 'Semua Lab Komputer');
+
+        return view('admin.cetak_sesi', compact(
+            'sekolah',
+            'daftarSiswa',
+            'kelasList',
+            'namaKetua',
+            'nipKetua',
+            'namaProktor',
+            'nipProktor',
+            'kelasFilter',
+            'sesiFilter',
+            'ruanganFilter'
+        ));
+    }
+
+    // ==========================================
     // DATA KELAS (CRUD)
     // ==========================================
 
@@ -830,7 +1020,7 @@ class AdminController extends Controller
     public function users(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $query = User::whereIn('role', ['admin', 'guru', 'proktor']);
+        $query = User::where('role', '!=', 'siswa');
 
         if ($request->filled('role')) {
             $query->where('role', $request->role);
@@ -842,6 +1032,8 @@ class AdminController extends Controller
                 $w->where('name', 'like', "%{$q}%")
                   ->orWhere('username', 'like', "%{$q}%")
                   ->orWhere('nip', 'like', "%{$q}%")
+                  ->orWhere('nuptk', 'like', "%{$q}%")
+                  ->orWhere('tugas', 'like', "%{$q}%")
                   ->orWhere('email', 'like', "%{$q}%");
             });
         }
@@ -860,9 +1052,18 @@ class AdminController extends Controller
             'nuptk' => 'nullable|string|max:40',
             'password' => 'required|string|min:4',
             'role' => 'required|in:admin,guru,proktor',
+            'tugas' => 'nullable|string|max:100',
+            'is_kepsek' => 'nullable|boolean',
         ]);
 
-        User::create([
+        $tugas = $data['tugas'] ?? null;
+        $isKepsek = $request->boolean('is_kepsek') || (strtolower(trim($tugas ?? '')) === 'kepala sekolah');
+
+        if ($isKepsek) {
+            $tugas = 'Kepala Sekolah';
+        }
+
+        $user = User::create([
             'name' => $data['name'],
             'username' => $data['username'],
             'email' => $data['email'],
@@ -870,8 +1071,13 @@ class AdminController extends Controller
             'nuptk' => $data['nuptk'] ?? null,
             'password' => Hash::make($data['password']),
             'role' => $data['role'],
+            'tugas' => $tugas,
             'status' => 'aktif',
         ]);
+
+        if ($isKepsek) {
+            $this->applyKepalaSekolah($user);
+        }
 
         return back()->with('success', 'Pengguna ' . $data['name'] . ' (' . ucfirst($data['role']) . ') berhasil ditambahkan.');
     }
@@ -887,8 +1093,17 @@ class AdminController extends Controller
             'nuptk' => 'nullable|string|max:40',
             'password' => 'nullable|string|min:4',
             'role' => 'required|in:admin,guru,proktor',
+            'tugas' => 'nullable|string|max:100',
+            'is_kepsek' => 'nullable|boolean',
             'status' => 'required|in:aktif,nonaktif',
         ]);
+
+        $tugas = $data['tugas'] ?? null;
+        $isKepsek = $request->boolean('is_kepsek') || (strtolower(trim($tugas ?? '')) === 'kepala sekolah');
+
+        if ($isKepsek) {
+            $tugas = 'Kepala Sekolah';
+        }
 
         $updateData = [
             'name' => $data['name'],
@@ -897,6 +1112,7 @@ class AdminController extends Controller
             'nip' => $data['nip'] ?? null,
             'nuptk' => $data['nuptk'] ?? null,
             'role' => $data['role'],
+            'tugas' => $tugas,
             'status' => $data['status'],
         ];
 
@@ -906,7 +1122,51 @@ class AdminController extends Controller
 
         $user->update($updateData);
 
+        if ($isKepsek) {
+            $this->applyKepalaSekolah($user);
+        }
+
         return back()->with('success', 'Data pengguna ' . $user->name . ' berhasil diperbarui.');
+    }
+
+    public function setKepsek($id)
+    {
+        $user = User::findOrFail($id);
+        $user->update(['tugas' => 'Kepala Sekolah']);
+        $this->applyKepalaSekolah($user);
+
+        return back()->with('success', 'Berhasil! ' . $user->name . ' telah ditetapkan sebagai Kepala Sekolah. Seluruh dokumen resmi asesmen (Kartu, Daftar Hadir, Berita Acara, & Rekap Nilai) otomatis menggunakan nama dan NIP beliau.');
+    }
+
+    protected function applyKepalaSekolah(User $user)
+    {
+        $nip = $user->nip ?: ($user->nuptk ?: '-');
+        $sekolah = MasterSekolah::first();
+
+        if ($sekolah) {
+            $sekolah->update([
+                'kepala_sekolah' => $user->name,
+                'nip_kepala_sekolah' => $nip,
+            ]);
+        } else {
+            MasterSekolah::create([
+                'nama_sekolah' => 'SMK NEGERI 1 KUPANG BARAT',
+                'kepala_sekolah' => $user->name,
+                'nip_kepala_sekolah' => $nip,
+            ]);
+        }
+
+        // Reset user lain yang sebelumnya bertugas Kepala Sekolah agar tidak ganda
+        User::where('id', '!=', $user->id)
+            ->where('tugas', 'Kepala Sekolah')
+            ->update(['tugas' => 'Guru']);
+
+        // Sinkronkan seluruh Berita Acara asesmen agar penanggung jawab sesuai Kepsek baru
+        BeritaAcara::query()->update([
+            'penanggung_jawab_id' => $user->id,
+            'penanggung_jawab_nama' => $user->name,
+            'penanggung_jawab_nip' => $nip,
+        ]);
     }
 
     public function hapusUser($id)
@@ -1285,7 +1545,12 @@ class AdminController extends Controller
         $bobotUraian = $is40 ? 5.0 : 10.0;
         $presetTitle = $is40 ? 'PRESET STANDAR 40 NOMOR (10 B/S x 1 + 20 PG x 2 + 10 URAIAN x 5 = 100 POIN)' : 'PRESET STANDAR 25 NOMOR (5 B/S x 4 + 15 PG x 2 + 5 URAIAN x 10 = 100 POIN)';
 
-        $samples = $is40 ? $this->getSampleQuestions40($bobotBs, $bobotPg, $bobotUraian) : $this->getSampleQuestions25($bobotBs, $bobotPg, $bobotUraian);
+        $isKka = str_contains(strtoupper($bank->kode_bank), 'KKA') || ($bank->mataPelajaran && str_contains(strtoupper($bank->mataPelajaran->nama_mapel), 'KODING'));
+        if ($isKka && !$is40) {
+            $samples = $this->getSampleQuestionsKKA25($bobotBs, $bobotPg, $bobotUraian);
+        } else {
+            $samples = $is40 ? $this->getSampleQuestions40($bobotBs, $bobotPg, $bobotUraian) : $this->getSampleQuestions25($bobotBs, $bobotPg, $bobotUraian);
+        }
 
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
@@ -1464,6 +1729,47 @@ class AdminController extends Controller
             [23, 'URAIAN', 'Sebutkan 4 (empat) Alat Pelindung Diri (APD) utama yang wajib dikenakan oleh seorang juru las saat melaksanakan pengelasan SMAW di bengkel beserta fungsinya!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Helm/Topeng Las: melindungi mata dan wajah dari sinar radiasi UV/IR dan percikan terak. 2) Sarung Tangan Kulit: melindungi tangan dari panas dan sengatan listrik. 3) Apron Kulit: melindungi dada dan tubuh dari percikan api las. 4) Safety Shoes: melindungi kaki dari kejatuhan benda panas/berat.', $bobotUraian],
             [24, 'URAIAN', 'Uraikan urutan langkah kerja penyetelan celah katup (valve clearance) pada mesin bensin 4 silinder segaris dengan Firing Order (FO) 1-3-4-2!', '', '', '', '', '', '', 'Kunci Jawaban: 1) Putar poros engkol hingga tanda timing di puli lurus dengan angka 0 pada posisi TOP 1. 2) Periksa dan setel katup bebas silinder 1 menggunakan feeler gauge sesuai buku manual. 3) Kencangkan mur pengunci sambil menahan baut penyetel. 4) Putar poros engkol 360 derajat ke posisi TOP 4. 5) Setel celah katup bebas silinder 4.', $bobotUraian],
             [25, 'URAIAN', 'Jelaskan apa yang dimaksud dengan selimut beton (concrete cover) pada konstruksi beton bertulang (DPIB) dan mengapa ketebalannya minimal harus 3 cm pada pekerjaan pondasi!', '', '', '', '', '', '', 'Kunci Jawaban: Selimut beton adalah jarak antara permukaan luar tulangan baja dengan permukaan terluar beton. Pada pondasi, ketebalan minimal 3-5 cm diperlukan untuk melindungi tulangan baja dari kontak air tanah, garam mineral, dan kelembaban agar tidak mengalami korosi (karat) serta menjamin ketahanan terhadap api.', $bobotUraian],
+        ];
+    }
+
+    /**
+     * Bank Soal Sampel Koding dan Kecerdasan Artifisial (KKA) Kelas X (25 Nomor - 100 Poin)
+     * Materi: Pengertian & Sejarah AI, Isian Algoritma Sehari-hari (Berangkat Sekolah),
+     * Kode Dasar HTML (Tag Dasar), dan Simbol-Simbol Flowchart.
+     */
+    public function getSampleQuestionsKKA25($bobotBs, $bobotPg, $bobotUraian): array
+    {
+        return [
+            // 5 BENAR / SALAH (Bobot masing-masing 4.0 pt = 20 pt)
+            [1, 'BENAR_SALAH', 'Kecerdasan Artifisial (Artificial Intelligence atau AI) adalah teknologi komputer yang dirancang untuk dapat meniru kemampuan berpikir, belajar, dan memecahkan masalah seperti yang dilakukan oleh manusia.', 'Benar', 'Salah', '', '', '', 'BENAR', 'AI dirancang untuk menirukan kecerdasan manusia dalam mengenali pola, belajar dari informasi, dan membantu memecahkan masalah.', $bobotBs],
+            [2, 'BENAR_SALAH', 'Istilah "Artificial Intelligence" (AI) pertama kali diperkenalkan secara resmi dalam dunia ilmu komputer oleh ilmuwan John McCarthy pada Konferensi Dartmouth tahun 1956.', 'Benar', 'Salah', '', '', '', 'BENAR', 'John McCarthy mencetuskan istilah Artificial Intelligence secara resmi pada tahun 1956 dalam konferensi musim panas di Dartmouth College.', $bobotBs],
+            [3, 'BENAR_SALAH', 'Dalam menyusun algoritma kegiatan sehari-hari seperti persiapan berangkat ke sekolah, urutan langkah boleh dibolak-balik secara acak (misalnya memakai sepatu terlebih dahulu sebelum memakai kaos kaki) tanpa memengaruhi kebenaran hasil.', 'Benar', 'Salah', '', '', '', 'SALAH', 'Algoritma harus tersusun secara runtut, teratur, dan logis. Memakai sepatu sebelum memakai kaos kaki adalah urutan yang salah dan tidak logis.', $bobotBs],
+            [4, 'BENAR_SALAH', 'Pada struktur kode dasar HTML, seluruh teks, gambar, dan tombol yang ingin ditampilkan pada halaman web harus diletakkan di dalam tag <body>...</body>, bukan di dalam tag <head>.', 'Benar', 'Salah', '', '', '', 'BENAR', 'Tag <body> berisi konten visual web yang dilihat pengguna di browser, sedangkan <head> berisi informasi judul tab (<title>) dan metadata.', $bobotBs],
+            [5, 'BENAR_SALAH', 'Pada diagram alir (flowchart), simbol berbentuk persegi panjang digunakan untuk menandai titik awal (Mulai) dan titik akhir (Selesai).', 'Benar', 'Salah', '', '', '', 'SALAH', 'Simbol untuk Mulai (Start) dan Selesai (End) adalah Terminator yang berbentuk oval/kapsul. Simbol persegi panjang digunakan untuk menunjukkan langkah proses atau tindakan.', $bobotBs],
+
+            // 15 PILIHAN GANDA (Bobot masing-masing 2.0 pt = 30 pt)
+            [6, 'PG', 'Teknologi pada perangkat komputer atau smartphone yang mampu memahami perintah suara, mengenali wajah, dan memberikan rekomendasi pintar secara otomatis kepada pengguna merupakan penerapan dari...', 'Perangkat Keras Penyimpan Data (Harddisk)', 'Artificial Intelligence / AI (Kecerdasan Buatan)', 'Kabel Jaringan Internet (UTP)', 'Monitor Tabung Resolusi Tinggi', 'Printer Kasir Thermal', 'B', 'Kemampuan memahami suara manusia, pengenalan wajah, dan algoritma rekomendasi otomatis adalah penerapan dari teknologi Artificial Intelligence (AI).', $bobotPg],
+            [7, 'PG', 'Siapakah tokoh ilmuwan komputer yang pertama kali mencetuskan istilah "Artificial Intelligence" (AI) pada pertemuan bersejarah Dartmouth Summer Research Project tahun 1956?', 'Bill Gates', 'Mark Zuckerberg', 'John McCarthy', 'Alexander Graham Bell', 'Thomas Alva Edison', 'C', 'John McCarthy adalah ilmuwan komputer asal Amerika Serikat yang pertama kali mencetuskan istilah "Artificial Intelligence" pada Konferensi Dartmouth tahun 1956.', $bobotPg],
+            [8, 'PG', 'Berikut ini yang merupakan contoh penerapan Kecerdasan Buatan (AI) yang paling sering digunakan oleh siswa dalam kehidupan sehari-hari pada smartphone adalah...', 'Fitur asisten suara pintar (Google Assistant / Siri) yang menjawab pertanyaan pengguna', 'Menekan saklar stopkontak untuk menyalakan kipas angin di ruang kelas', 'Menghapus tulisan pensil di buku tulis menggunakan karet penghapus', 'Mengisi ulang lembaran buku tulis ke dalam map binder secara manual', 'Menekan tombol bel sekolah saat pergantian jam istirahat', 'A', 'Asisten suara pintar (seperti Google Assistant dan Siri) menggunakan teknologi AI pemrosesan bahasa alami untuk memahami dan menjawab instruksi pengguna.', $bobotPg],
+            [9, 'PG', 'Urutan langkah-langkah yang terencana, logis, teratur, dan terstruktur secara sistematis untuk menyelesaikan suatu masalah atau mencapai tujuan tertentu disebut...', 'Motherboard Komputer', 'Protokol Pengiriman Berkas', 'Sistem Operasi Komputer', 'Algoritma', 'Topologi Jaringan Komputer', 'D', 'Algoritma adalah serangkaian urutan langkah terencana, sistematis, dan logis yang disusun untuk memecahkan suatu permasalahan.', $bobotPg],
+            [10, 'PG', "Perhatikan langkah-langkah acak persiapan berangkat ke sekolah berikut:\n(1) Mengenakan seragam sekolah rapi\n(2) Bangun tidur pagi hari\n(3) Berpamitan kepada orang tua dan berangkat ke sekolah\n(4) Mandi pagi dan menyikat gigi\n(5) Sarapan pagi\nUrutan algoritma persiapan berangkat ke sekolah yang paling logis dan benar adalah...", '(1) - (2) - (3) - (4) - (5)', '(2) - (4) - (1) - (5) - (3)', '(3) - (1) - (5) - (4) - (2)', '(5) - (3) - (2) - (1) - (4)', '(4) - (5) - (1) - (2) - (3)', 'B', 'Urutan yang logis: Bangun tidur pagi hari (2) -> Mandi pagi (4) -> Mengenakan seragam sekolah (1) -> Sarapan pagi (5) -> Berpamitan dan berangkat ke sekolah (3).', $bobotPg],
+            [11, 'PG', 'Pada algoritma membuat secangkir teh manis hangat, setelah kantung teh celup dan air panas dituangkan ke dalam cangkir, langkah logis berikutnya agar air teh terasa manis adalah...', 'Langsung membuang air teh ke tempat cuci piring', 'Memasukkan es batu berukuran besar ke dalam cangkir', 'Menutup cangkir rapat-rapat tanpa menambahkan apapun', 'Menambahkan bubuk kopi sebanyak dua sendok makan', 'Memasukkan gula pasir secukupnya lalu mengaduknya hingga larut', 'E', 'Langkah logis untuk menghasilkan teh manis adalah menambahkan gula pasir secukupnya lalu mengaduknya hingga benar-benar larut.', $bobotPg],
+            [12, 'PG', 'Sebuah algoritma yang baik wajib memiliki sifat keterbatasan langkah (finiteness). Makna dari sifat finiteness tersebut adalah...', 'Algoritma harus berjalan terus-menerus selamanya tanpa henti', 'Algoritma tidak boleh ditulis di atas kertas', 'Algoritma harus dapat berhenti setelah sejumlah langkah terhingga diselesaikan', 'Algoritma hanya boleh dikerjakan oleh robot komputer', 'Algoritma dilarang menghasilkan solusi atau hasil akhir', 'C', 'Finiteness (keterbatasan) berarti langkah-langkah algoritma harus dapat berhenti setelah menyelesaikan proses yang terhingga, tidak boleh berputar tanpa akhir (infinite loop).', $bobotPg],
+            [13, 'PG', 'Dalam pembuatan dokumen halaman web dasar, singkatan resmi dari HTML adalah...', 'HyperText Markup Language', 'High Tech Machine Learning', 'Hyper Transfer Mail Link', 'Home Tool Media Language', 'Hard Text Multi Layer', 'A', 'HTML adalah singkatan dari HyperText Markup Language, bahasa markah standar yang digunakan untuk membuat dan menyusun struktur halaman situs web.', $bobotPg],
+            [14, 'PG', 'Tag dasar dalam dokumen HTML yang berfungsi khusus sebagai wadah utama untuk menampung seluruh konten yang tampil dan dilihat langsung oleh pengunjung situs web (seperti teks paragraf, gambar, dan tautan) adalah...', 'Tag <head>', 'Tag <body>', 'Tag <title>', 'Tag <meta>', 'Tag <style>', 'B', 'Tag <body> ... </body> membungkus seluruh konten visual halaman web yang ditampilkan pada layar peramban (browser).', $bobotPg],
+            [15, 'PG', 'Pada kode dasar HTML, tag yang digunakan untuk membuat tulisan judul utama (heading) dengan ukuran huruf paling besar dan tebal adalah...', 'Tag <p>', 'Tag <br>', 'Tag <h6>', 'Tag <h1>', 'Tag <small>', 'D', 'Tag <h1> (Heading 1) menghasilkan teks judul dengan ukuran paling besar, sedangkan <h6> menghasilkan judul ukuran paling kecil.', $bobotPg],
+            [16, 'PG', 'Tag dasar HTML yang digunakan untuk membuat sebuah paragraf teks baru pada halaman web adalah...', 'Tag <p> ... </p>', 'Tag <line> ... </line>', 'Tag <text> ... </text>', 'Tag <font> ... </font>', 'Tag <par> ... </par>', 'A', 'Tag <p> (paragraph) digunakan untuk mengelompokkan teks ke dalam satu paragraf terpisah.', $bobotPg],
+            [17, 'PG', 'Untuk memindahkan teks ke baris baru berikutnya (ganti baris / enter) tanpa membuat jarak paragraf baru pada dokumen HTML, tag tunggal yang digunakan adalah...', 'Tag <b>', 'Tag <hr>', 'Tag <br>', 'Tag <i>', 'Tag <u>', 'C', 'Tag <br> (break) adalah tag tunggal (tanpa penutup) yang digunakan untuk menyisipkan jeda baris baru pada teks.', $bobotPg],
+            [18, 'PG', 'Pada diagram alir (flowchart), simbol geometri berbentuk oval atau kapsul (Terminator) memiliki fungsi utama untuk...', 'Melakukan operasi perhitungan rumus matematika', 'Membaca masukan data yang diketik melalui keyboard', 'Memutuskan cabang pilihan logika Ya atau Tidak', 'Menghubungkan alur ke halaman kertas lain', 'Menandai titik permulaan (Mulai/Start) dan penutupan (Selesai/End) alur program', 'E', 'Simbol Terminator yang berbentuk oval/kapsul digunakan untuk menandai awal (Mulai / Start) dan akhir (Selesai / End) dari suatu diagram alir.', $bobotPg],
+            [19, 'PG', 'Bentuk geometri Persegi Panjang pada diagram alir (flowchart) standar melambangkan...', 'Titik awal dimulainya program', 'Langkah pemrosesan, tindakan aktivitas, atau proses perhitungan data', 'Pengambilan keputusan percabangan Ya / Tidak', 'Memasukkan data dari keyboard komputer', 'Garis panah petunjuk arah alur', 'B', 'Simbol Persegi Panjang (Process) menyatakan suatu tindakan proses, eksekusi kegiatan, atau pengolahan perhitungan.', $bobotPg],
+            [20, 'PG', 'Simbol diagram alir (flowchart) berbentuk Jajar Genjang (Parallelogram) digunakan khusus untuk menyatakan operasi...', 'Titik Berhenti program', 'Perhitungan rumus perkalian', 'Percabangan logika keputusan', 'Masukan data (Input) atau keluaran hasil data (Output)', 'Menghubungkan dua diagram pada lembar terpisah', 'D', 'Simbol Jajar Genjang digunakan untuk melambangkan operasi Input (menerima masukan data) dan Output (menampilkan hasil data).', $bobotPg],
+
+            // 5 URAIAN / ESAI (Bobot masing-masing 10.0 pt = 50 pt)
+            [21, 'URAIAN', 'Jelaskan dengan bahasamu sendiri apa yang dimaksud dengan Kecerdasan Artifisial (Artificial Intelligence / AI), dan sebutkan 3 (tiga) contoh pemanfaatan teknologi AI yang sering kamu temui dalam kehidupan sehari-hari!', '', '', '', '', '', '', "Kunci Jawaban & Rubrik Penilaian (Maksimal 10 Poin):\n1. Pengertian AI (Skor 4): Kecerdasan Artifisial (AI) adalah teknologi atau sistem komputer cerdas yang dirancang untuk dapat meniru kemampuan berpikir, belajar, dan menyelesaikan masalah seperti kecerdasan manusia.\n2. Tiga Contoh AI Sehari-hari (Skor 6, @2 poin per contoh):\n   - Asisten virtual di smartphone (seperti Google Assistant, Siri, atau Alexa).\n   - Fitur pengenalan wajah (Face Unlock) untuk membuka kunci smartphone.\n   - Rekomendasi video otomatis di YouTube / TikTok yang sesuai dengan minat tontonan pengguna.\n   - Aplikasi peta navigasi (Google Maps) yang menghitung rute perjalanan tercepat.\n   - Penerjemah bahasa otomatis (Google Translate).", $bobotUraian],
+            [22, 'URAIAN', 'Uraikan secara singkat sejarah lahirnya istilah "Artificial Intelligence" (Kecerdasan Buatan), termasuk nama tokoh ilmuwan yang mencetuskannya dan tahun dilaksanakannya konferensi bersejarah tersebut!', '', '', '', '', '', '', "Kunci Jawaban & Rubrik Penilaian (Maksimal 10 Poin):\n1. Tokoh Pencetus (Skor 4): Istilah Artificial Intelligence dicetuskan oleh seorang ilmuwan komputer bernama John McCarthy (dijuluki salah satu bapak pelopor AI).\n2. Tahun & Nama Konferensi (Skor 4): Istilah ini resmi diperkenalkan pada tahun 1956 dalam pertemuan ilmiah bernama Dartmouth Summer Research Project on Artificial Intelligence (Konferensi Dartmouth) di Dartmouth College, Amerika Serikat.\n3. Tujuan Pertemuan (Skor 2): Pertemuan tersebut bertujuan mengumpulkan para peneliti untuk mendiskusikan kemungkinan merancang mesin komputer yang dapat meniru kecerdasan manusia.", $bobotUraian],
+            [23, 'URAIAN', 'Tuliskan urutan algoritma langkah demi langkah yang logis dan teratur untuk kegiatan "Persiapan Berangkat ke Sekolah dari Rumah" (tuliskan minimal 5 urutan langkah yang jelas mulai dari bangun pagi hingga tiba di sekolah)!', '', '', '', '', '', '', "Kunci Jawaban & Rubrik Penilaian (Maksimal 10 Poin, @2 poin per langkah terurut):\nContoh Algoritma Berangkat ke Sekolah:\n1. Langkah 1 (Mulai): Bangun tidur di pagi hari tepat waktu dan merapikan tempat tidur.\n2. Langkah 2: Masuk ke kamar mandi untuk mandi pagi dan menggosok gigi hingga bersih.\n3. Langkah 3: Mengenakan pakaian seragam sekolah SMKN 1 Kupang Barat dengan rapi dan lengkap.\n4. Langkah 4: Menikmati sarapan pagi dan menyiapkan buku pelajaran ke dalam tas sekolah.\n5. Langkah 5: Mengenakan kaos kaki dan sepatu, berpamitan kepada orang tua, lalu berangkat menuju sekolah hingga tiba di gerbang sekolah dengan selamat (Selesai).", $bobotUraian],
+            [24, 'URAIAN', "Sebutkan dan jelaskan fungsi dari 5 (lima) tag dasar HTML berikut ini yang digunakan saat membuat struktur halaman web pemula:\n1. <html>\n2. <head>\n3. <title>\n4. <body>\n5. <p>", '', '', '', '', '', '', "Kunci Jawaban & Rubrik Penilaian (Maksimal 10 Poin, @2 poin per tag):\n1. <html> (Skor 2): Tag utama yang membungkus seluruh baris kode dokumen HTML dari awal hingga akhir.\n2. <head> (Skor 2): Bagian kepala dokumen yang memuat informasi metadata dan judul tab browser (tidak tampil langsung di area halaman web).\n3. <title> (Skor 2): Menentukan teks judul halaman yang tampil pada tab di bagian atas browser web.\n4. <body> (Skor 2): Bagian tubuh dokumen yang menampung seluruh konten yang tampil dan dilihat oleh pengunjung web (teks, gambar, tombol, link).\n5. <p> (Skor 2): Digunakan untuk membuat paragraf teks pada halaman web.", $bobotUraian],
+            [25, 'URAIAN', "Sebutkan bentuk geometri beserta fungsi dari 4 (empat) simbol utama diagram alir (flowchart) berikut ini:\n1. Terminator\n2. Process (Proses)\n3. Input / Output\n4. Decision (Keputusan)", '', '', '', '', '', '', "Kunci Jawaban & Rubrik Penilaian (Maksimal 10 Poin):\n1. Terminator (Skor 2.5): Bentuk Oval / Kapsul. Fungsinya untuk menandai titik awal (Mulai / Start) dan titik akhir (Selesai / End) alur program.\n2. Process (Skor 2.5): Bentuk Persegi Panjang. Fungsinya untuk menunjukkan langkah pemrosesan data, tindakan aktivitas, atau perhitungan aritmatika.\n3. Input / Output (Skor 2.5): Bentuk Jajar Genjang. Fungsinya untuk menyatakan operasi memasukkan data (Input) atau menampilkan hasil data (Output).\n4. Decision (Skor 2.5): Bentuk Belah Ketupat (Diamond). Fungsinya untuk pengambilan keputusan atau percabangan logika yang menghasilkan pilihan kondisi Ya / Tidak.", $bobotUraian],
         ];
     }
 
@@ -2656,7 +2962,7 @@ class AdminController extends Controller
     public function petugasUjian(Request $request)
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
-        $petugasList = PetugasUjian::with(['user', 'jadwal'])->orderBy('jenis_petugas')->get();
+        $petugasList = $this->sortPetugasBySK(PetugasUjian::with(['user', 'jadwal'])->get());
         $guruList = User::whereIn('role', ['guru', 'proktor', 'admin'])->orderBy('name')->get();
         $jadwalList = JadwalUjian::all();
 
@@ -2668,20 +2974,23 @@ class AdminController extends Controller
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
             'jadwal_ujian_id' => 'nullable|exists:jadwal_ujian,id',
-            'jenis_petugas' => 'required|in:proktor,pengawas',
-            'ruangan' => 'required|string|max:50',
-            'sesi' => 'required|string|max:30',
+            'jenis_petugas' => 'required|string|max:100',
+            'ruangan' => 'nullable|string|max:50',
+            'sesi' => 'nullable|string|max:30',
             'nomor_sk' => 'nullable|string|max:100',
         ]);
+
+        $data['ruangan'] = !empty($data['ruangan']) ? $data['ruangan'] : 'Semua Ruang / Panitia';
+        $data['sesi'] = !empty($data['sesi']) ? $data['sesi'] : 'Semua Sesi';
 
         PetugasUjian::create($data);
 
         // Jika ditugaskan sebagai proktor, pastikan role user terupdate
-        if ($data['jenis_petugas'] === 'proktor') {
+        if (strtolower($data['jenis_petugas']) === 'proktor') {
             User::where('id', $data['user_id'])->update(['role' => 'proktor']);
         }
 
-        return back()->with('success', 'Petugas Ujian (' . ucfirst($data['jenis_petugas']) . ') berhasil ditambahkan.');
+        return back()->with('success', 'Petugas / Panitia Ujian (' . ucwords($data['jenis_petugas']) . ') berhasil ditambahkan.');
     }
 
     public function updatePetugasUjian(Request $request, $id)
@@ -2690,19 +2999,22 @@ class AdminController extends Controller
         $data = $request->validate([
             'user_id' => 'required|exists:users,id',
             'jadwal_ujian_id' => 'nullable|exists:jadwal_ujian,id',
-            'jenis_petugas' => 'required|in:proktor,pengawas',
-            'ruangan' => 'required|string|max:50',
-            'sesi' => 'required|string|max:30',
+            'jenis_petugas' => 'required|string|max:100',
+            'ruangan' => 'nullable|string|max:50',
+            'sesi' => 'nullable|string|max:30',
             'nomor_sk' => 'nullable|string|max:100',
         ]);
 
+        $data['ruangan'] = !empty($data['ruangan']) ? $data['ruangan'] : 'Semua Ruang / Panitia';
+        $data['sesi'] = !empty($data['sesi']) ? $data['sesi'] : 'Semua Sesi';
+
         $petugas->update($data);
 
-        if ($data['jenis_petugas'] === 'proktor') {
+        if (strtolower($data['jenis_petugas']) === 'proktor') {
             User::where('id', $data['user_id'])->update(['role' => 'proktor']);
         }
 
-        return back()->with('success', 'Penugasan petugas (' . ucfirst($data['jenis_petugas']) . ') berhasil diperbarui.');
+        return back()->with('success', 'Penugasan petugas (' . ucwords($data['jenis_petugas']) . ') berhasil diperbarui.');
     }
 
     public function hapusPetugasUjian($id)
@@ -2722,7 +3034,7 @@ class AdminController extends Controller
             $query->where('id', $request->petugas_id);
         }
 
-        $daftarPetugas = $query->get();
+        $daftarPetugas = $this->sortPetugasBySK($query->get());
 
         // Jika belum ada penugasan manual, buat preview dari proktor dan guru default
         if ($daftarPetugas->isEmpty()) {
@@ -2757,6 +3069,117 @@ class AdminController extends Controller
         return view('admin.cetak_kartu_petugas', compact('sekolah', 'daftarPetugas'));
     }
 
+    public function cetakDaftarHadirPetugas(Request $request)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $query = PetugasUjian::with(['user', 'jadwal']);
+
+        if ($request->filled('jadwal_id')) {
+            $query->where('jadwal_ujian_id', $request->jadwal_id);
+        }
+        if ($request->filled('jenis_petugas')) {
+            $query->where('jenis_petugas', $request->jenis_petugas);
+        }
+        if ($request->filled('ruangan')) {
+            $query->where('ruangan', $request->ruangan);
+        }
+        if ($request->filled('sesi')) {
+            $query->where('sesi', $request->sesi);
+        }
+
+        $daftarPetugas = $this->sortPetugasBySK($query->get());
+        $jadwal = $request->filled('jadwal_id') ? JadwalUjian::find($request->jadwal_id) : JadwalUjian::where('status', 'aktif')->first();
+
+        return view('admin.cetak_daftar_hadir_petugas', compact('sekolah', 'daftarPetugas', 'jadwal'));
+    }
+
+    /**
+     * Urutkan daftar petugas sesuai hierarki Surat Keputusan (SK) Panitia & Petugas Asesmen
+     * 1. Penanggungjawab Umum
+     * 2. Koordinator Umum / Pengarah
+     * 3. Ketua Pelaksana
+     * 4. Wakil Ketua
+     * 5. Sekretaris
+     * 6. Bendahara
+     * 7. Seksi / Koordinator Bidang (Pengawas, Proktor, dll)
+     * 8. Proktor CBT
+     * 9. Teknisi CBT
+     * 10. Pengawas Ruang
+     * 11. Pembantu Umum / Lainnya
+     */
+    protected function sortPetugasBySK($petugasCollection)
+    {
+        $getRank = function ($p) {
+            $j = strtolower(trim($p->jenis_petugas ?? ''));
+
+            // 1. Penanggungjawab / Penanggung Jawab Umum
+            if (str_contains($j, 'penanggung')) {
+                return 1;
+            }
+            // 2. Koordinator Umum / Pengarah
+            if (str_contains($j, 'koordinator umum') || str_contains($j, 'pengarah')) {
+                return 2;
+            }
+            // 3. Ketua Pelaksana / Ketua Panitia
+            if (str_contains($j, 'ketua') && !str_contains($j, 'wakil')) {
+                return 3;
+            }
+            // 4. Wakil Ketua
+            if (str_contains($j, 'wakil ketua')) {
+                return 4;
+            }
+            // 5. Sekretaris
+            if (str_contains($j, 'sekretaris')) {
+                return 5;
+            }
+            // 6. Bendahara
+            if (str_contains($j, 'bendahara')) {
+                return 6;
+            }
+            // 7. Koordinator / Seksi Bidang
+            if (str_contains($j, 'koordinator') || str_contains($j, 'seksi')) {
+                return 7;
+            }
+            // 8. Proktor / Proktor CBT
+            if (str_contains($j, 'proktor')) {
+                return 8;
+            }
+            // 9. Teknisi / Teknisi CBT / Teknisi Server
+            if (str_contains($j, 'teknisi')) {
+                return 9;
+            }
+            // 10. Pengawas / Pengawas Ruang
+            if (str_contains($j, 'pengawas')) {
+                return 10;
+            }
+            // 11. Lainnya
+            return 20;
+        };
+
+        return $petugasCollection->sort(function ($a, $b) use ($getRank) {
+            $rankA = $getRank($a);
+            $rankB = $getRank($b);
+
+            if ($rankA !== $rankB) {
+                return $rankA <=> $rankB;
+            }
+
+            $ruangCmp = strcmp($a->ruangan ?? '', $b->ruangan ?? '');
+            if ($ruangCmp !== 0) {
+                return $ruangCmp;
+            }
+
+            $sesiCmp = strcmp($a->sesi ?? '', $b->sesi ?? '');
+            if ($sesiCmp !== 0) {
+                return $sesiCmp;
+            }
+
+            $namaA = $a->user->name ?? '';
+            $namaB = $b->user->name ?? '';
+            return strcmp($namaA, $namaB);
+        })->values();
+    }
+
     public function pengaturan()
     {
         $sekolah = MasterSekolah::first() ?? new MasterSekolah();
@@ -2779,6 +3202,8 @@ class AdminController extends Controller
             'nip_kepala_sekolah' => 'nullable|string',
             'tahun_ajaran_aktif' => 'required|string',
             'semester_aktif' => 'required|string',
+            'nama_ujian_aktif' => 'nullable|string|max:150',
+            'jenis_ujian_aktif' => 'nullable|string|max:50',
             'ttd_kepala_sekolah' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',
             'logo_pemprov' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',
             'logo_sekolah' => 'nullable|file|mimes:png,jpg,jpeg,svg|max:4096',

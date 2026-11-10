@@ -13,12 +13,18 @@
             box-sizing: border-box;
             margin: 0;
             padding: 0;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
         body {
             font-family: Arial, Helvetica, sans-serif;
             background: #f1f5f9;
             color: #000000;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
         .no-print {
@@ -53,60 +59,69 @@
         .card-header {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
             border-bottom: 2px solid #0f2b48;
             padding-bottom: 8px;
             margin-bottom: 8px;
         }
 
         .card-header img {
-            width: 44px;
-            height: 44px;
+            width: 38px;
+            height: 38px;
             object-fit: contain;
+            flex-shrink: 0;
         }
 
         .header-text {
             flex: 1;
             text-align: center;
+            min-width: 0;
         }
 
         .header-text h4 {
-            font-size: 8.5px;
+            font-size: 7.2px;
             font-weight: 700;
             margin-bottom: 1px;
-            letter-spacing: 0.3px;
+            letter-spacing: 0;
+            white-space: nowrap;
         }
 
         .header-text h5 {
-            font-size: 8px;
+            font-size: 7.5px;
             font-weight: 700;
             color: #1e293b;
             margin-bottom: 1px;
+            white-space: nowrap;
         }
 
         .header-text h3 {
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 800;
             color: #0f2b48;
             margin-bottom: 1px;
+            white-space: nowrap;
         }
 
         .header-text p {
-            font-size: 7.5px;
+            font-size: 7px;
             color: #475569;
+            line-height: 1.2;
         }
 
         .badge-title {
             text-align: center;
             font-size: 11px;
             font-weight: 800;
-            color: #ffffff;
-            background: #0f2b48;
-            padding: 4px 8px;
+            color: #ffffff !important;
+            background-color: #0f2b48 !important;
+            padding: 5px 8px;
             border-radius: 3px;
             letter-spacing: 0.8px;
             margin-bottom: 10px;
             text-transform: uppercase;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color-adjust: exact !important;
         }
 
         .badge-title.pengawas {
@@ -192,8 +207,16 @@
         }
 
         @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
             body {
-                background: #ffffff;
+                background: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
             .no-print {
                 display: none !important;
@@ -204,6 +227,20 @@
             .card-petugas {
                 box-shadow: none;
                 border-color: #000000;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .badge-title {
+                color: #ffffff !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
+            }
+            .photo-frame {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
             }
         }
     </style>
@@ -212,11 +249,14 @@
 
     <div class="no-print">
         <div>
-            <strong>Kartu Tanda Pengenal Proktor & Pengawas Asesmen CBT</strong> &bull; Total {{ count($daftarPetugas) }} Petugas
+            <strong style="font-size: 14px;">Kartu Tanda Pengenal Panitia & Petugas Asesmen CBT</strong> &bull; Total {{ count($daftarPetugas) }} Petugas
+            <div style="font-size: 11.5px; opacity: 0.9; margin-top: 3px;">
+                💡 <em>Tips Cetak:</em> Pastikan opsi <strong>"Grafik latar belakang" (Background graphics)</strong> dicentang pada jendela cetak browser agar warna pita tugas tercetak jelas.
+            </div>
         </div>
         <div>
-            <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 7px 16px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 13px;">
-                Cetak Semua Kartu Petugas (Print / PDF)
+            <button onclick="window.print()" style="background: #0077b6; color: #fff; border: none; padding: 8px 18px; font-weight: bold; cursor: pointer; border-radius: 4px; font-size: 13px; display: inline-flex; align-items: center; gap: 6px;">
+                🖨️ Cetak Semua Kartu Petugas (Print / PDF)
             </button>
         </div>
     </div>
@@ -236,12 +276,26 @@
                 <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo SMK">
             </div>
 
-            <div class="badge-title {{ $p->jenis_petugas === 'pengawas' ? 'pengawas' : '' }}">
-                @if ($p->jenis_petugas === 'proktor')
-                    KARTU TANDA PENGENAL PROKTOR CBT
-                @else
-                    KARTU TANDA PENGENAL PENGAWAS RUANG
-                @endif
+            @php
+                $roleLower = strtolower($p->jenis_petugas ?? 'pengawas');
+                $badgeBg = '#0f2b48';
+                if (str_contains($roleLower, 'pengawas')) {
+                    $badgeBg = '#065f46';
+                } elseif (str_contains($roleLower, 'proktor')) {
+                    $badgeBg = '#b45309';
+                } elseif (str_contains($roleLower, 'teknisi')) {
+                    $badgeBg = '#0284c7';
+                } elseif (str_contains($roleLower, 'ketua') || str_contains($roleLower, 'penanggung')) {
+                    $badgeBg = '#1e1b4b';
+                } elseif (str_contains($roleLower, 'sekretaris') || str_contains($roleLower, 'bendahara')) {
+                    $badgeBg = '#581c87';
+                } elseif (str_contains($roleLower, 'koordinator')) {
+                    $badgeBg = '#0f766e';
+                }
+            @endphp
+
+            <div class="badge-title" style="background-color: {{ $badgeBg }} !important; color: #ffffff !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;">
+                KARTU TANDA PENGENAL {{ strtoupper($p->jenis_petugas) }}
             </div>
 
             <div class="card-body">
@@ -262,12 +316,8 @@
                     <tr>
                         <td class="label">Peran Tugas</td>
                         <td class="colon">:</td>
-                        <td class="val">
-                            @if ($p->jenis_petugas === 'proktor')
-                                Proktor Asesmen Komputer
-                            @else
-                                Pengawas Ruang Ujian
-                            @endif
+                        <td class="val" style="color: #0f2b48; font-weight: 700;">
+                            {{ ucwords(str_replace('_', ' ', $p->jenis_petugas)) }}
                         </td>
                     </tr>
                     <tr>
@@ -290,7 +340,7 @@
 
             <div class="card-footer">
                 <div class="barcode-box">
-                    <div>* PETUGAS-{{ strtoupper($p->jenis_petugas) }}-{{ $p->id }} *</div>
+                    <div>* PETUGAS-{{ strtoupper(preg_replace('/[^A-Za-z0-9]/', '', $p->jenis_petugas)) }}-{{ $p->id }} *</div>
                     <div style="font-size: 7px; color: #94a3b8; margin-top: 2px;">Wajib Dikenakan Selama Ujian</div>
                 </div>
 

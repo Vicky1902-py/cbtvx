@@ -8,6 +8,7 @@ use App\Models\JadwalUjian;
 use App\Models\UjianPeserta;
 use App\Models\UjianJawaban;
 use App\Models\SoalButir;
+use App\Models\MasterSekolah;
 use Carbon\Carbon;
 
 class SiswaController extends Controller
@@ -40,7 +41,9 @@ class SiswaController extends Controller
             ->get()
             ->keyBy('jadwal_ujian_id');
 
-        return view('siswa.dashboard', compact('siswa', 'jadwalAktif', 'riwayatUjian'));
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+
+        return view('siswa.dashboard', compact('sekolah', 'siswa', 'jadwalAktif', 'riwayatUjian'));
     }
 
     /**
@@ -50,6 +53,11 @@ class SiswaController extends Controller
     {
         $siswa = Auth::user()->siswa;
         $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran'])->findOrFail($id);
+
+        // Verifikasi isolasi kelas: Siswa hanya dapat mengikuti ujian yang ditugaskan ke kelasnya
+        if ($jadwal->kelas()->exists() && !$jadwal->kelas()->where('kelas.id', $siswa->kelas_id)->exists()) {
+            return redirect()->route('siswa.dashboard')->with('error', 'Ujian ini bukan untuk kelas Anda.');
+        }
 
         $peserta = UjianPeserta::where('jadwal_ujian_id', $jadwal->id)
             ->where('siswa_id', $siswa->id)
@@ -69,6 +77,11 @@ class SiswaController extends Controller
     {
         $siswa = Auth::user()->siswa;
         $jadwal = JadwalUjian::with('bankSoal.butirSoal')->findOrFail($id);
+
+        // Verifikasi isolasi kelas: Siswa hanya dapat memulai ujian yang ditugaskan ke kelasnya
+        if ($jadwal->kelas()->exists() && !$jadwal->kelas()->where('kelas.id', $siswa->kelas_id)->exists()) {
+            return redirect()->route('siswa.dashboard')->with('error', 'Ujian ini bukan untuk kelas Anda.');
+        }
 
         $tokenInput = strtoupper(trim($request->input('token', '')));
 
@@ -114,6 +127,10 @@ class SiswaController extends Controller
         $siswa = Auth::user()->siswa;
         $jadwal = JadwalUjian::with(['bankSoal.mataPelajaran', 'bankSoal.butirSoal'])->findOrFail($id);
 
+        if ($jadwal->kelas()->exists() && !$jadwal->kelas()->where('kelas.id', $siswa->kelas_id)->exists()) {
+            return redirect()->route('siswa.dashboard')->with('error', 'Ujian ini bukan untuk kelas Anda.');
+        }
+
         $peserta = UjianPeserta::where('jadwal_ujian_id', $jadwal->id)
             ->where('siswa_id', $siswa->id)
             ->firstOrFail();
@@ -122,8 +139,8 @@ class SiswaController extends Controller
             return redirect()->route('siswa.dashboard')->with('success', 'Ujian telah selesai.');
         }
 
-        // Ambil daftar soal
-        $soalList = $jadwal->bankSoal->butirSoal;
+        // Ambil daftar soal (sembunyikan kunci jawaban & rubrik penilaian agar 100% aman dari inspect browser siswa)
+        $soalList = $jadwal->bankSoal->butirSoal->makeHidden(['kunci_jawaban', 'rubrik_penilaian']);
 
         // Ambil seluruh jawaban yang sudah tersimpan
         $jawabanList = UjianJawaban::where('ujian_peserta_id', $peserta->id)

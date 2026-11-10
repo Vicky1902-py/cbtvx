@@ -106,5 +106,28 @@ class DatabaseSeeder extends Seeder
         // Pasangkan ke seluruh 12 kelas Dapodik
         $allKelasIds = Kelas::pluck('id')->toArray();
         $jadwal->kelas()->sync($allKelasIds);
+
+        // 8. Jadwal Ujian KKA (Koding dan Kecerdasan Artifisial)
+        $bankKka = BankSoal::where('kode_bank', 'BS-KKA-X-25')->first();
+        if ($bankKka) {
+            $jadwalKka = JadwalUjian::updateOrCreate(
+                ['nama_ujian' => 'Asesmen Koding dan Kecerdasan Artifisial (KKA) Kelas X'],
+                [
+                    'bank_soal_id' => $bankKka->id,
+                    'jenis_ujian' => 'UAS',
+                    'token_ujian' => 'KKA26',
+                    'acak_token' => false,
+                    'waktu_mulai' => now()->subDay(),
+                    'waktu_selesai' => now()->addDays(30),
+                    'durasi_menit' => 60,
+                    'acak_soal' => true,
+                    'acak_opsi' => true,
+                    'tampilkan_nilai' => true,
+                    'izinkan_login_ganda' => false,
+                    'status' => 'aktif',
+                ]
+            );
+            $jadwalKka->kelas()->sync($allKelasIds);
+        }
     }
 }

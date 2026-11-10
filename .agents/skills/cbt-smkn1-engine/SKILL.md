@@ -54,4 +54,4 @@ Sebelum melakukan push atau setelah melakukan perubahan kode, selalu jalankan te
 ```bash
 php artisan test
 ```
-Pastikan seluruh 30 tes lulus dengan 157 assertion.
+Pastikan seluruh 46 tes lulus dengan 338 assertion.

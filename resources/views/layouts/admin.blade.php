@@ -575,6 +575,12 @@
 
         <div class="nav-group-title">Pelaksanaan Ujian</div>
         <ul class="nav-menu">
+            <li class="nav-item {{ request()->routeIs('admin.sesi*') ? 'active' : '' }}" title="Pengaturan Sesi & Lab Siswa">
+                <a href="{{ route('admin.sesi') }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><rect x="15" y="4" width="7" height="9" rx="1"></rect><line x1="18.5" y1="13" x2="18.5" y2="15"></line></svg>
+                    <span>Pengaturan Sesi & Lab</span>
+                </a>
+            </li>
             <li class="nav-item {{ request()->routeIs('admin.jadwal*') ? 'active' : '' }}" title="Jadwal & Token Ujian">
                 <a href="{{ route('admin.jadwal') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>

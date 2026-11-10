@@ -38,6 +38,12 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/siswa/export-xlsx', [AdminController::class, 'exportSiswaXlsx'])->name('siswa.export_xlsx');
     Route::get('/siswa/template-xlsx', [AdminController::class, 'downloadTemplateSiswaXlsx'])->name('siswa.template_xlsx');
 
+    // Pengaturan Sesi & Ruang Lab Siswa Massal
+    Route::get('/pengaturan-sesi', [AdminController::class, 'pengaturanSesi'])->name('sesi');
+    Route::post('/pengaturan-sesi/update-massal', [AdminController::class, 'updateSesiMassal'])->name('sesi.update_massal');
+    Route::post('/pengaturan-sesi/auto-split', [AdminController::class, 'autoSplitSesi'])->name('sesi.auto_split');
+    Route::get('/cetak-sesi', [AdminController::class, 'cetakSesi'])->name('cetak_sesi');
+
     // Kelas CRUD
     Route::get('/kelas', [AdminController::class, 'kelas'])->name('kelas');
     Route::post('/kelas', [AdminController::class, 'simpanKelas'])->name('kelas.simpan');
@@ -57,6 +63,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/users', [AdminController::class, 'users'])->name('users');
     Route::post('/users', [AdminController::class, 'simpanUser'])->name('users.simpan');
     Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
+    Route::post('/users/{id}/set-kepsek', [AdminController::class, 'setKepsek'])->name('users.set_kepsek');
     Route::post('/users/{id}/hapus', [AdminController::class, 'hapusUser'])->name('users.hapus');
 
     // Bank Soal & Butir Soal (Roadmap Preset 25 & 40)
@@ -113,6 +120,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/petugas-ujian/{id}/update', [AdminController::class, 'updatePetugasUjian'])->name('petugas_ujian.update');
     Route::post('/petugas-ujian/{id}/hapus', [AdminController::class, 'hapusPetugasUjian'])->name('petugas_ujian.hapus');
     Route::get('/cetak-kartu-petugas', [AdminController::class, 'cetakKartuPetugas'])->name('cetak_kartu_petugas');
+    Route::get('/cetak-daftar-hadir-petugas', [AdminController::class, 'cetakDaftarHadirPetugas'])->name('cetak_daftar_hadir_petugas');
 
     // Modul Laporan & Analisis (Nilai, Analisis Butir Soal, Monitor & Reset Siswa)
     Route::get('/laporan/nilai', [AdminController::class, 'laporanNilai'])->name('laporan.nilai');

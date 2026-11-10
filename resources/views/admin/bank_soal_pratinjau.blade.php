@@ -366,6 +366,17 @@
             document.getElementById('q-text').style.fontSize = currentFontSize + 'px';
         }
 
+        function safeRenderText(text) {
+            if (!text) return '';
+            const temp = document.createElement('textarea');
+            temp.innerHTML = text;
+            const raw = temp.value;
+
+            const div = document.createElement('div');
+            div.textContent = raw;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
         function loadQuestion(idx) {
             if (questions.length === 0) {
                 document.getElementById('q-text').textContent = 'Belum ada butir soal pada bank soal ini.';
@@ -375,7 +386,7 @@
             const q = questions[idx];
 
             document.getElementById('q-title').textContent = 'SOAL NOMOR ' + q.nomor_urut + ' (' + q.jenis_soal.toUpperCase() + ' - ' + q.bobot + ' Poin)';
-            document.getElementById('q-text').innerHTML = q.konten_soal.replace(/\n/g, '<br>');
+            document.getElementById('q-text').innerHTML = safeRenderText(q.konten_soal);
 
             // Media
             const mediaBox = document.getElementById('q-media-box');
@@ -404,10 +415,19 @@
                 choices.forEach(c => {
                     if (!c.t) return;
                     const isSel = (currentAns === c.k);
+                    const isKey = (q.kunci_jawaban && q.kunci_jawaban.toUpperCase() === c.k);
                     const div = document.createElement('div');
                     div.className = 'option-item' + (isSel ? ' selected' : '');
+                    if (isKey) {
+                        div.style.borderColor = '#16a34a';
+                        div.style.backgroundColor = '#f0fdf4';
+                    }
                     div.onclick = () => selectAns(c.k);
-                    div.innerHTML = `<div class="option-letter">${c.k}</div><div class="option-text">${c.t}</div>`;
+                    div.innerHTML = `
+                        <div class="option-letter" style="${isKey ? 'background:#16a34a;color:#ffffff;border-color:#16a34a;' : ''}">${c.k}</div>
+                        <div class="option-text">${safeRenderText(c.t)}</div>
+                        ${isKey ? '<span style="font-size:11px;font-weight:700;color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;padding:2px 8px;border-radius:4px;white-space:nowrap;margin-left:auto;">✓ Kunci Jawaban</span>' : ''}
+                    `;
                     optBox.appendChild(div);
                 });
             } else if (q.jenis_soal === 'benar_salah') {
@@ -417,20 +437,42 @@
                 ];
                 choices.forEach(c => {
                     const isSel = (currentAns === c.k);
+                    const isKey = (q.kunci_jawaban && q.kunci_jawaban.toUpperCase() === c.k);
                     const div = document.createElement('div');
                     div.className = 'option-item' + (isSel ? ' selected' : '');
+                    if (isKey) {
+                        div.style.borderColor = '#16a34a';
+                        div.style.backgroundColor = '#f0fdf4';
+                    }
                     div.onclick = () => selectAns(c.k);
-                    div.innerHTML = `<div class="option-letter">${c.k === 'BENAR' ? 'A' : 'B'}</div><div class="option-text"><strong>${c.k}:</strong> ${c.t}</div>`;
+                    div.innerHTML = `
+                        <div class="option-letter" style="${isKey ? 'background:#16a34a;color:#ffffff;border-color:#16a34a;' : ''}">${c.k === 'BENAR' ? 'A' : 'B'}</div>
+                        <div class="option-text"><strong>${c.k}:</strong> ${safeRenderText(c.t)}</div>
+                        ${isKey ? '<span style="font-size:11px;font-weight:700;color:#16a34a;background:#dcfce7;border:1px solid #bbf7d0;padding:2px 8px;border-radius:4px;white-space:nowrap;margin-left:auto;">✓ Kunci Jawaban</span>' : ''}
+                    `;
                     optBox.appendChild(div);
                 });
             } else {
                 optBox.innerHTML = `
                     <div style="background: #f8fafc; border: 1px solid var(--border); padding: 12px; border-radius: 4px;">
-                        <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Tuliskan Jawaban Uraian Anda di Sini:</label>
-                        <textarea rows="5" placeholder="Ketikkan uraian jawaban..." style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;" oninput="selectAns(this.value)">${currentAns}</textarea>
+                        <label style="display: block; font-weight: 600; font-size: 12px; margin-bottom: 6px;">Simulasi Lembar Jawaban Uraian:</label>
+                        <textarea rows="4" placeholder="Ketikkan uraian jawaban..." style="width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 13px;" oninput="selectAns(this.value)">${currentAns}</textarea>
                     </div>
                 `;
             }
+
+            // KOTAK INFORMASI KUNCI JAWABAN & RUBRIK RESMI (KHUSUS PRATINJAU GURU / ADMIN)
+            const infoDiv = document.createElement('div');
+            infoDiv.style.cssText = 'margin-top: 20px; padding: 12px 16px; background: #f8fafc; border: 1px solid #cbd5e1; border-left: 4px solid #0284c7; border-radius: var(--radius-sm); font-size: 12.5px;';
+            infoDiv.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <strong style="color: #0369a1; text-transform: uppercase; font-size: 11.5px;">Kunci Jawaban & Rubrik Penilaian Resmi:</strong>
+                    <span style="font-weight: 700; background: #e0f2fe; color: #0369a1; padding: 2px 8px; border-radius: 4px; font-size: 11px;">Bobot: ${q.bobot} Poin</span>
+                </div>
+                ${q.kunci_jawaban ? `<div style="margin-bottom: 6px;"><strong>Kunci Jawaban:</strong> <span style="display: inline-block; background: #dcfce7; color: #166534; font-weight: 700; padding: 1px 8px; border-radius: 4px; border: 1px solid #bbf7d0;">${q.kunci_jawaban}</span></div>` : ''}
+                ${q.rubrik_uraian ? `<div><strong>Pembahasan / Rubrik Penilaian:</strong><div style="margin-top: 4px; color: #334155; line-height: 1.5; background: #ffffff; padding: 8px 12px; border-radius: 4px; border: 1px solid #e2e8f0; white-space: pre-line;">${safeRenderText(q.rubrik_uraian)}</div></div>` : ''}
+            `;
+            optBox.appendChild(infoDiv);
 
             // Nav buttons state
             document.getElementById('btn-prev').disabled = (idx === 0);

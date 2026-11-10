@@ -18,6 +18,7 @@ class User extends Authenticatable
         'nuptk',
         'password',
         'role',
+        'tugas',
         'status',
         'last_login_at',
     ];

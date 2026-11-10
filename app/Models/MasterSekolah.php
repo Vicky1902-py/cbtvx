@@ -164,4 +164,20 @@ class MasterSekolah extends Model
     {
         return $value ?: '198501192011011005';
     }
+
+    /**
+     * Nama Ujian Aktif Global (Default: "Simulasi Sumatif Akhir Semester" atau "Sumatif Akhir Semester")
+     */
+    public function getNamaUjianAktifAttribute($value): string
+    {
+        return $value ?: 'Simulasi Sumatif Akhir Semester';
+    }
+
+    /**
+     * Jenis Ujian Aktif Global
+     */
+    public function getJenisUjianAktifAttribute($value): string
+    {
+        return $value ?: 'Simulasi SAS';
+    }
 }

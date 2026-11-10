@@ -688,6 +688,17 @@
             startTimer();
         }
 
+        function safeRenderText(text) {
+            if (!text) return '';
+            const temp = document.createElement('textarea');
+            temp.innerHTML = text;
+            const raw = temp.value;
+
+            const div = document.createElement('div');
+            div.textContent = raw;
+            return div.innerHTML.replace(/\n/g, '<br>');
+        }
+
         function loadQuestion(index) {
             if (index < 0 || index >= questions.length) return;
             currentIndex = index;
@@ -695,7 +706,7 @@
             const q = questions[currentIndex];
             const jenisBadge = q.jenis_soal === 'benar_salah' ? ' (BENAR/SALAH)' : (q.jenis_soal === 'uraian' ? ' (URAIAN)' : '');
             document.getElementById('current-question-title').textContent = 'SOAL NOMOR ' + (currentIndex + 1) + jenisBadge;
-            document.getElementById('question-text-el').innerHTML = q.konten_soal.replace(/\n/g, '<br>');
+            document.getElementById('question-text-el').innerHTML = safeRenderText(q.konten_soal);
 
             // Update Media Jika Ada
             let mediaHtml = '';
@@ -741,7 +752,7 @@
 
                     optDiv.innerHTML = `
                         <div class="option-letter">${opt.key}</div>
-                        <div class="option-text">${opt.text}</div>
+                        <div class="option-text">${safeRenderText(opt.text)}</div>
                     `;
                     container.appendChild(optDiv);
                 });
@@ -759,7 +770,7 @@
 
                     optDiv.innerHTML = `
                         <div class="option-letter">${opt.label}</div>
-                        <div class="option-text"><strong>${opt.key}:</strong> ${opt.text}</div>
+                        <div class="option-text"><strong>${opt.key}:</strong> ${safeRenderText(opt.text)}</div>
                     `;
                     container.appendChild(optDiv);
                 });

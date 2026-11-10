@@ -203,7 +203,7 @@
         <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo Sekolah" class="logo-left">
         <div class="judul-center">
             <h2>BERITA ACARA PELAKSANAAN</h2>
-            <h2>{{ strtoupper($beritaAcara->nama_tes ?? $jadwal->nama_ujian) }}</h2>
+            <h2>{{ strtoupper(($beritaAcara->nama_tes ?? null) ?: ($jadwal->nama_ujian ?: ($sekolah->nama_ujian_aktif ?? 'SIMULASI SUMATIF AKHIR SEMESTER'))) }}</h2>
             <h2>TAHUN {{ date('Y') }}</h2>
         </div>
     </div>
@@ -236,7 +236,7 @@
 
     <!-- NARASI PEMBUKA -->
     <p class="paragraf-pembuka">
-        Pada hari ini <strong>{{ $hariStr }}</strong> tanggal <strong>{{ $tglStr }}</strong> bulan <strong>{{ $blnStr }}</strong> tahun <strong>{{ $thnStr }}</strong>, di <strong>{{ strtoupper($sekolah->nama_sekolah ?? 'SMKN 1 KUPANG BARAT') }}</strong> telah diselenggarakan <strong>{{ strtoupper($beritaAcara->nama_tes ?? $jadwal->nama_ujian) }}</strong>, dari pukul {{ $beritaAcara->waktu_mulai ?? '08:00' }} sampai dengan pukul {{ $beritaAcara->waktu_selesai ?? '09:45' }}
+        Pada hari ini <strong>{{ $hariStr }}</strong> tanggal <strong>{{ $tglStr }}</strong> bulan <strong>{{ $blnStr }}</strong> tahun <strong>{{ $thnStr }}</strong>, di <strong>{{ strtoupper($sekolah->nama_sekolah ?? 'SMKN 1 KUPANG BARAT') }}</strong> telah diselenggarakan <strong>{{ strtoupper(($beritaAcara->nama_tes ?? null) ?: ($jadwal->nama_ujian ?: ($sekolah->nama_ujian_aktif ?? 'SIMULASI SUMATIF AKHIR SEMESTER'))) }}</strong>, dari pukul {{ $beritaAcara->waktu_mulai ?? '08:00' }} sampai dengan pukul {{ $beritaAcara->waktu_selesai ?? '09:45' }}
     </p>
 
     <!-- POIN 1: IDENTITAS & JUMLAH PESERTA -->

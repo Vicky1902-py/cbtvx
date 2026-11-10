@@ -331,7 +331,7 @@
             </div>
             <div class="hero-badge">
                 <span>Standar Asesmen</span>
-                <strong>TKA Kemdikbud Modern</strong>
+                <strong>{{ $sekolah->nama_ujian_aktif ?? 'Simulasi Sumatif Akhir Semester' }}</strong>
             </div>
         </div>
 

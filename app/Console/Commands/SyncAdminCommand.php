@@ -27,15 +27,23 @@ class SyncAdminCommand extends Command
      */
     public function handle()
     {
-        MasterSekolah::query()->update([
-            'kepala_sekolah' => 'Vicky Koroh, S.Pd., Gr.',
-        ]);
-
+        // 1. Selaraskan akun Administrator utama
         User::where('username', 'admin')->update([
             'name' => 'Vicky Koroh, S.Pd., Gr. (Administrator)',
         ]);
 
-        $this->info('[SUKSES] Nama Kepala Sekolah dan Admin berhasil diselaraskan ke: Vicky Koroh, S.Pd., Gr.');
+        // 2. Pastikan Master Profil Sekolah memiliki Kepala Sekolah resmi jika belum terisi
+        $sekolah = MasterSekolah::first();
+        if ($sekolah) {
+            if (empty($sekolah->kepala_sekolah)) {
+                $sekolah->update([
+                    'kepala_sekolah' => 'Apolos Kofan, S.Pd.,MM',
+                    'nip_kepala_sekolah' => '196704062006041009',
+                ]);
+            }
+        }
+
+        $this->info('[SUKSES] Nama Admin CBT dan data Kepala Sekolah berhasil diselaraskan.');
         return 0;
     }
 }

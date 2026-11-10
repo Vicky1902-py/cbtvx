@@ -95,5 +95,57 @@ class BankSoalPresetSeeder extends Seeder
                 'bobot' => $q[10],
             ]);
         }
+
+        // 3. BANK SOAL 3: KODING DAN KECERDASAN ARTIFISIAL (PRESET STANDAR 25 SOAL - 100 POIN)
+        $b3 = BankSoal::where('kode_bank', 'BS-KKA-X-25')->first();
+        if (!$b3) {
+            $b3 = new BankSoal();
+            $b3->kode_bank = 'BS-KKA-X-25';
+        }
+        $mapelKka = \App\Models\MataPelajaran::where('kode_mapel', 'MPP-KKA-X')->first()
+            ?? \App\Models\MataPelajaran::where('nama_mapel', 'LIKE', '%Koding%')->first();
+        if (!$mapelKka) {
+            $mapelKka = \App\Models\MataPelajaran::firstOrCreate(
+                ['kode_mapel' => 'MPP-KKA-X'],
+                [
+                    'nama_mapel' => 'Koding dan Kecerdasan Artifisial',
+                    'tingkat' => '10',
+                    'jurusan' => 'Semua Jurusan',
+                ]
+            );
+        }
+
+        $b3->nama_bank = 'Koding dan Kecerdasan Artifisial (Preset Standar 25 Soal)';
+        $b3->mata_pelajaran_id = $mapelKka->id;
+        $b3->guru_id = $admin ? $admin->id : 1;
+        $b3->standar_bobot = '25_soal';
+        $b3->jumlah_soal_bs = 5;
+        $b3->bobot_bs = 20.00;
+        $b3->jumlah_soal_pg = 15;
+        $b3->bobot_pg = 30.00;
+        $b3->jumlah_soal_uraian = 5;
+        $b3->bobot_uraian = 50.00;
+        $b3->kkm = 75.00;
+        $b3->status = 'aktif';
+        $b3->save();
+
+        $b3->butirSoal()->delete();
+        $samplesKka = $controller->getSampleQuestionsKKA25(4.0, 2.0, 10.0);
+        foreach ($samplesKka as $q) {
+            SoalButir::create([
+                'bank_soal_id' => $b3->id,
+                'nomor_urut' => $q[0],
+                'jenis_soal' => strtolower($q[1]),
+                'konten_soal' => $q[2],
+                'opsi_a' => $q[3] ?: null,
+                'opsi_b' => $q[4] ?: null,
+                'opsi_c' => $q[5] ?: null,
+                'opsi_d' => $q[6] ?: null,
+                'opsi_e' => $q[7] ?: null,
+                'kunci_jawaban' => $q[8] ?: null,
+                'rubrik_uraian' => $q[9] ?: null,
+                'bobot' => $q[10],
+            ]);
+        }
     }
 }

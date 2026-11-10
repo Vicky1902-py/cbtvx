@@ -72,7 +72,43 @@
 
             <hr style="border: none; border-top: 1px solid var(--border-light); margin: 20px 0;">
 
-            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--primary);">2. Logo Kop Dokumen (Kiri & Kanan)</h3>
+            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--primary);">2. Profil & Jenis Ujian Umum Aktif</h3>
+            <p style="font-size: 12px; color: #64748b; margin-bottom: 14px;">Pilih salah satu jenis ujian di bawah ini. Judul kartu login peserta, lembar berita acara, dan daftar hadir otomatis berganti serentak.</p>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px;">
+                <!-- Opsi A: Simulasi Sumatif Akhir Semester -->
+                <label style="cursor: pointer; border: 2px solid {{ ($sekolah->nama_ujian_aktif ?? '') === 'Simulasi Sumatif Akhir Semester' ? '#0284c7' : 'var(--border)' }}; background: {{ ($sekolah->nama_ujian_aktif ?? '') === 'Simulasi Sumatif Akhir Semester' ? '#f0f9ff' : '#ffffff' }}; border-radius: 6px; padding: 12px; display: block;" id="labelSimulasiSas">
+                    <div style="display: flex; align-items: flex-start; gap: 8px;">
+                        <input type="radio" name="pilihan_preset_ujian" value="Simulasi Sumatif Akhir Semester" {{ ($sekolah->nama_ujian_aktif ?? 'Simulasi Sumatif Akhir Semester') === 'Simulasi Sumatif Akhir Semester' ? 'checked' : '' }} onchange="pilihPresetUjian('Simulasi Sumatif Akhir Semester', 'Simulasi SAS')" style="margin-top: 3px;">
+                        <div>
+                            <strong style="display: block; font-size: 13px; color: #0f172a;">Simulasi Sumatif Akhir Semester</strong>
+                            <span style="font-size: 11px; color: #0284c7; font-weight: 600;">Gladi Bersih / Uji Coba</span>
+                        </div>
+                    </div>
+                </label>
+
+                <!-- Opsi B: Sumatif Akhir Semester -->
+                <label style="cursor: pointer; border: 2px solid {{ ($sekolah->nama_ujian_aktif ?? '') === 'Sumatif Akhir Semester' ? '#047857' : 'var(--border)' }}; background: {{ ($sekolah->nama_ujian_aktif ?? '') === 'Sumatif Akhir Semester' ? '#ecfdf5' : '#ffffff' }}; border-radius: 6px; padding: 12px; display: block;" id="labelSasResmi">
+                    <div style="display: flex; align-items: flex-start; gap: 8px;">
+                        <input type="radio" name="pilihan_preset_ujian" value="Sumatif Akhir Semester" {{ ($sekolah->nama_ujian_aktif ?? '') === 'Sumatif Akhir Semester' ? 'checked' : '' }} onchange="pilihPresetUjian('Sumatif Akhir Semester', 'Sumatif Akhir Semester')" style="margin-top: 3px;">
+                        <div>
+                            <strong style="display: block; font-size: 13px; color: #0f172a;">Sumatif Akhir Semester (SAS)</strong>
+                            <span style="font-size: 11px; color: #047857; font-weight: 600;">Asesmen Semester Resmi</span>
+                        </div>
+                    </div>
+                </label>
+            </div>
+
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-weight: 600; font-size: 13px; margin-bottom: 6px;">Nama Ujian yang Aktif Digunakan:</label>
+                <input type="text" name="nama_ujian_aktif" id="inputNamaUjianAktif" value="{{ old('nama_ujian_aktif', $sekolah->nama_ujian_aktif ?? 'Simulasi Sumatif Akhir Semester') }}" required style="width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; font-weight: 700; color: #0f2b48;">
+                <input type="hidden" name="jenis_ujian_aktif" id="inputJenisUjianAktif" value="{{ old('jenis_ujian_aktif', $sekolah->jenis_ujian_aktif ?? 'Simulasi SAS') }}">
+                <p style="font-size: 11px; color: #64748b; margin-top: 4px;">Nama ini akan otomatis tercetak di: Kartu Peserta Ujian, Daftar Hadir Asesmen, dan Berita Acara.</p>
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border-light); margin: 20px 0;">
+
+            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--primary);">3. Logo Kop Dokumen (Kiri & Kanan)</h3>
 
             <!-- LOGO PEMPROV (KIRI) -->
             <div style="margin-bottom: 16px;">
@@ -104,7 +140,7 @@
 
             <hr style="border: none; border-top: 1px solid var(--border-light); margin: 20px 0;">
 
-            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--primary);">3. Pengesahan Kepala Sekolah & Tanda Tangan</h3>
+            <h3 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--primary);">4. Pengesahan Kepala Sekolah & Tanda Tangan</h3>
 
             <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; margin-bottom: 16px;">
                 <div>
@@ -197,4 +233,34 @@
         </div>
     </div>
 </div>
+
+<script>
+    function pilihPresetUjian(nama, jenis) {
+        document.getElementById('inputNamaUjianAktif').value = nama;
+        document.getElementById('inputJenisUjianAktif').value = jenis;
+
+        const cardSim = document.getElementById('labelSimulasiSas');
+        const cardSas = document.getElementById('labelSasResmi');
+
+        if (nama === 'Simulasi Sumatif Akhir Semester') {
+            if (cardSim) {
+                cardSim.style.borderColor = '#0284c7';
+                cardSim.style.backgroundColor = '#f0f9ff';
+            }
+            if (cardSas) {
+                cardSas.style.borderColor = 'var(--border)';
+                cardSas.style.backgroundColor = '#ffffff';
+            }
+        } else {
+            if (cardSas) {
+                cardSas.style.borderColor = '#047857';
+                cardSas.style.backgroundColor = '#ecfdf5';
+            }
+            if (cardSim) {
+                cardSim.style.borderColor = 'var(--border)';
+                cardSim.style.backgroundColor = '#ffffff';
+            }
+        }
+    }
+</script>
 @endsection

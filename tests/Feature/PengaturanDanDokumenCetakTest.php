@@ -150,6 +150,8 @@ class PengaturanDanDokumenCetakTest extends TestCase
         $response->assertSee($this->sekolah->kepala_sekolah);
         $response->assertSee($this->sekolah->nip_kepala_sekolah);
         $response->assertSee('POTIFERA BUAN, S.PD');
+        $response->assertSee('-webkit-print-color-adjust: exact !important', false);
+        $response->assertSee('print-color-adjust: exact !important', false);
     }
 
     public function test_cetak_kartu_peserta_menggunakan_kop_dan_ttd_dinamis()
@@ -264,5 +266,59 @@ class PengaturanDanDokumenCetakTest extends TestCase
         $response->assertSee('DAFTAR HADIR PESERTA');
         $response->assertSee($this->sekolah->nama_sekolah);
         $response->assertSee('KEMENTERIAN PENDIDIKAN DASAR DAN MENENGAH');
+    }
+
+    public function test_admin_dapat_menugaskan_berbagai_peran_dan_cetak_daftar_hadir_petugas()
+    {
+        $guruKetua = User::create([
+            'name' => 'Drs. Yohanis Ndoen',
+            'username' => 'guru_ketua',
+            'email' => 'yohanis@smkn1kupangbarat.sch.id',
+            'password' => bcrypt('password'),
+            'role' => 'guru',
+        ]);
+
+        $guruTeknisi = User::create([
+            'name' => 'Semuel Dethan, S.Kom',
+            'username' => 'guru_teknisi',
+            'email' => 'semuel@smkn1kupangbarat.sch.id',
+            'password' => bcrypt('password'),
+            'role' => 'guru',
+        ]);
+
+        // Simpan penugasan kustom: Ketua Panitia & Teknisi CBT
+        $resKetua = $this->actingAs($this->admin)->post(route('admin.petugas_ujian.simpan'), [
+            'user_id' => $guruKetua->id,
+            'jenis_petugas' => 'Ketua Panitia',
+            'ruangan' => 'Ruang Panitia',
+            'sesi' => 'Semua Sesi',
+            'nomor_sk' => '421.5/012/SMKN1.KB/2026',
+        ]);
+        $resKetua->assertSessionHas('success');
+
+        $resTeknisi = $this->actingAs($this->admin)->post(route('admin.petugas_ujian.simpan'), [
+            'user_id' => $guruTeknisi->id,
+            'jenis_petugas' => 'Teknisi CBT',
+            'ruangan' => 'Server Lab 1',
+            'sesi' => 'Sesi 1 & 2',
+            'nomor_sk' => '421.5/012/SMKN1.KB/2026',
+        ]);
+        $resTeknisi->assertSessionHas('success');
+
+        // Cetak Daftar Hadir Petugas
+        $resDH = $this->actingAs($this->admin)->get(route('admin.cetak_daftar_hadir_petugas'));
+        $resDH->assertStatus(200);
+        $resDH->assertSee('DAFTAR HADIR PANITIA', false);
+        $resDH->assertSee('Ketua Panitia');
+        $resDH->assertSee('Teknisi CBT');
+        $resDH->assertSee('Drs. Yohanis Ndoen');
+        $resDH->assertSee('Semuel Dethan, S.Kom');
+        $resDH->assertSee($this->sekolah->kepala_sekolah);
+
+        // Cetak Kartu Petugas Kustom
+        $resKartu = $this->actingAs($this->admin)->get(route('admin.cetak_kartu_petugas'));
+        $resKartu->assertStatus(200);
+        $resKartu->assertSee('KARTU TANDA PENGENAL KETUA PANITIA');
+        $resKartu->assertSee('KARTU TANDA PENGENAL TEKNISI CBT');
     }
 }

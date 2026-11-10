@@ -244,7 +244,7 @@
         <img src="{{ $sekolah->logo_sekolah_url }}" alt="Logo Sekolah" class="logo-left">
         <div class="judul-center">
             <h2>DAFTAR HADIR PESERTA</h2>
-            <h2>{{ strtoupper($beritaAcara->nama_tes ?? $jadwal->nama_ujian) }}</h2>
+            <h2>{{ strtoupper(($beritaAcara->nama_tes ?? null) ?: ($jadwal->nama_ujian ?: ($sekolah->nama_ujian_aktif ?? 'SIMULASI SUMATIF AKHIR SEMESTER'))) }}</h2>
             <h2>TAHUN {{ date('Y') }}</h2>
         </div>
     </div>
