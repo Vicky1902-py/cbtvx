@@ -76,6 +76,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/butir-soal/{id}/hapus', [AdminController::class, 'hapusButirSoal'])->name('bank_soal.butir.hapus');
     Route::post('/bank-soal/{id}/hapus', [AdminController::class, 'hapusBankSoal'])->name('bank_soal.hapus');
     Route::get('/bank-soal/{id}/template-xlsx', [AdminController::class, 'downloadTemplateSoalXlsx'])->name('bank_soal.template_xlsx');
+    Route::get('/bank-soal/{id}/template-docx', [AdminController::class, 'downloadTemplateSoalDocx'])->name('bank_soal.template_docx');
     Route::post('/bank-soal/{id}/import-xlsx', [AdminController::class, 'importSoalXlsx'])->name('bank_soal.import_xlsx');
     Route::post('/bank-soal/{id}/import-docx', [AdminController::class, 'importSoalDocx'])->name('bank_soal.import_docx');
     Route::get('/bank-soal/{id}/export-xlsx', [AdminController::class, 'exportSoalXlsx'])->name('bank_soal.export_xlsx');

@@ -711,7 +711,11 @@
             // Update Media Jika Ada
             let mediaHtml = '';
             if (q.gambar_soal) {
-                mediaHtml += `<div style="margin-bottom: 14px;"><img src="/${q.gambar_soal}" alt="Gambar Soal" style="max-height: 260px; max-width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);"></div>`;
+                let imgSrc = q.gambar_soal;
+                if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
+                    imgSrc = '/' + imgSrc.replace(/^\/+/, '');
+                }
+                mediaHtml += `<div style="margin-bottom: 14px; text-align: center;"><a href="${imgSrc}" target="_blank" title="Klik untuk memperbesar gambar"><img src="${imgSrc}" alt="Gambar Soal" style="max-height: 280px; max-width: 100%; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: zoom-in; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></a><div style="font-size: 11px; color: #64748b; margin-top: 4px;">🔍 Klik gambar untuk memperbesar</div></div>`;
             }
             if (q.audio_file) {
                 mediaHtml += `<div style="margin-bottom: 14px;"><audio controls style="width: 280px;"><source src="/${q.audio_file}"></audio></div>`;

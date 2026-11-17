@@ -1557,31 +1557,31 @@ class AdminController extends Controller
         $sheet->setTitle($is40 ? 'Template 40 Soal' : 'Template 25 Soal');
 
         // 1. BANNER HEADER RESMI SEKOLAH
-        $sheet->mergeCells('A1:K1');
+        $sheet->mergeCells('A1:L1');
         $sheet->setCellValue('A1', 'SMK NEGERI 1 KUPANG BARAT - SISTEM CBT ASESMEN TERSTANDAR');
-        $sheet->getStyle('A1:K1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F2B48');
-        $sheet->getStyle('A1:K1')->getFont()->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A1:K1')->getFont()->setBold(true)->setSize(12);
-        $sheet->getStyle('A1:K1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A1:L1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0F2B48');
+        $sheet->getStyle('A1:L1')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A1:L1')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('A1:L1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(1)->setRowHeight(28);
 
         // 2. IDENTITAS PAKET SOAL
-        $sheet->mergeCells('A2:K2');
+        $sheet->mergeCells('A2:L2');
         $mapelNama = $bank->mataPelajaran ? $bank->mataPelajaran->nama_mapel : 'Semua Mapel';
         $sheet->setCellValue('A2', 'PAKET: ' . strtoupper($bank->kode_bank) . ' | MAPEL: ' . strtoupper($mapelNama) . ' | ' . $presetTitle);
-        $sheet->getStyle('A2:K2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E293B');
-        $sheet->getStyle('A2:K2')->getFont()->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A2:K2')->getFont()->setSize(9.5)->setBold(true);
-        $sheet->getStyle('A2:K2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A2:L2')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF1E293B');
+        $sheet->getStyle('A2:L2')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A2:L2')->getFont()->setSize(9.5)->setBold(true);
+        $sheet->getStyle('A2:L2')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(2)->setRowHeight(22);
 
         // 3. PETUNJUK PENGISIAN
-        $sheet->mergeCells('A3:K3');
-        $sheet->setCellValue('A3', 'PETUNJUK: Isi baris soal di bawah. Jangan ubah urutan kolom A s/d K. Kolom B (Tipe Soal) pilih PG, BENAR_SALAH, atau URAIAN. Rumus KaTeX didukung (contoh $x^2$ atau $\\frac{a}{b}$).');
-        $sheet->getStyle('A3:K3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
-        $sheet->getStyle('A3:K3')->getFont()->getColor()->setARGB('FF334155');
-        $sheet->getStyle('A3:K3')->getFont()->setSize(8.5)->setItalic(true);
-        $sheet->getStyle('A3:K3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->mergeCells('A3:L3');
+        $sheet->setCellValue('A3', 'PETUNJUK: Isi baris soal di bawah. Kolom B (Tipe Soal) pilih PG, BENAR_SALAH, atau URAIAN. Kolom L untuk Gambar (bisa paste/tempel gambar langsung di sel kolom L, atau tuliskan nama file/link gambar). Rumus KaTeX didukung (contoh $x^2$ atau $\\frac{a}{b}$).');
+        $sheet->getStyle('A3:L3')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF1F5F9');
+        $sheet->getStyle('A3:L3')->getFont()->getColor()->setARGB('FF334155');
+        $sheet->getStyle('A3:L3')->getFont()->setSize(8.5)->setItalic(true);
+        $sheet->getStyle('A3:L3')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(3)->setRowHeight(20);
 
         // 4. PEMISAH KOSONG
@@ -1600,16 +1600,17 @@ class AdminController extends Controller
             'I5' => 'Kunci Jawaban',
             'J5' => 'Rubrik Jawaban Uraian',
             'K5' => 'Bobot Poin',
+            'L5' => 'Gambar / Ilustrasi (Paste di Sini)',
         ];
 
         foreach ($headers as $cell => $val) {
             $sheet->setCellValue($cell, $val);
         }
 
-        $sheet->getStyle('A5:K5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0284C7');
-        $sheet->getStyle('A5:K5')->getFont()->getColor()->setARGB('FFFFFFFF');
-        $sheet->getStyle('A5:K5')->getFont()->setBold(true)->setSize(9.5);
-        $sheet->getStyle('A5:K5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+        $sheet->getStyle('A5:L5')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FF0284C7');
+        $sheet->getStyle('A5:L5')->getFont()->getColor()->setARGB('FFFFFFFF');
+        $sheet->getStyle('A5:L5')->getFont()->setBold(true)->setSize(9.5);
+        $sheet->getStyle('A5:L5')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
         $sheet->getRowDimension(5)->setRowHeight(26);
 
         // LEBAR KOLOM PROPORSIONAL
@@ -1625,6 +1626,7 @@ class AdminController extends Controller
             'I' => 15,
             'J' => 35,
             'K' => 12,
+            'L' => 28,
         ];
         foreach ($widths as $col => $w) {
             $sheet->getColumnDimension($col)->setWidth($w);
@@ -1644,16 +1646,18 @@ class AdminController extends Controller
             $sheet->setCellValue('I' . $rowIdx, $s[8]);
             $sheet->setCellValue('J' . $rowIdx, $s[9]);
             $sheet->setCellValue('K' . $rowIdx, $s[10]);
+            $sheet->setCellValue('L' . $rowIdx, $s[11] ?? '');
 
             // Perataan sel
             $sheet->getStyle('A' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('B' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('I' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
             $sheet->getStyle('K' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
+            $sheet->getStyle('L' . $rowIdx)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER)->setVertical(Alignment::VERTICAL_CENTER);
 
             // Zebra striping baris genap
             if ($rowIdx % 2 === 0) {
-                $sheet->getStyle('A' . $rowIdx . ':K' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8FAFC');
+                $sheet->getStyle('A' . $rowIdx . ':L' . $rowIdx)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setARGB('FFF8FAFC');
             }
 
             // Dropdown validasi tipe soal
@@ -1681,7 +1685,7 @@ class AdminController extends Controller
         $sheet->getStyle('J6:J' . $lastRow)->getAlignment()->setWrapText(true)->setVertical(Alignment::VERTICAL_CENTER);
 
         // Border tipis pada seluruh tabel
-        $sheet->getStyle('A5:K' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFCBD5E1');
+        $sheet->getStyle('A5:L' . $lastRow)->getBorders()->getAllBorders()->setBorderStyle(Border::BORDER_THIN)->getColor()->setARGB('FFCBD5E1');
 
         $writer = new Xlsx($spreadsheet);
         $fileName = 'Template_Soal_' . Str::slug($bank->kode_bank) . '_' . ($is40 ? 'Preset_40_Nomor' : 'Preset_25_Nomor') . '.xlsx';
@@ -1840,6 +1844,50 @@ class AdminController extends Controller
         $sheet = $spreadsheet->getActiveSheet();
         $rows = $sheet->toArray(null, true, true, true);
 
+        // Siapkan folder penyimpanan gambar soal
+        $destDir = public_path('uploads/soal');
+        if (!File::exists($destDir)) {
+            File::makeDirectory($destDir, 0755, true);
+        }
+
+        // Ekstraksi seluruh gambar / drawing yang menempel pada sheet Excel
+        $gambarMapByRow = [];
+        try {
+            $drawings = $sheet->getDrawingCollection();
+            foreach ($drawings as $drawing) {
+                $coord = $drawing->getCoordinates();
+                if (preg_match('/(\d+)$/', $coord, $match)) {
+                    $rowNum = (int)$match[1];
+                    $ext = 'png';
+                    $binaryData = null;
+
+                    if ($drawing instanceof \PhpOffice\PhpSpreadsheet\Worksheet\MemoryDrawing) {
+                        ob_start();
+                        call_user_func($drawing->getRenderingFunction(), $drawing->getImageResource());
+                        $binaryData = ob_get_clean();
+                        $mime = $drawing->getMimeType();
+                        if (str_contains($mime, 'jpeg') || str_contains($mime, 'jpg')) $ext = 'jpg';
+                        elseif (str_contains($mime, 'gif')) $ext = 'gif';
+                    } elseif ($drawing instanceof \PhpOffice\PhpSpreadsheet\Worksheet\Drawing) {
+                        $imgPath = $drawing->getPath();
+                        $binaryData = @file_get_contents($imgPath);
+                        $pExt = strtolower(pathinfo($imgPath, PATHINFO_EXTENSION));
+                        if (in_array($pExt, ['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg'])) {
+                            $ext = $pExt;
+                        }
+                    }
+
+                    if (!empty($binaryData)) {
+                        $imgFileName = 'soal_xlsx_' . $bank->id . '_' . $rowNum . '_' . time() . '_' . Str::random(6) . '.' . $ext;
+                        File::put($destDir . '/' . $imgFileName, $binaryData);
+                        $gambarMapByRow[$rowNum] = 'uploads/soal/' . $imgFileName;
+                    }
+                }
+            }
+        } catch (\Throwable $errDrawing) {
+            \Log::warning('Drawing extraction error XLSX: ' . $errDrawing->getMessage());
+        }
+
         $bobotPg = ($bank->standar_bobot === '25_soal') ? 2.0 : (($bank->standar_bobot === '40_soal') ? 2.0 : 4.0);
         $bobotBs = ($bank->standar_bobot === '25_soal') ? 4.0 : (($bank->standar_bobot === '40_soal') ? 1.0 : 2.0);
         $bobotUraian = ($bank->standar_bobot === '25_soal') ? 10.0 : (($bank->standar_bobot === '40_soal') ? 5.0 : 10.0);
@@ -1898,23 +1946,44 @@ class AdminController extends Controller
                     else $bobot = $bobotPg;
                 }
 
+                // Cek gambar soal dari drawing atau teks kolom L
+                $gambarSoal = $gambarMapByRow[$index] ?? null;
+                $rawL = trim((string)($row['L'] ?? ''));
+                if (!$gambarSoal && !empty($rawL)) {
+                    if (filter_var($rawL, FILTER_VALIDATE_URL)) {
+                        $gambarSoal = $rawL;
+                    } elseif (File::exists(public_path('uploads/soal/' . $rawL))) {
+                        $gambarSoal = 'uploads/soal/' . $rawL;
+                    } elseif (File::exists(public_path('images/' . $rawL))) {
+                        $gambarSoal = 'images/' . $rawL;
+                    } else {
+                        $gambarSoal = $rawL;
+                    }
+                }
+
+                $soalData = [
+                    'jenis_soal' => $jenis,
+                    'konten_soal' => $konten,
+                    'opsi_a' => $opsiA ?: null,
+                    'opsi_b' => $opsiB ?: null,
+                    'opsi_c' => $opsiC ?: null,
+                    'opsi_d' => $opsiD ?: null,
+                    'opsi_e' => $opsiE ?: null,
+                    'kunci_jawaban' => $kunci ?: null,
+                    'rubrik_uraian' => $rubrik ?: null,
+                    'bobot' => $bobot,
+                ];
+
+                if ($gambarSoal) {
+                    $soalData['gambar_soal'] = $gambarSoal;
+                }
+
                 SoalButir::updateOrCreate(
                     [
                         'bank_soal_id' => $bank->id,
                         'nomor_urut' => $nomorUrut,
                     ],
-                    [
-                        'jenis_soal' => $jenis,
-                        'konten_soal' => $konten,
-                        'opsi_a' => $opsiA ?: null,
-                        'opsi_b' => $opsiB ?: null,
-                        'opsi_c' => $opsiC ?: null,
-                        'opsi_d' => $opsiD ?: null,
-                        'opsi_e' => $opsiE ?: null,
-                        'kunci_jawaban' => $kunci ?: null,
-                        'rubrik_uraian' => $rubrik ?: null,
-                        'bobot' => $bobot,
-                    ]
+                    $soalData
                 );
 
                 $totalImported++;
@@ -1953,29 +2022,119 @@ class AdminController extends Controller
             return back()->with('error', 'Format struktur internal dokumen Word tidak valid (tidak ditemukan word/document.xml).');
         }
 
+        // Siapkan folder penyimpanan gambar soal
+        $destDir = public_path('uploads/soal');
+        if (!File::exists($destDir)) {
+            File::makeDirectory($destDir, 0755, true);
+        }
+
+        // 1. Ekstraksi relasi gambar (word/_rels/document.xml.rels)
+        $imageRels = [];
+        $relsXml = $zip->getFromName('word/_rels/document.xml.rels');
+        if ($relsXml) {
+            $domRels = new \DOMDocument();
+            libxml_use_internal_errors(true);
+            $domRels->loadXML($relsXml);
+            libxml_clear_errors();
+            foreach ($domRels->getElementsByTagName('Relationship') as $rel) {
+                $type = $rel->getAttribute('Type');
+                $id = $rel->getAttribute('Id');
+                $target = $rel->getAttribute('Target');
+                if (str_contains($type, 'relationships/image')) {
+                    $targetClean = ltrim(str_replace('../', '', $target), '/');
+                    if (!str_starts_with($targetClean, 'word/')) {
+                        $targetClean = 'word/' . $targetClean;
+                    }
+                    $imageRels[$id] = $targetClean;
+                }
+            }
+        }
+
         $xmlData = $zip->getFromIndex($xmlIndex);
-        $zip->close();
 
         $dom = new \DOMDocument();
         libxml_use_internal_errors(true);
         $dom->loadXML($xmlData);
         libxml_clear_errors();
 
+        // 2. Baca paragraf demi paragraf (mengambil teks dan gambar embedded)
         $paragraphs = $dom->getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 'p');
-        $lines = [];
+        if ($paragraphs->length === 0) {
+            $paragraphs = $dom->getElementsByTagName('p');
+        }
+
+        $parsedParagraphs = [];
+        $imageCounter = 1;
+
         foreach ($paragraphs as $p) {
+            // Ambil teks
             $lineText = '';
-            $runs = $p->getElementsByTagNameNS('http://schemas.openxmlformats.org/wordprocessingml/2006/main', 't');
+            $runs = $p->getElementsByTagName('t');
             foreach ($runs as $r) {
                 $lineText .= $r->nodeValue;
             }
             $lineText = trim($lineText);
-            if (!empty($lineText)) {
-                $lines[] = $lineText;
+
+            // Ambil gambar (DrawingML <a:blip> & VML <v:imagedata>)
+            $pImages = [];
+
+            // A. DrawingML blip
+            $blips = $p->getElementsByTagName('blip');
+            foreach ($blips as $b) {
+                $rId = null;
+                foreach ($b->attributes as $attr) {
+                    if ($attr->localName === 'embed' || $attr->name === 'r:embed') {
+                        $rId = $attr->value;
+                        break;
+                    }
+                }
+                if ($rId && isset($imageRels[$rId])) {
+                    $entryName = $imageRels[$rId];
+                    $imgBinary = $zip->getFromName($entryName);
+                    if (!empty($imgBinary)) {
+                        $imgExt = strtolower(pathinfo($entryName, PATHINFO_EXTENSION)) ?: 'png';
+                        $imgFileName = 'soal_docx_' . $bank->id . '_' . $imageCounter . '_' . time() . '_' . Str::random(5) . '.' . $imgExt;
+                        File::put($destDir . '/' . $imgFileName, $imgBinary);
+                        $pImages[] = 'uploads/soal/' . $imgFileName;
+                        $imageCounter++;
+                    }
+                }
+            }
+
+            // B. VML imagedata
+            $vmls = $p->getElementsByTagName('imagedata');
+            foreach ($vmls as $v) {
+                $rId = null;
+                foreach ($v->attributes as $attr) {
+                    if ($attr->localName === 'id' || $attr->name === 'r:id') {
+                        $rId = $attr->value;
+                        break;
+                    }
+                }
+                if ($rId && isset($imageRels[$rId])) {
+                    $entryName = $imageRels[$rId];
+                    $imgBinary = $zip->getFromName($entryName);
+                    if (!empty($imgBinary)) {
+                        $imgExt = strtolower(pathinfo($entryName, PATHINFO_EXTENSION)) ?: 'png';
+                        $imgFileName = 'soal_docx_' . $bank->id . '_' . $imageCounter . '_' . time() . '_' . Str::random(5) . '.' . $imgExt;
+                        File::put($destDir . '/' . $imgFileName, $imgBinary);
+                        $pImages[] = 'uploads/soal/' . $imgFileName;
+                        $imageCounter++;
+                    }
+                }
+            }
+
+            if (!empty($lineText) || !empty($pImages)) {
+                $parsedParagraphs[] = [
+                    'text' => $lineText,
+                    'images' => $pImages,
+                ];
             }
         }
 
-        if (empty($lines)) {
+        $zip->close();
+
+        if (empty($parsedParagraphs)) {
             return back()->with('error', 'Dokumen Word kosong atau tidak ditemukan baris pertanyaan teks.');
         }
 
@@ -2017,8 +2176,11 @@ class AdminController extends Controller
             $currentQuestion = null;
         };
 
-        foreach ($lines as $line) {
-            if (preg_match('/^(?:No\.?\s*)?(\d+)[\.\)\:\-\]]\s*(.*)$/i', $line, $matches)) {
+        foreach ($parsedParagraphs as $pData) {
+            $line = $pData['text'];
+            $imgs = $pData['images'];
+
+            if (!empty($line) && preg_match('/^(?:No\.?\s*)?(\d+)[\.\)\:\-\]]\s*(.*)$/i', $line, $matches)) {
                 $saveCurrent();
                 $no = (int)$matches[1];
                 $konten = trim($matches[2]);
@@ -2039,6 +2201,7 @@ class AdminController extends Controller
                     'nomor' => $no,
                     'konten' => $konten,
                     'jenis' => $jenis,
+                    'gambar_soal' => !empty($imgs) ? $imgs[0] : null,
                     'opsi_a' => '',
                     'opsi_b' => '',
                     'opsi_c' => '',
@@ -2053,8 +2216,20 @@ class AdminController extends Controller
 
             if (!$currentQuestion) continue;
 
+            // Jika paragraf ini memiliki gambar dan pertanyaan belum memiliki gambar, tautkan gambar
+            if (!empty($imgs) && empty($currentQuestion['gambar_soal']) && empty($currentQuestion['opsi_a'])) {
+                $currentQuestion['gambar_soal'] = $imgs[0];
+            }
+
+            if (empty($line)) continue;
+
             if (preg_match('/^(?:KUNCI(?:\s*JAWABAN)?|JAWABAN|ANSWER|KUNCI)\s*[\:\=]\s*([A-E]|BENAR|SALAH|B|S)(.*)$/i', $line, $km)) {
                 $currentQuestion['kunci'] = strtoupper(trim($km[1]));
+                continue;
+            }
+
+            if (preg_match('/^(?:BOBOT(?:\s*POIN)?|POIN|POINT|SKOR)\s*[\:\=]\s*([0-9\.]+)/i', $line, $bm)) {
+                $currentQuestion['bobot'] = (float)$bm[1];
                 continue;
             }
 
@@ -2098,23 +2273,28 @@ class AdminController extends Controller
         DB::beginTransaction();
         try {
             foreach ($parsedQuestions as $q) {
+                $soalData = [
+                    'jenis_soal' => $q['jenis'],
+                    'konten_soal' => $q['konten'],
+                    'opsi_a' => $q['opsi_a'] ?: null,
+                    'opsi_b' => $q['opsi_b'] ?: null,
+                    'opsi_c' => $q['opsi_c'] ?: null,
+                    'opsi_d' => $q['opsi_d'] ?: null,
+                    'opsi_e' => $q['opsi_e'] ?: null,
+                    'kunci_jawaban' => $q['kunci'] ?: null,
+                    'rubrik_uraian' => $q['rubrik'] ?: null,
+                    'bobot' => $q['bobot'],
+                ];
+                if (!empty($q['gambar_soal'])) {
+                    $soalData['gambar_soal'] = $q['gambar_soal'];
+                }
+
                 SoalButir::updateOrCreate(
                     [
                         'bank_soal_id' => $bank->id,
                         'nomor_urut' => $q['nomor'],
                     ],
-                    [
-                        'jenis_soal' => $q['jenis'],
-                        'konten_soal' => $q['konten'],
-                        'opsi_a' => $q['opsi_a'] ?: null,
-                        'opsi_b' => $q['opsi_b'] ?: null,
-                        'opsi_c' => $q['opsi_c'] ?: null,
-                        'opsi_d' => $q['opsi_d'] ?: null,
-                        'opsi_e' => $q['opsi_e'] ?: null,
-                        'kunci_jawaban' => $q['kunci'] ?: null,
-                        'rubrik_uraian' => $q['rubrik'] ?: null,
-                        'bobot' => $q['bobot'],
-                    ]
+                    $soalData
                 );
             }
             DB::commit();
@@ -2124,7 +2304,118 @@ class AdminController extends Controller
         }
 
         $total = count($parsedQuestions);
-        return back()->with('success', "Import Word (.docx) berhasil: {$total} butir soal terdeteksi dan tersimpan ke paket {$bank->kode_bank}!");
+        return back()->with('success', "Import Word (.docx) berhasil: {$total} butir soal (beserta gambar ilustrasi) terdeteksi dan tersimpan ke paket {$bank->kode_bank}!");
+    }
+
+    public function downloadTemplateSoalDocx($bankId)
+    {
+        $bank = BankSoal::with('mataPelajaran')->findOrFail($bankId);
+        $mapelNama = $bank->mataPelajaran ? $bank->mataPelajaran->nama_mapel : 'Semua Mapel';
+
+        $tmpFile = tempnam(sys_get_temp_dir(), 'tpl_docx_');
+        $zip = new \ZipArchive();
+        $zip->open($tmpFile, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        // 1. [Content_Types].xml
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Default Extension="jpeg" ContentType="image/jpeg"/>
+  <Default Extension="jpg" ContentType="image/jpeg"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>');
+
+        // 2. _rels/.rels
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>');
+
+        // 3. word/_rels/document.xml.rels
+        $zip->addFromString('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdImg1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>
+</Relationships>');
+
+        // 4. Sample image logo / flowchart
+        $sampleImgPath = public_path('images/logo_smk.png');
+        if (File::exists($sampleImgPath)) {
+            $sampleImg = file_get_contents($sampleImgPath);
+        } else {
+            $sampleImg = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+        }
+        $zip->addFromString('word/media/image1.png', $sampleImg);
+
+        // 5. word/document.xml
+        $docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" 
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" 
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" 
+            xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" 
+            xmlns:pic="http://schemas.openxmlformats.org/drawingml/2006/picture">
+  <w:body>
+    <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="28"/></w:rPr><w:t>SMK NEGERI 1 KUPANG BARAT</w:t></w:r></w:p>
+    <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:b/><w:sz w:val="22"/><w:color w:val="0F2B48"/></w:rPr><w:t>TEMPLATE RESMI PENYUSUNAN SOAL ASESMEN CBT (MENDUKUNG GAMBAR)</w:t></w:r></w:p>
+    <w:p><w:pPr><w:jc w:val="center"/></w:pPr><w:r><w:rPr><w:i/><w:sz w:val="18"/><w:color w:val="64748B"/></w:rPr><w:t>Paket: ' . htmlspecialchars($bank->kode_bank) . ' | Mapel: ' . htmlspecialchars($mapelNama) . '</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/><w:color w:val="1E293B"/></w:rPr><w:t>PETUNJUK PENYUSUNAN SOAL UNTUK GURU:</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:color w:val="475569"/></w:rPr><w:t>1. Format nomor diawali angka dan titik: "1. [PG] ...", "2. [B/S] ...", "3. [URAIAN] ...".</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:color w:val="475569"/></w:rPr><w:t>2. Untuk soal bergambar/diagram, Anda bisa langsung COPY &amp; PASTE gambar di bawah baris soal.</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:color w:val="475569"/></w:rPr><w:t>3. Kunci jawaban ditulis: "Kunci: A" (atau "Kunci: BENAR" / "Kunci: SALAH").</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>1. [PG] Perhatikan gambar / diagram ilustrasi berikut untuk menjawab soal!</w:t></w:r></w:p>
+    <w:p>
+      <w:r>
+        <w:drawing>
+          <wp:inline distT="0" distB="0" distL="0" distR="0">
+            <wp:extent cx="2800000" cy="1800000"/>
+            <wp:docPr id="1" name="Gambar 1"/>
+            <a:graphic>
+              <a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">
+                <pic:pic>
+                  <pic:nvPicPr><pic:cNvPr id="0" name="Picture 1"/><pic:cNvPicPr/></pic:nvPicPr>
+                  <pic:blipFill>
+                    <a:blip r:embed="rIdImg1"/>
+                    <a:stretch><a:fillRect/></a:stretch>
+                  </pic:blipFill>
+                  <pic:spPr>
+                    <a:xfrm><a:off x="0" y="0"/><a:ext cx="2800000" cy="1800000"/></a:xfrm>
+                    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
+                  </pic:spPr>
+                </pic:pic>
+              </a:graphicData>
+            </a:graphic>
+          </wp:inline>
+        </w:drawing>
+      </w:r>
+    </w:p>
+    <w:p><w:r><w:t>A. Komponen Pengaman (Circuit Breaker)</w:t></w:r></w:p>
+    <w:p><w:r><w:t>B. Pengatur Tegangan Otomatis</w:t></w:r></w:p>
+    <w:p><w:r><w:t>C. Sumber Arus Searah (DC)</w:t></w:r></w:p>
+    <w:p><w:r><w:t>D. Saklar Pembalik Putaran</w:t></w:r></w:p>
+    <w:p><w:r><w:t>E. Sensor Tekanan Fluida</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Kunci: A</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Bobot: 2</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>2. [B/S] Topologi jaringan tipe Star menggunakan perangkat konsentrator (Switch/Hub) sebagai pusat distribusi transmisi data.</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Kunci: BENAR</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Bobot: 4</w:t></w:r></w:p>
+    <w:p><w:r><w:t></w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>3. [URAIAN] Jelaskan fungsi Alat Pelindung Diri (APD) helm las pada saat pelaksanaan pekerjaan pengelasan busur manual (SMAW)!</w:t></w:r></w:p>
+    <w:p><w:r><w:rPr><w:b/></w:rPr><w:t>Rubrik: Melindungi mata dan wajah dari sinar radiasi ultraviolet (UV) dan inframerah (IR) serta percikan terak panas.</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Bobot: 10</w:t></w:r></w:p>
+  </w:body>
+</w:document>';
+
+        $zip->addFromString('word/document.xml', $docXml);
+        $zip->close();
+
+        $fileName = 'Template_Soal_Word_' . Str::slug($bank->kode_bank) . '.docx';
+        return response()->download($tmpFile, $fileName, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        ])->deleteFileAfterSend(true);
     }
 
     public function exportSoalXlsx($bankId)

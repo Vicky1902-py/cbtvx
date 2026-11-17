@@ -606,10 +606,36 @@
                     Unduh Template 40 Soal
                 </a>
             </div>
+
+            <!-- Card Template Word DOCX (Mendukung Gambar & Diagram) -->
+            <div style="border: 2px solid #3b82f6; background: #eff6ff; border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+                <div style="position: absolute; top: -10px; right: 12px; background: #2563eb; color: #fff; font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 9999px; text-transform: uppercase;">Mendukung Gambar</div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                        <span style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; background: #dbeafe; color: #1d4ed8; font-weight: 700; font-size: 13px; border-radius: 6px;">DOC</span>
+                        <h4 style="font-size: 15px; font-weight: 700; color: #0f172a; margin: 0;">Template Word (.docx)</h4>
+                    </div>
+                    <div style="font-size: 12px; color: #475569; line-height: 1.5; margin-bottom: 12px;">
+                        Format Microsoft Word resmi. Guru dapat <strong>langsung Copy &amp; Paste gambar</strong> diagram / skema langsung di bawah pertanyaan.
+                    </div>
+                    <div style="background: #ffffff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 10px; font-size: 11.5px; margin-bottom: 14px;">
+                        <div style="margin-bottom: 4px; color: #1e40af;">
+                            &bull; <strong>Auto-Ekstraksi Gambar</strong>: Gambar yang ditempel langsung tersimpan otomatis ke sistem ujian siswa.
+                        </div>
+                        <div style="margin-bottom: 4px; color: #1e40af;">
+                            &bull; Format: <code>1. [PG] Pertanyaan</code>, <code>A.</code> s/d <code>E.</code>, <code>Kunci: A</code>, <code>Bobot: 2</code>.
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ route('admin.bank_soal.template_docx', $bank->id) }}" class="btn btn-primary btn-sm" style="width: 100%; text-align: center; justify-content: center; background: #2563eb; border-color: #1d4ed8;" onclick="closeModal('modalPilihTemplate')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Unduh Template Word (.docx)
+                </a>
+            </div>
         </div>
 
         <div style="background: #f1f5f9; border-radius: 6px; padding: 10px 14px; font-size: 11.5px; color: #475569; display: flex; align-items: center; justify-content: space-between;">
-            <span>Keduanya memiliki banner resmi sekolah, validasi dropdown tipe &amp; kunci, serta siap diimpor kembali.</span>
+            <span>Semua template memiliki banner resmi sekolah dan siap diimpor kembali dengan gambar.</span>
             <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalPilihTemplate')">Tutup</button>
         </div>
     </div>
@@ -627,8 +653,9 @@
             <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 12px; color: #166534;">
                 <strong>Panduan Impor Soal:</strong>
                 <ol style="margin: 6px 0 0 16px; padding: 0;">
-                    <li>Unduh template resmi: <a href="javascript:void(0)" onclick="closeModal('modalImportXlsx'); openModal('modalPilihTemplate');" style="color: #15803d; font-weight: 700; text-decoration: underline;">Pilih &amp; Unduh Template (Preset 25 atau 40 Soal)</a></li>
+                    <li>Unduh template resmi: <a href="javascript:void(0)" onclick="closeModal('modalImportXlsx'); openModal('modalPilihTemplate');" style="color: #15803d; font-weight: 700; text-decoration: underline;">Pilih &amp; Unduh Template (Excel atau Word)</a></li>
                     <li>Mendukung jenis: <code>PG</code>, <code>BENAR_SALAH</code>, dan <code>URAIAN</code>.</li>
+                    <li><strong>Mendukung Gambar</strong>: Tempel (*Paste*) gambar langsung di sel <strong>Kolom L</strong> (atau tuliskan nama file gambar).</li>
                     <li>Rumus KaTeX didukung, contoh: <code>$x^2$</code> atau <code>$\frac{a}{b}$</code>.</li>
                     <li>Bobot otomatis dihitung sesuai preset jika kolom bobot dikosongkan.</li>
                 </ol>
@@ -657,15 +684,23 @@
         <form action="{{ route('admin.bank_soal.import_docx', $bank->id) }}" method="POST" enctype="multipart/form-data">
             @csrf
             <div style="background: #f8fafc; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 16px; font-size: 12px; color: #334155;">
-                <strong>Format Penulisan di Word:</strong>
-                <pre style="background: #ffffff; border: 1px solid var(--border-light); padding: 8px; margin-top: 6px; font-size: 11px; border-radius: var(--radius-sm); line-height: 1.4;">
-1. Protokol jaringan yang bertugas menerjemahkan IP adalah...
-A. DHCP
-B. DNS
-C. FTP
-D. HTTP
-E. SMTP
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <strong>Format Penulisan di Word:</strong>
+                    <a href="{{ route('admin.bank_soal.template_docx', $bank->id) }}" style="color: #0284c7; font-weight: 700; font-size: 11.5px; text-decoration: underline;">📄 Unduh Contoh Template Word (.docx)</a>
+                </div>
+                <div style="font-size: 11px; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; padding: 6px 10px; border-radius: 4px; margin-bottom: 6px;">
+                    ✨ <strong>Mendukung Gambar Otomatis</strong>: Anda cukup menempelkan (*Paste*) gambar diagram/flowchart langsung di bawah teks soal.
+                </div>
+                <pre style="background: #ffffff; border: 1px solid var(--border-light); padding: 8px; margin-top: 4px; font-size: 11px; border-radius: var(--radius-sm); line-height: 1.4;">
+1. [PG] Perhatikan gambar diagram alur di bawah ini!
+[Gambar diagram/flowchart ditempel langsung di sini]
+A. Simbol Proses
+B. Simbol Keputusan
+C. Simbol Terminator
+D. Simbol Masukan
+E. Simbol Persiapan
 Kunci: B
+Bobot: 2
 
 2. [B/S] Topologi star memakai switch konsentrator.
 Kunci: BENAR

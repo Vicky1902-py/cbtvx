@@ -468,4 +468,164 @@ class BankSoalPresetTest extends TestCase
         $bypassDpib->assertRedirect(route('siswa.dashboard'));
         $bypassDpib->assertSessionHas('error', 'Ujian ini bukan untuk kelas Anda.');
     }
+
+    public function test_admin_dapat_mengunduh_template_word_docx()
+    {
+        $response = $this->actingAs($this->admin)->get(route('admin.bank_soal.template_docx', $this->bank->id));
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        $this->assertStringContainsString('.docx', $response->headers->get('content-disposition'));
+    }
+
+    public function test_admin_dapat_impor_soal_word_docx_dengan_gambar_otomatis()
+    {
+        // 1. Buat berkas .docx riil dalam memori/temp dengan gambar
+        $tmpDocx = tempnam(sys_get_temp_dir(), 'test_docx_import_') . '.docx';
+        $zip = new \ZipArchive();
+        $zip->open($tmpDocx, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Default Extension="png" ContentType="image/png"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>');
+
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>');
+
+        $zip->addFromString('word/_rels/document.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rIdImg1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image1.png"/>
+</Relationships>');
+
+        $pngSample = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
+        $zip->addFromString('word/media/image1.png', $pngSample);
+
+        $docXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" 
+            xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" 
+            xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">
+  <w:body>
+    <w:p><w:r><w:t>1. [PG] Perhatikan diagram las berikut ini!</w:t></w:r></w:p>
+    <w:p><w:r><w:drawing><a:blip r:embed="rIdImg1"/></w:drawing></w:r></w:p>
+    <w:p><w:r><w:t>A. Las SMAW</w:t></w:r></w:p>
+    <w:p><w:r><w:t>B. Las GMAW</w:t></w:r></w:p>
+    <w:p><w:r><w:t>C. Las GTAW</w:t></w:r></w:p>
+    <w:p><w:r><w:t>D. Las OAW</w:t></w:r></w:p>
+    <w:p><w:r><w:t>E. Las SAW</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Kunci: A</w:t></w:r></w:p>
+    <w:p><w:r><w:t>Bobot: 2</w:t></w:r></w:p>
+  </w:body>
+</w:document>';
+
+        $zip->addFromString('word/document.xml', $docXml);
+        $zip->close();
+
+        // 2. Upload file docx ke route import_docx
+        $uploaded = new \Illuminate\Http\UploadedFile(
+            $tmpDocx,
+            'soal_bergambar.docx',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->admin)->post(route('admin.bank_soal.import_docx', $this->bank->id), [
+            'file_docx' => $uploaded,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // 3. Verifikasi soal tersimpan di database dan memiliki gambar_soal
+        $soal = \App\Models\SoalButir::where('bank_soal_id', $this->bank->id)->where('nomor_urut', 1)->first();
+        $this->assertNotNull($soal);
+        $this->assertEquals('pg', $soal->jenis_soal);
+        $this->assertEquals('A', $soal->kunci_jawaban);
+        $this->assertNotNull($soal->gambar_soal);
+        $this->assertStringStartsWith('uploads/soal/soal_docx_', $soal->gambar_soal);
+
+        // Pastikan file gambar fisik ada di public/uploads/soal/
+        $this->assertFileExists(public_path($soal->gambar_soal));
+
+        // Bersihkan file fisik yang digenerate test
+        @unlink(public_path($soal->gambar_soal));
+        @unlink($tmpDocx);
+    }
+
+    public function test_admin_dapat_impor_soal_excel_xlsx_dengan_gambar_drawing_otomatis()
+    {
+        // 1. Buat Spreadsheet riil dengan Drawing
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Baris 1-5 Header/Banner
+        $sheet->setCellValue('A5', 'No');
+        $sheet->setCellValue('B5', 'Tipe Soal');
+        $sheet->setCellValue('C5', 'Pertanyaan');
+        $sheet->setCellValue('D5', 'Pilihan A');
+        $sheet->setCellValue('E5', 'Pilihan B');
+        $sheet->setCellValue('I5', 'Kunci');
+        $sheet->setCellValue('K5', 'Bobot');
+        $sheet->setCellValue('L5', 'Gambar');
+
+        // Baris 6 Soal Nomor 1
+        $sheet->setCellValue('A6', 1);
+        $sheet->setCellValue('B6', 'PG');
+        $sheet->setCellValue('C6', 'Perhatikan skema motor listrik pada gambar!');
+        $sheet->setCellValue('D6', 'Motor Induksi 3 Fasa');
+        $sheet->setCellValue('E6', 'Motor DC Shunt');
+        $sheet->setCellValue('I6', 'A');
+        $sheet->setCellValue('K6', 2.0);
+
+        // Temp image untuk drawing
+        $tmpImg = tempnam(sys_get_temp_dir(), 'test_img_drawing_') . '.png';
+        file_put_contents($tmpImg, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+
+        $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+        $drawing->setName('Motor Skema');
+        $drawing->setPath($tmpImg);
+        $drawing->setCoordinates('L6');
+        $drawing->setWorksheet($sheet);
+
+        $tmpXlsx = tempnam(sys_get_temp_dir(), 'test_xlsx_import_') . '.xlsx';
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $writer->save($tmpXlsx);
+
+        // 2. Upload file XLSX ke route import_xlsx
+        $uploaded = new \Illuminate\Http\UploadedFile(
+            $tmpXlsx,
+            'soal_drawing.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true
+        );
+
+        $response = $this->actingAs($this->admin)->post(route('admin.bank_soal.import_xlsx', $this->bank->id), [
+            'file_excel' => $uploaded,
+        ]);
+
+        $response->assertRedirect();
+        $response->assertSessionHas('success');
+
+        // 3. Verifikasi soal tersimpan di database dan memiliki gambar_soal hasil drawing
+        $soal = \App\Models\SoalButir::where('bank_soal_id', $this->bank->id)->where('nomor_urut', 1)->first();
+        $this->assertNotNull($soal);
+        $this->assertEquals('pg', $soal->jenis_soal);
+        $this->assertEquals('A', $soal->kunci_jawaban);
+        $this->assertNotNull($soal->gambar_soal);
+        $this->assertStringStartsWith('uploads/soal/soal_xlsx_', $soal->gambar_soal);
+
+        // Pastikan file gambar fisik ada di public/uploads/soal/
+        $this->assertFileExists(public_path($soal->gambar_soal));
+
+        // Bersihkan
+        @unlink(public_path($soal->gambar_soal));
+        @unlink($tmpImg);
+        @unlink($tmpXlsx);
+    }
 }

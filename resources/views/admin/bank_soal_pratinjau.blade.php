@@ -392,7 +392,11 @@
             const mediaBox = document.getElementById('q-media-box');
             mediaBox.innerHTML = '';
             if (q.gambar_soal) {
-                mediaBox.innerHTML += `<div style="margin-bottom: 10px;"><img src="/${q.gambar_soal}" style="max-height: 240px; max-width: 100%; border: 1px solid var(--border); border-radius: 4px;"></div>`;
+                let imgSrc = q.gambar_soal;
+                if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
+                    imgSrc = '/' + imgSrc.replace(/^\/+/, '');
+                }
+                mediaBox.innerHTML += `<div style="margin-bottom: 10px;"><a href="${imgSrc}" target="_blank" title="Klik untuk memperbesar gambar"><img src="${imgSrc}" style="max-height: 250px; max-width: 100%; border: 1px solid var(--border); border-radius: 4px; object-fit: contain; cursor: zoom-in;"></a><div style="font-size: 11px; color: #64748b; margin-top: 3px;">🔍 Klik gambar untuk memperbesar</div></div>`;
             }
             if (q.audio_file) {
                 mediaBox.innerHTML += `<div style="margin-bottom: 10px;"><audio controls style="width: 280px;"><source src="/${q.audio_file}"></audio></div>`;
