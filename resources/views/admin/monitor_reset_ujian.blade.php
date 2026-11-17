@@ -186,6 +186,16 @@
                             </form>
                         @endif
 
+                        <!-- Reset Pelanggaran (Bila false alarm) -->
+                        @if ($p->jumlah_pelanggaran > 0)
+                            <form action="{{ route('admin.reset_ujian.reset_pelanggaran', $p->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus catatan pelanggaran untuk {{ $p->siswa->nama_lengkap }}?');">
+                                @csrf
+                                <button type="submit" class="btn btn-sm" style="border: 1px solid #dc2626; color: #dc2626; background: #fff1f2; font-size: 11px; padding: 3px 6px;" title="Reset Peringatan Pelanggaran">
+                                    Reset Peringatan
+                                </button>
+                            </form>
+                        @endif
+
                         <!-- Reset Tes Total (Ulang Dari Awal) -->
                         <form action="{{ route('admin.reset_ujian.reset_tes', $p->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('PERINGATAN: Seluruh jawaban siswa {{ $p->siswa->nama_lengkap }} akan DIHAPUS dan siswa mengulang ujian dari awal. Lanjutkan?');">
                             @csrf

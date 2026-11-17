@@ -135,6 +135,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::get('/laporan/reset-ujian', [AdminController::class, 'monitorResetUjian'])->name('laporan.reset_ujian');
     Route::post('/reset-ujian/{pesertaId}/tambah-waktu', [AdminController::class, 'tambahWaktuPeserta'])->name('reset_ujian.tambah_waktu');
     Route::post('/reset-ujian/{pesertaId}/reset-tes', [AdminController::class, 'resetTesPeserta'])->name('reset_ujian.reset_tes');
+    Route::post('/reset-ujian/{pesertaId}/reset-pelanggaran', [AdminController::class, 'resetPelanggaranPeserta'])->name('reset_ujian.reset_pelanggaran');
     Route::post('/reset-ujian/{pesertaId}/force-finish', [AdminController::class, 'forceFinishPeserta'])->name('reset_ujian.force_finish');
 
     // Backup & Pemulihan (Database & Bank Soal)

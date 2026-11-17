@@ -4050,6 +4050,7 @@ class AdminController extends Controller
             'jawaban_benar' => 0,
             'jawaban_salah' => 0,
             'jawaban_kosong' => 0,
+            'jumlah_pelanggaran' => 0,
             'ip_pengerjaan' => null,
         ]);
 
@@ -4060,6 +4061,14 @@ class AdminController extends Controller
         ]);
 
         return back()->with('success', "Ujian peserta {$peserta->siswa->nama_lengkap} berhasil di-reset total. Siswa dapat login dan mengerjakan ulang dari awal.");
+    }
+
+    public function resetPelanggaranPeserta($pesertaId)
+    {
+        $peserta = UjianPeserta::with('siswa')->findOrFail($pesertaId);
+        $peserta->update(['jumlah_pelanggaran' => 0]);
+
+        return back()->with('success', "Catatan pelanggaran peserta {$peserta->siswa->nama_lengkap} berhasil di-reset menjadi 0.");
     }
 
     public function forceFinishPeserta($pesertaId)

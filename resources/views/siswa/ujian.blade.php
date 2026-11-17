@@ -511,6 +511,10 @@
         </div>
 
         <div class="header-right">
+            <div id="sync-status-badge" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; padding: 4px 10px; border-radius: 4px; background: rgba(34, 197, 94, 0.15); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); transition: all 0.3s ease;">
+                <span id="sync-status-dot" style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e;"></span>
+                <span id="sync-status-text" style="font-weight: 600;">Semua Tersimpan</span>
+            </div>
             <div class="timer-box" id="timer-box">
                 <span class="label">Sisa Waktu:</span>
                 <strong id="timer-display">--:--:--</strong>
@@ -617,7 +621,7 @@
 
             <div style="display: flex; justify-content: flex-end; gap: 10px;">
                 <button type="button" class="btn-nav btn-prev" onclick="closeFinishModal()">Batal & Periksa Lagi</button>
-                <form action="{{ route('siswa.selesai', $jadwal->id) }}" method="POST" onsubmit="isExamFinished = true;">
+                <form action="{{ route('siswa.selesai', $jadwal->id) }}" method="POST" onsubmit="isExamFinished = true; try { localStorage.removeItem(storageKey); } catch(e){}">
                     @csrf
                     <button type="submit" class="btn-nav btn-finish">Ya, Selesai Sekarang</button>
                 </form>
@@ -669,13 +673,42 @@
         const jadwalId = {{ $jadwal->id }};
         const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        // State Jawaban Siswa
+        // State Penyimpanan Lokal Siswa (Zero Data Loss Protection)
+        const storageKey = `cbt_ans_${jadwalId}_{{ $siswa->id }}`;
+        let localAnswers = {};
+        try {
+            const rawLocal = localStorage.getItem(storageKey);
+            if (rawLocal) {
+                localAnswers = JSON.parse(rawLocal);
+            }
+        } catch (e) {
+            console.warn('localStorage tidak tersedia:', e);
+        }
+
+        // State Jawaban Siswa (Prioritaskan server, fallback ke local storage jika ada jawaban yang tertunda)
         let answersState = {};
+        let pendingSyncQueue = [];
+
         questions.forEach(q => {
-            const saved = initialAnswers[q.id];
+            const serverSaved = initialAnswers[q.id];
+            const localSaved = localAnswers[q.id];
+
+            let answerVal = serverSaved ? serverSaved.jawaban_siswa : null;
+            let doubtVal = serverSaved ? Boolean(serverSaved.ragu_ragu) : false;
+
+            if (!answerVal && localSaved && localSaved.jawaban) {
+                answerVal = localSaved.jawaban;
+                doubtVal = Boolean(localSaved.ragu_ragu);
+                pendingSyncQueue.push({
+                    soal_id: q.id,
+                    jawaban: answerVal,
+                    ragu_ragu: doubtVal
+                });
+            }
+
             answersState[q.id] = {
-                jawaban: saved ? saved.jawaban_siswa : null,
-                ragu_ragu: saved ? Boolean(saved.ragu_ragu) : false
+                jawaban: answerVal,
+                ragu_ragu: doubtVal
             };
         });
 
@@ -887,7 +920,41 @@
             });
         }
 
+        function updateSyncBadge(status, text) {
+            const badge = document.getElementById('sync-status-badge');
+            const dot = document.getElementById('sync-status-dot');
+            const label = document.getElementById('sync-status-text');
+            if (!badge || !dot || !label) return;
+
+            if (status === 'saving') {
+                badge.style.background = 'rgba(14, 165, 233, 0.15)';
+                badge.style.borderColor = 'rgba(14, 165, 233, 0.4)';
+                badge.style.color = '#7dd3fc';
+                dot.style.background = '#0ea5e9';
+                label.textContent = text || 'Menyimpan...';
+            } else if (status === 'saved') {
+                badge.style.background = 'rgba(34, 197, 94, 0.15)';
+                badge.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                badge.style.color = '#86efac';
+                dot.style.background = '#22c55e';
+                label.textContent = text || 'Semua Tersimpan';
+            } else if (status === 'offline') {
+                badge.style.background = 'rgba(239, 68, 68, 0.2)';
+                badge.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+                badge.style.color = '#fca5a5';
+                dot.style.background = '#ef4444';
+                label.textContent = text || 'Offline (Aman di Komputer)';
+            }
+        }
+
         function saveAnswerToServer(soalId, jawaban, ragu) {
+            // Amankan data ke penyimpanan lokal browser siswa
+            try {
+                localStorage.setItem(storageKey, JSON.stringify(answersState));
+            } catch (e) {}
+
+            updateSyncBadge('saving', 'Menyimpan jawaban...');
+
             fetch(`/siswa/ujian/${jadwalId}/simpan-jawaban`, {
                 method: 'POST',
                 headers: {
@@ -901,8 +968,56 @@
                     ragu_ragu: ragu,
                     sisa_detik: remainingSeconds
                 })
-            }).catch(err => console.log('Offline auto-saved locally'));
+            })
+            .then(res => {
+                if (res.ok) {
+                    updateSyncBadge('saved', 'Semua Tersimpan');
+                    pendingSyncQueue = pendingSyncQueue.filter(item => item.soal_id !== soalId);
+                } else {
+                    throw new Error('HTTP ' + res.status);
+                }
+            })
+            .catch(err => {
+                console.warn('Simpan server tertunda. Jawaban aman di penyimpanan lokal:', err);
+                updateSyncBadge('offline', 'Offline (Aman di Komputer)');
+                if (!pendingSyncQueue.some(item => item.soal_id === soalId)) {
+                    pendingSyncQueue.push({
+                        soal_id: soalId,
+                        jawaban: jawaban,
+                        ragu_ragu: ragu
+                    });
+                }
+            });
         }
+
+        // Background Auto-Sync Loop untuk item pending (tiap 4 detik)
+        setInterval(function () {
+            if (pendingSyncQueue.length === 0) return;
+            const item = pendingSyncQueue[0];
+            fetch(`/siswa/ujian/${jadwalId}/simpan-jawaban`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    soal_id: item.soal_id,
+                    jawaban: item.jawaban,
+                    ragu_ragu: item.ragu_ragu,
+                    sisa_detik: remainingSeconds
+                })
+            })
+            .then(res => {
+                if (res.ok) {
+                    pendingSyncQueue.shift();
+                    if (pendingSyncQueue.length === 0) {
+                        updateSyncBadge('saved', 'Semua Tersimpan');
+                    }
+                }
+            })
+            .catch(() => {});
+        }, 4000);
 
         function startTimer() {
             const display = document.getElementById('timer-display');
@@ -911,6 +1026,8 @@
             function updateDisplay() {
                 if (remainingSeconds <= 0) {
                     display.textContent = '00:00:00';
+                    isExamFinished = true;
+                    try { localStorage.removeItem(storageKey); } catch(e) {}
                     alert('Waktu ujian telah habis! Sistem akan menyelesaikan lembar jawaban Anda.');
                     document.querySelector('#finish-modal form').submit();
                     return;
@@ -1050,6 +1167,15 @@
             ) {
                 e.preventDefault();
                 return false;
+            }
+        });
+
+        // Proteksi accidental tab close / reload
+        window.addEventListener('beforeunload', function (e) {
+            if (!isExamFinished) {
+                e.preventDefault();
+                e.returnValue = 'Ujian Anda sedang berlangsung. Jawaban Anda tersimpan otomatis.';
+                return e.returnValue;
             }
         });
 
