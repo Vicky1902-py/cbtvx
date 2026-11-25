@@ -140,7 +140,24 @@ class SiswaController extends Controller
         }
 
         // Ambil daftar soal (sembunyikan kunci jawaban & rubrik penilaian agar 100% aman dari inspect browser siswa)
-        $soalList = $jadwal->bankSoal->butirSoal->makeHidden(['kunci_jawaban', 'rubrik_penilaian']);
+        $butirCollection = $jadwal->bankSoal->butirSoal->sortBy('nomor_urut')->values();
+
+        if ($jadwal->acak_soal) {
+            $urutanIds = $peserta->urutan_soal ? json_decode($peserta->urutan_soal, true) : null;
+            if (!is_array($urutanIds) || count($urutanIds) !== $butirCollection->count()) {
+                $urutanIds = $butirCollection->pluck('id')->shuffle()->values()->toArray();
+                $peserta->update(['urutan_soal' => json_encode($urutanIds)]);
+            }
+            $indexed = $butirCollection->keyBy('id');
+            $butirCollection = collect($urutanIds)
+                ->map(fn($sid) => $indexed->get($sid))
+                ->filter()
+                ->values();
+        }
+
+        $soalList = $butirCollection->map(
+            fn($item) => $item->makeHidden(['kunci_jawaban', 'rubrik_penilaian', 'rubrik_uraian'])
+        )->values();
 
         // Ambil seluruh jawaban yang sudah tersimpan
         $jawabanList = UjianJawaban::where('ujian_peserta_id', $peserta->id)
@@ -306,6 +323,10 @@ class SiswaController extends Controller
 
         $siswa->update(['status_login' => 'selesai']);
 
-        return redirect()->route('siswa.dashboard')->with('success', 'Ujian berhasil diselesaikan! Nilai akhir Anda: ' . number_format($totalNilai, 1));
+        $msg = $jadwal->tampilkan_nilai
+            ? 'Ujian berhasil diselesaikan! Nilai sementara (PG/BS): ' . number_format($totalNilai, 1)
+            : 'Ujian berhasil diselesaikan dan jawaban Anda telah tersimpan di server.';
+
+        return redirect()->route('siswa.dashboard')->with('success', $msg);
     }
 }

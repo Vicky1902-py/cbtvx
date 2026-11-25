@@ -1300,6 +1300,16 @@
         }
 
         function openFinishModal() {
+            // Pastikan jawaban uraian yang sedang diketik ikut tersimpan sebelum konfirmasi selesai
+            const activeQ = questions[currentIndex];
+            if (activeQ && activeQ.jenis_soal === 'uraian') {
+                const ta = document.querySelector('#options-container textarea');
+                if (ta) {
+                    answersState[activeQ.id].jawaban = ta.value;
+                    saveAnswerToServer(activeQ.id, ta.value, answersState[activeQ.id].ragu_ragu);
+                }
+            }
+
             let answered = 0;
             let doubt = 0;
             let unanswered = 0;

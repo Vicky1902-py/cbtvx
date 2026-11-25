@@ -856,4 +856,90 @@ class BankSoalPresetTest extends TestCase
         $this->assertEquals('VXSIM', $jadwal->token_ujian);
         $this->assertEquals('aktif', $jadwal->status);
     }
+
+    public function test_proses_ujian_menghormati_acak_soal_dan_tampilkan_nilai_serta_force_finish_massal()
+    {
+        $kelas = \App\Models\Kelas::create(['kode_kelas' => 'XI-TP-PROC', 'nama_kelas' => 'XI TP 1', 'tingkat' => 11, 'jurusan' => 'TP']);
+        $userSiswa = \App\Models\User::factory()->create(['role' => 'siswa', 'username' => 'siswa_proc_01']);
+        $siswa = \App\Models\Siswa::create([
+            'user_id' => $userSiswa->id,
+            'kelas_id' => $kelas->id,
+            'nisn' => '0077665544',
+            'nama_lengkap' => 'Siswa Uji Proses',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab 1',
+        ]);
+
+        $s1 = \App\Models\SoalButir::create([
+            'bank_soal_id' => $this->bank->id,
+            'nomor_urut' => 1,
+            'jenis_soal' => 'benar_salah',
+            'konten_soal' => 'Soal BS Proses',
+            'opsi_a' => 'Benar',
+            'opsi_b' => 'Salah',
+            'kunci_jawaban' => 'B',
+            'bobot' => 50,
+        ]);
+        $s2 = \App\Models\SoalButir::create([
+            'bank_soal_id' => $this->bank->id,
+            'nomor_urut' => 2,
+            'jenis_soal' => 'uraian',
+            'konten_soal' => 'Soal Uraian Proses',
+            'bobot' => 50,
+        ]);
+
+        $jadwal = \App\Models\JadwalUjian::create([
+            'bank_soal_id' => $this->bank->id,
+            'nama_ujian' => 'Ujian Acak Tanpa Tampil Nilai',
+            'jenis_ujian' => 'SIMULASI',
+            'waktu_mulai' => now()->subMinute(),
+            'waktu_selesai' => now()->addHour(),
+            'durasi_menit' => 60,
+            'token_ujian' => 'HIDE1',
+            'acak_soal' => true,
+            'tampilkan_nilai' => false,
+            'status' => 'aktif',
+        ]);
+        $jadwal->kelas()->sync([$kelas->id]);
+
+        $peserta = \App\Models\UjianPeserta::create([
+            'jadwal_ujian_id' => $jadwal->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'berlangsung',
+            'sisa_detik' => 3600,
+        ]);
+
+        // Buka halaman ujian -> urutan_soal harus tersimpan oleh fitur acak_soal
+        $this->actingAs($userSiswa)->get(route('siswa.ujian', $jadwal->id))->assertStatus(200);
+        $peserta->refresh();
+        $this->assertNotNull($peserta->urutan_soal);
+        $this->assertCount(2, json_decode($peserta->urutan_soal, true));
+
+        // Siswa menjawab BS ('BENAR') dan Uraian, lalu Admin paksa selesai semua
+        $this->actingAs($userSiswa)->postJson(route('siswa.simpan', $jadwal->id), [
+            'soal_id' => $s1->id,
+            'jawaban' => 'BENAR',
+            'ragu_ragu' => false,
+            'sisa_detik' => 3500,
+        ])->assertStatus(200);
+        $this->actingAs($userSiswa)->postJson(route('siswa.simpan', $jadwal->id), [
+            'soal_id' => $s2->id,
+            'jawaban' => 'Penjelasan uraian lengkap.',
+            'ragu_ragu' => false,
+            'sisa_detik' => 3400,
+        ])->assertStatus(200);
+
+        $this->actingAs($this->admin)->post(route('admin.force_finish', $jadwal->id))->assertSessionHas('success');
+        $peserta->refresh();
+        $this->assertEquals('selesai', $peserta->status);
+        $this->assertEquals(1, $peserta->jawaban_benar);
+        $this->assertEquals(0, $peserta->jawaban_salah);
+        $this->assertEquals(50.0, (float) $peserta->nilai_pg);
+
+        // Karena tampilkan_nilai = false, dashboard siswa tidak boleh menampilkan angka "Nilai: 50.0"
+        $this->actingAs($userSiswa)->get(route('siswa.dashboard'))
+            ->assertStatus(200)
+            ->assertSee('Tersimpan')
+            ->assertDontSee('Nilai: 50.0');
+    }
 }

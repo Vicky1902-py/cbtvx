@@ -2597,25 +2597,45 @@ class AdminController extends Controller
         $daftarSoal = $jadwal->bankSoal->butirSoal;
 
         foreach ($pesertaList as $p) {
-            $totalNilai = 0.0;
+            $jawabanMap = UjianJawaban::where('ujian_peserta_id', $p->id)
+                ->get()
+                ->keyBy('soal_butir_id');
+
+            $totalNilaiPg = 0.0;
             $totalBenar = 0;
             $totalSalah = 0;
             $totalKosong = 0;
 
             foreach ($daftarSoal as $soal) {
-                $jwb = UjianJawaban::where('ujian_peserta_id', $p->id)
-                    ->where('soal_butir_id', $soal->id)
-                    ->first();
+                $jwb = $jawabanMap->get($soal->id);
 
-                if (!$jwb || empty($jwb->jawaban_siswa)) {
+                if (!$jwb || trim((string) $jwb->jawaban_siswa) === '') {
                     $totalKosong++;
-                } elseif (strtoupper(trim($jwb->jawaban_siswa)) === strtoupper(trim($soal->kunci_jawaban))) {
+                    continue;
+                }
+
+                if ($soal->jenis_soal === 'uraian') {
+                    continue;
+                }
+
+                $cleanSiswa = strtoupper(trim((string) $jwb->jawaban_siswa));
+                $cleanKunci = strtoupper(trim((string) $soal->kunci_jawaban));
+                if ($soal->jenis_soal === 'benar_salah') {
+                    if ($cleanSiswa === 'B') $cleanSiswa = 'BENAR';
+                    if ($cleanSiswa === 'S') $cleanSiswa = 'SALAH';
+                    if ($cleanKunci === 'B') $cleanKunci = 'BENAR';
+                    if ($cleanKunci === 'S') $cleanKunci = 'SALAH';
+                }
+
+                if ($cleanSiswa === $cleanKunci) {
                     $totalBenar++;
-                    $totalNilai += (float) $soal->bobot;
+                    $totalNilaiPg += (float) $soal->bobot;
                 } else {
                     $totalSalah++;
                 }
             }
+
+            $totalAkhir = min(100.0, $totalNilaiPg + (float) ($p->nilai_uraian ?? 0));
 
             $p->update([
                 'status' => 'selesai',
@@ -2624,7 +2644,8 @@ class AdminController extends Controller
                 'jawaban_benar' => $totalBenar,
                 'jawaban_salah' => $totalSalah,
                 'jawaban_kosong' => $totalKosong,
-                'total_nilai' => min(100.0, $totalNilai),
+                'nilai_pg' => $totalNilaiPg,
+                'total_nilai' => $totalAkhir,
             ]);
 
             if ($p->siswa) {
@@ -3831,9 +3852,10 @@ class AdminController extends Controller
                     ->where('soal_butir_id', $soal->id)
                     ->get();
 
-                $benarCount = $jawabans->where('is_benar', true)->count();
-                $salahCount = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
-                $kosongCount = $totalPeserta - ($benarCount + $salahCount);
+                $benarCount = $jawabans->filter(fn($j) => $j->is_benar === true)->count();
+                $salahCount = $jawabans->filter(fn($j) => $j->is_benar === false && trim((string) $j->jawaban_siswa) !== '')->count();
+                $terisiCount = $jawabans->filter(fn($j) => trim((string) $j->jawaban_siswa) !== '')->count();
+                $kosongCount = max(0, $totalPeserta - $terisiCount);
 
                 // Frekuensi Opsi (Distraktor Analysis)
                 $opsiCount = [
@@ -3931,15 +3953,16 @@ class AdminController extends Controller
                 ->where('soal_butir_id', $soal->id)
                 ->get();
 
-            $benarCount = $jawabans->where('is_benar', true)->count();
-            $salahCount = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
-            $kosongCount = max(0, $totalPeserta - ($benarCount + $salahCount));
+            $benarCount = $jawabans->filter(fn($j) => $j->is_benar === true)->count();
+            $salahCount = $jawabans->filter(fn($j) => $j->is_benar === false && trim((string) $j->jawaban_siswa) !== '')->count();
+            $terisiCount = $jawabans->filter(fn($j) => trim((string) $j->jawaban_siswa) !== '')->count();
+            $kosongCount = max(0, $totalPeserta - $terisiCount);
 
             $pIndex = $totalPeserta > 0 ? round($benarCount / $totalPeserta, 2) : 0;
             $kategoriKesukaran = $pIndex >= 0.70 ? 'Mudah' : ($pIndex >= 0.30 ? 'Sedang' : 'Sukar');
 
-            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->where('is_benar', true)->count();
-            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->where('is_benar', true)->count();
+            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->filter(fn($j) => $j->is_benar === true)->count();
+            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->filter(fn($j) => $j->is_benar === true)->count();
             $dIndex = $kCount > 0 ? round(($benarAtas - $benarBawah) / $kCount, 2) : 0;
             $rekomendasi = $dIndex >= 0.40 ? 'Diterima (Sangat Baik)' : ($dIndex >= 0.30 ? 'Diterima' : ($dIndex >= 0.20 ? 'Perlu Revisi' : 'Dibuang / Diganti'));
 
@@ -4005,15 +4028,16 @@ class AdminController extends Controller
                 ->where('soal_butir_id', $soal->id)
                 ->get();
 
-            $benar = $jawabans->where('is_benar', true)->count();
-            $salah = $jawabans->where('is_benar', false)->whereNotNull('jawaban_siswa')->count();
-            $kosong = max(0, $totalPeserta - ($benar + $salah));
+            $benar = $jawabans->filter(fn($j) => $j->is_benar === true)->count();
+            $salah = $jawabans->filter(fn($j) => $j->is_benar === false && trim((string) $j->jawaban_siswa) !== '')->count();
+            $terisi = $jawabans->filter(fn($j) => trim((string) $j->jawaban_siswa) !== '')->count();
+            $kosong = max(0, $totalPeserta - $terisi);
 
             $pIndex = $totalPeserta > 0 ? round($benar / $totalPeserta, 2) : 0;
             $kategoriKesukaran = $pIndex >= 0.70 ? 'Mudah' : ($pIndex >= 0.30 ? 'Sedang' : 'Sukar');
 
-            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->where('is_benar', true)->count();
-            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->where('is_benar', true)->count();
+            $benarAtas = $jawabans->whereIn('ujian_peserta_id', $kelompokAtasIds)->filter(fn($j) => $j->is_benar === true)->count();
+            $benarBawah = $jawabans->whereIn('ujian_peserta_id', $kelompokBawahIds)->filter(fn($j) => $j->is_benar === true)->count();
             $dIndex = $kCount > 0 ? round(($benarAtas - $benarBawah) / $kCount, 2) : 0;
             $rekomendasi = $dIndex >= 0.40 ? 'Diterima (Sangat Baik)' : ($dIndex >= 0.30 ? 'Diterima' : ($dIndex >= 0.20 ? 'Perlu Revisi' : 'Dibuang / Diganti'));
 

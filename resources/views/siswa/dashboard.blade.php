@@ -517,7 +517,11 @@
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
                                     </a>
                                 @elseif ($peserta->status === 'selesai')
-                                    <span style="font-weight: 700; color: #15803d; font-size: 14px;">Nilai: {{ number_format($peserta->total_nilai, 1) }}</span>
+                                    @if ($jadwal->tampilkan_nilai)
+                                        <span style="font-weight: 700; color: #15803d; font-size: 14px;">Nilai: {{ number_format($peserta->total_nilai, 1) }}</span>
+                                    @else
+                                        <span class="badge-done">Tersimpan</span>
+                                    @endif
                                 @endif
                             </td>
                         </tr>
