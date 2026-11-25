@@ -148,6 +148,37 @@
         .btn-back:hover {
             color: var(--text-main);
         }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 14px;
+                justify-content: flex-start;
+            }
+            .confirm-card {
+                margin: auto 0;
+            }
+            .confirm-header {
+                padding: 16px 18px;
+            }
+            .confirm-body {
+                padding: 18px;
+            }
+            .info-table td.label {
+                width: 42%;
+                padding-right: 10px;
+            }
+            .token-input {
+                font-size: 20px;
+                padding: 14px;
+            }
+            .btn-start {
+                min-height: 48px;
+                font-size: 15px;
+            }
+            .btn-back {
+                padding: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -195,7 +226,7 @@
                 </tr>
                 <tr>
                     <td class="label">Jumlah Butir Soal</td>
-                    <td>{{ $jadwal->bankSoal->butirSoal->count() }} Butir Soal (Pilihan Ganda)</td>
+                    <td>{{ $jadwal->bankSoal->butirSoal->count() }} Butir Soal</td>
                 </tr>
             </table>
 

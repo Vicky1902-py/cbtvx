@@ -7,8 +7,8 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
 
-    <!-- KaTeX Rumus Matematika (ANBK / TKA) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+    <!-- KaTeX Rumus Matematika (ANBK / TKA - Non-blocking untuk lab offline) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" media="print" onload="this.media='all'">
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js"></script>
     <style>
@@ -484,12 +484,221 @@
             font-size: 18px;
         }
 
-        @media (max-width: 900px) {
+        .question-text {
+            overflow-wrap: break-word;
+            word-wrap: break-word;
+        }
+
+        .question-text table,
+        .question-text img,
+        .option-text img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* Modal Zoom Gambar In-Page (Tidak membuka tab baru / anti-cheat aman) */
+        .image-zoom-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.88);
+            z-index: 100000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+        }
+
+        .image-zoom-box {
+            position: relative;
+            max-width: 95vw;
+            max-height: 90vh;
+            background: #ffffff;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-zoom-box img {
+            max-width: 100%;
+            max-height: calc(90vh - 70px);
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        @media (max-width: 1100px) {
+            .exam-header {
+                padding: 8px 14px;
+                gap: 10px;
+            }
+            .header-left p {
+                max-width: 210px;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+            .exam-body {
+                grid-template-columns: 1fr 255px;
+                padding: 12px;
+                gap: 12px;
+            }
+            .number-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 920px) {
+            .exam-header {
+                flex-wrap: wrap;
+                padding: 10px 14px;
+                gap: 8px;
+            }
+            .header-left {
+                flex: 1;
+                min-width: 0;
+                gap: 10px;
+            }
+            .header-left img {
+                width: 30px;
+                height: 30px;
+            }
+            .header-left h1 {
+                font-size: 12px;
+            }
+            .header-left p {
+                font-size: 11px;
+                max-width: none;
+                white-space: normal;
+                word-break: break-word;
+            }
+            .header-right {
+                gap: 8px;
+                flex-shrink: 0;
+            }
+            #sync-status-badge {
+                padding: 4px 8px !important;
+                font-size: 11px !important;
+            }
+            .timer-box {
+                padding: 4px 10px;
+                gap: 6px;
+            }
+            .timer-box span.label {
+                display: none;
+            }
+            .timer-box strong {
+                font-size: 15px;
+            }
+            .header-center {
+                order: 3;
+                width: 100%;
+                border-top: 1px solid rgba(255, 255, 255, 0.14);
+                padding-top: 6px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                text-align: left;
+            }
+            .header-center .exam-name {
+                font-size: 12px;
+            }
+            .header-center .exam-sub {
+                font-size: 11px;
+                flex-shrink: 0;
+            }
             .exam-body {
                 grid-template-columns: 1fr;
+                padding: 10px 12px;
+                gap: 12px;
+            }
+            .question-header {
+                padding: 10px 14px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .question-content {
+                padding: 16px 14px;
+            }
+            .question-text {
+                font-size: 15.5px;
+                margin-bottom: 18px;
+            }
+            .option-item {
+                padding: 13px 14px;
+                gap: 12px;
+                min-height: 52px;
+            }
+            .option-letter {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .exam-action-bar {
+                padding: 12px 14px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .exam-action-bar .btn-nav {
+                min-height: 44px;
+                padding: 10px 14px;
+                font-size: 13.5px;
+                justify-content: center;
+            }
+            .btn-drawer-toggle {
+                display: inline-flex !important;
             }
             .nav-panel {
                 order: 2;
+            }
+            .number-grid {
+                grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+                gap: 8px;
+                padding: 14px;
+                max-height: none;
+            }
+            .num-btn {
+                min-height: 46px;
+                max-height: 54px;
+                font-size: 13.5px;
+            }
+            .nav-panel.drawer-open {
+                position: fixed;
+                inset: 0;
+                z-index: 1000;
+                height: 100dvh;
+                max-height: 100dvh;
+                border-radius: 0;
+                border: none;
+            }
+            .nav-panel.drawer-open .nav-panel-close-btn {
+                display: inline-flex !important;
+            }
+            .nav-panel.drawer-open .number-grid {
+                flex: 1;
+                overflow-y: auto;
+                align-content: start;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .exam-action-bar {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .exam-action-bar > div {
+                grid-column: 1 / -1;
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            #sync-status-text {
+                display: none;
             }
         }
     </style>
@@ -527,11 +736,16 @@
         <div class="question-card">
             <div class="question-header">
                 <div class="question-number-badge" id="current-question-title">SOAL NOMOR 1</div>
-                <div class="font-sizer">
-                    <span>Ukuran Teks:</span>
-                    <button type="button" class="btn-size" onclick="changeFontSize(-1)">A-</button>
-                    <button type="button" class="btn-size" onclick="changeFontSize(0)">A</button>
-                    <button type="button" class="btn-size" onclick="changeFontSize(1)">A+</button>
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="btn-size btn-drawer-toggle" onclick="toggleNavDrawer()" style="display: none; align-items: center; gap: 5px; background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; padding: 5px 10px;">
+                        &#9776; Daftar Soal (<span id="drawer-answered-count">0</span>/{{ $soalList->count() }})
+                    </button>
+                    <div class="font-sizer">
+                        <span>Ukuran Teks:</span>
+                        <button type="button" class="btn-size" onclick="changeFontSize(-1)">A-</button>
+                        <button type="button" class="btn-size" onclick="changeFontSize(0)">A</button>
+                        <button type="button" class="btn-size" onclick="changeFontSize(1)">A+</button>
+                    </div>
                 </div>
             </div>
 
@@ -565,10 +779,13 @@
         </div>
 
         <!-- Panel Daftar Nomor Soal -->
-        <aside class="nav-panel">
+        <aside class="nav-panel" id="nav-panel-drawer">
             <div class="nav-panel-header">
                 <span>Daftar Nomor Soal</span>
-                <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">Total: {{ $soalList->count() }}</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 11px; font-weight: normal; color: var(--text-muted);">Total: {{ $soalList->count() }}</span>
+                    <button type="button" class="nav-panel-close-btn" onclick="closeNavDrawer()" style="display: none; align-items: center; gap: 4px; background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; border-radius: 4px; padding: 4px 10px; font-size: 12px; font-weight: 700; cursor: pointer;">&#10005; Tutup</button>
+                </div>
             </div>
 
             <div class="number-grid" id="number-grid">
@@ -590,6 +807,14 @@
                 </div>
             </div>
         </aside>
+    </div>
+
+    <!-- Modal Zoom Gambar In-Page -->
+    <div class="image-zoom-overlay" id="image-zoom-modal" onclick="if (event.target === this) closeImageZoom();">
+        <div class="image-zoom-box">
+            <img id="image-zoom-preview" src="" alt="Perbesaran Gambar Soal">
+            <button type="button" onclick="closeImageZoom()" style="margin-top: 10px; background: #0f2b48; color: #ffffff; border: none; padding: 8px 20px; border-radius: 4px; font-weight: 700; font-size: 13px; cursor: pointer;">&#10005; Tutup Gambar</button>
+        </div>
     </div>
 
     <!-- Modal Konfirmasi Selesai Ujian -->
@@ -748,10 +973,10 @@
                 if (!imgSrc.startsWith('http://') && !imgSrc.startsWith('https://')) {
                     imgSrc = '/' + imgSrc.replace(/^\/+/, '');
                 }
-                mediaHtml += `<div style="margin-bottom: 14px; text-align: center;"><a href="${imgSrc}" target="_blank" title="Klik untuk memperbesar gambar"><img src="${imgSrc}" alt="Gambar Soal" style="max-height: 280px; max-width: 100%; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: zoom-in; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"></a><div style="font-size: 11px; color: #64748b; margin-top: 4px;">🔍 Klik gambar untuk memperbesar</div></div>`;
+                mediaHtml += `<div style="margin-bottom: 14px; text-align: center;"><img src="${imgSrc}" alt="Gambar Soal" onclick="openImageZoom('${imgSrc}')" title="Klik untuk memperbesar gambar" style="max-height: 280px; max-width: 100%; object-fit: contain; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: zoom-in; box-shadow: 0 1px 3px rgba(0,0,0,0.08);"><div style="font-size: 11px; color: #64748b; margin-top: 4px;">&#128269; Ketuk/klik gambar untuk memperbesar</div></div>`;
             }
             if (q.audio_file) {
-                mediaHtml += `<div style="margin-bottom: 14px;"><audio controls style="width: 280px;"><source src="/${q.audio_file}"></audio></div>`;
+                mediaHtml += `<div style="margin-bottom: 14px;"><audio controls style="max-width: 100%; width: 280px;"><source src="/${q.audio_file}"></audio></div>`;
             }
 
             // Update Status Ragu-Ragu Checkbox
@@ -879,6 +1104,7 @@
         function renderNumberGrid() {
             const grid = document.getElementById('number-grid');
             grid.innerHTML = '';
+            let answeredCount = 0;
 
             questions.forEach((q, idx) => {
                 const btn = document.createElement('button');
@@ -886,10 +1112,13 @@
                 btn.className = 'num-btn';
 
                 const state = answersState[q.id];
+                const hasAns = Boolean(state.jawaban && String(state.jawaban).trim() !== '');
                 if (state.ragu_ragu) {
                     btn.classList.add('doubt');
-                } else if (state.jawaban) {
+                    answeredCount++;
+                } else if (hasAns) {
                     btn.classList.add('answered');
+                    answeredCount++;
                 }
 
                 if (idx === currentIndex) {
@@ -897,16 +1126,25 @@
                 }
 
                 btn.textContent = (idx + 1);
-                if (state.jawaban && !state.ragu_ragu) {
+                if (hasAns && !state.ragu_ragu) {
                     const code = document.createElement('span');
                     code.className = 'ans-code';
-                    code.textContent = state.jawaban;
+                    const ansStr = String(state.jawaban).trim();
+                    code.textContent = ansStr.length > 5 ? '✓' : ansStr;
                     btn.appendChild(code);
                 }
 
-                btn.onclick = () => loadQuestion(idx);
+                btn.onclick = () => {
+                    closeNavDrawer();
+                    loadQuestion(idx);
+                };
                 grid.appendChild(btn);
             });
+
+            const drawerCounter = document.getElementById('drawer-answered-count');
+            if (drawerCounter) {
+                drawerCounter.textContent = answeredCount;
+            }
         }
 
         function updateGridActiveState() {
@@ -1068,8 +1306,9 @@
 
             questions.forEach(q => {
                 const s = answersState[q.id];
+                const hasAns = Boolean(s.jawaban && String(s.jawaban).trim() !== '');
                 if (s.ragu_ragu) doubt++;
-                else if (s.jawaban) answered++;
+                else if (hasAns) answered++;
                 else unanswered++;
             });
 
@@ -1084,16 +1323,58 @@
             document.getElementById('finish-modal').style.display = 'none';
         }
 
+        function toggleNavDrawer() {
+            const drawer = document.getElementById('nav-panel-drawer');
+            if (drawer) {
+                drawer.classList.toggle('drawer-open');
+            }
+        }
+
+        function closeNavDrawer() {
+            const drawer = document.getElementById('nav-panel-drawer');
+            if (drawer) {
+                drawer.classList.remove('drawer-open');
+            }
+        }
+
+        function openImageZoom(src) {
+            const modal = document.getElementById('image-zoom-modal');
+            const preview = document.getElementById('image-zoom-preview');
+            if (modal && preview) {
+                preview.src = src;
+                modal.style.display = 'flex';
+            }
+        }
+
+        function closeImageZoom() {
+            const modal = document.getElementById('image-zoom-modal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         // ==========================================
         // SISTEM ANTI-CHEAT & FULL-SCREEN LOCK
         // ==========================================
         let violationCount = {{ $peserta->jumlah_pelanggaran ?? 0 }};
         let isExamFinished = false;
+        const isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        const supportsFullscreen = Boolean(
+            document.documentElement.requestFullscreen ||
+            document.documentElement.webkitRequestFullscreen ||
+            document.documentElement.mozRequestFullScreen ||
+            document.documentElement.msRequestFullscreen
+        );
 
         function checkFullscreen() {
             if (isExamFinished) return;
-            const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
             const overlay = document.getElementById('fullscreen-overlay');
+            // Pada tablet iOS/browser tertentu yang tidak mendukung Fullscreen API, jangan blokir akses ujian
+            if (!supportsFullscreen || isTouchDevice) {
+                if (overlay) overlay.style.display = 'none';
+                return;
+            }
+            const isFull = Boolean(document.fullscreenElement || document.webkitFullscreenElement || document.mozFullScreenElement || document.msFullscreenElement);
             if (!isFull) {
                 overlay.style.display = 'flex';
             } else {
@@ -1143,6 +1424,11 @@
         });
 
         window.addEventListener('blur', function () {
+            // Hindari false-alarm di tablet saat keyboard virtual / dialog browser muncul
+            const activeTag = document.activeElement ? document.activeElement.tagName : '';
+            if (isTouchDevice || activeTag === 'TEXTAREA' || activeTag === 'INPUT') {
+                return;
+            }
             if (!document.hidden) {
                 triggerTabViolation();
             }

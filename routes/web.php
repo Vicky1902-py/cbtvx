@@ -13,7 +13,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 Route::get('/logout', [AuthController::class, 'logout'])->name('logout.get');
 
 // Group Peserta Ujian (Siswa)
-Route::middleware(['auth'])->prefix('siswa')->name('siswa.')->group(function () {
+Route::middleware(['auth', 'role:siswa'])->prefix('siswa')->name('siswa.')->group(function () {
     Route::get('/dashboard', [SiswaController::class, 'dashboard'])->name('dashboard');
     Route::get('/konfirmasi/{id}', [SiswaController::class, 'konfirmasi'])->name('konfirmasi');
     Route::post('/mulai-ujian/{id}', [SiswaController::class, 'mulaiUjian'])->name('mulai');
@@ -24,7 +24,7 @@ Route::middleware(['auth'])->prefix('siswa')->name('siswa.')->group(function () 
 });
 
 // Group Administrator & Proktor
-Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:admin,guru,proktor'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('dashboard.index');
 
@@ -151,8 +151,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     Route::post('/pengaturan', [AdminController::class, 'simpanPengaturan'])->name('pengaturan.simpan');
 });
 
-// Route Migrasi Otomatis & Reset Database
-Route::get('/system-migrate', function () {
+// Route Migrasi Otomatis & Reset Database (Dibatasi hanya Administrator yang login)
+Route::middleware(['auth', 'role:admin'])->get('/system-migrate', function () {
     try {
         \Illuminate\Support\Facades\Artisan::call('migrate:fresh', [
             '--seed' => true,

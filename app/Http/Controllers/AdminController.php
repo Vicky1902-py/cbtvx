@@ -4086,8 +4086,10 @@ class AdminController extends Controller
 
         foreach ($soalList as $s) {
             $jw = $jawabans->firstWhere('soal_butir_id', $s->id);
-            if (!$jw || empty($jw->jawaban_siswa)) {
+            if (!$jw || trim((string)$jw->jawaban_siswa) === '') {
                 $kosong++;
+            } elseif ($s->jenis_soal === 'uraian') {
+                continue;
             } elseif ($jw->is_benar) {
                 $benar++;
                 $nilaiPg += (float) $s->bobot_nilai;

@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Masuk Asesmen CBT &bull; SMK Negeri 1 Kupang Barat</title>
     <meta name="description" content="Aplikasi CBT Berstandar TKA Pusmendik Kemdikbud - SMK Negeri 1 Kupang Barat">
-    <meta name="author" content="Vicky Koroh, S.Pd., M.Kom">
+    <meta name="author" content="Vicky Koroh, S.Pd., Gr.">
     <meta name="copyright" content="Hak Cipta &copy; Vicky Koroh">
     <link rel="icon" type="image/png" href="{{ asset('images/favicon.png') }}">
 
@@ -367,17 +367,38 @@
             font-weight: 700;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 920px) {
+            body {
+                padding: 16px;
+                justify-content: flex-start;
+            }
             .auth-container {
                 grid-template-columns: 1fr;
+                max-width: 620px;
+                margin: auto 0;
             }
             .auth-info-panel {
-                padding: 24px;
+                padding: 22px 24px;
                 border-right: none;
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             }
+            .feature-list {
+                margin-bottom: 16px;
+            }
             .auth-form-panel {
-                padding: 24px;
+                padding: 26px 24px;
+            }
+            .form-control {
+                height: 48px;
+                font-size: 16px;
+            }
+            .btn-submit {
+                height: 48px;
+                font-size: 15px;
+            }
+            .role-tab {
+                padding: 10px 12px;
+                font-size: 13px;
             }
         }
     </style>
@@ -421,7 +442,7 @@
                         <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
                         <div>
                             <strong>Kartu & Berita Acara Dinas</strong>
-                            <p style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Cetak kartu ujian A4 resmi dengan TTD Kepala Sekolah Vicky Koroh, S.Pd., M.Kom.</p>
+                            <p style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Cetak kartu ujian A4 resmi dengan TTD Kepala Sekolah Vicky Koroh, S.Pd., Gr.</p>
                         </div>
                     </li>
                 </ul>
@@ -429,7 +450,7 @@
 
             <div class="info-footer">
                 <div>Aplikasi Resmi Ujian Berbasis Komputer &bull; <b>SMK Negeri 1 Kupang Barat</b></div>
-                <div>Dikembangkan secara khusus oleh <b>Vicky Koroh, S.Pd., M.Kom</b></div>
+                <div>Dikembangkan secara khusus oleh <b>Vicky Koroh, S.Pd., Gr.</b></div>
             </div>
         </div>
 

@@ -284,6 +284,131 @@
             justify-content: space-between;
             align-items: center;
         }
+
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 900px) {
+            .portal-header {
+                padding: 12px 16px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+            .header-user {
+                width: 100%;
+                justify-content: space-between;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+                padding-top: 8px;
+                gap: 10px;
+            }
+            .main-container {
+                margin: 16px auto;
+                padding: 0 14px;
+            }
+            .welcome-hero {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 18px 20px;
+            }
+            .hero-left h2 {
+                font-size: 18px;
+            }
+            .hero-badge {
+                text-align: left;
+                width: 100%;
+            }
+            .cbt-table th,
+            .cbt-table td {
+                padding: 12px 12px;
+            }
+            .portal-footer {
+                flex-direction: column;
+                gap: 6px;
+                text-align: center;
+                padding: 14px 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .table-panel-header {
+                padding: 14px 16px;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .cbt-table thead {
+                display: none;
+            }
+            .cbt-table,
+            .cbt-table tbody,
+            .cbt-table tr,
+            .cbt-table td {
+                display: block;
+                width: 100%;
+            }
+            .cbt-table tr {
+                padding: 14px 16px;
+                border-bottom: 1px solid var(--border);
+            }
+            .cbt-table tr:last-child {
+                border-bottom: none;
+            }
+            .cbt-table td {
+                padding: 5px 0;
+                border-bottom: none;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                text-align: right;
+            }
+            .cbt-table td::before {
+                content: attr(data-label);
+                font-size: 12px;
+                font-weight: 600;
+                color: var(--text-muted);
+                text-align: left;
+                flex-shrink: 0;
+            }
+            .cbt-table td.col-no {
+                display: none;
+            }
+            .cbt-table td.col-ujian {
+                display: block;
+                text-align: left;
+                padding-bottom: 8px;
+                margin-bottom: 6px;
+                border-bottom: 1px dashed var(--border-light);
+            }
+            .cbt-table td.col-ujian::before {
+                display: none;
+            }
+            .cbt-table td.col-aksi {
+                margin-top: 8px;
+                padding-top: 10px;
+                border-top: 1px solid var(--border-light);
+                justify-content: flex-end;
+            }
+            .cbt-table td.col-aksi::before {
+                display: none;
+            }
+            .cbt-table td.col-aksi .btn-action {
+                width: 100%;
+                justify-content: center;
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+            .cbt-table td.col-empty {
+                display: block;
+                text-align: center;
+            }
+            .cbt-table td.col-empty::before {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -346,6 +471,7 @@
                 <a href="{{ route('siswa.dashboard') }}" style="font-size: 12px; color: var(--accent); text-decoration: none; font-weight: 600;">Segarkan Halaman &bull; Refresh</a>
             </div>
 
+            <div class="table-responsive">
             <table class="cbt-table">
                 <thead>
                     <tr>
@@ -363,14 +489,14 @@
                             $peserta = $riwayatUjian->get($jadwal->id);
                         @endphp
                         <tr>
-                            <td>{{ $idx + 1 }}</td>
-                            <td>
+                            <td class="col-no" data-label="No.">{{ $idx + 1 }}</td>
+                            <td class="col-ujian" data-label="Nama Asesmen">
                                 <strong style="color: var(--text-main); font-size: 14px;">{{ $jadwal->nama_ujian }}</strong><br>
                                 <span style="font-size: 11.5px; color: #64748b;">Jumlah: {{ $jadwal->bankSoal->butirSoal->count() }} Butir Soal</span>
                             </td>
-                            <td>{{ $jadwal->bankSoal->mataPelajaran->nama_mapel ?? '-' }}</td>
-                            <td><strong>{{ $jadwal->durasi_menit }} Menit</strong></td>
-                            <td>
+                            <td data-label="Mata Pelajaran">{{ $jadwal->bankSoal->mataPelajaran->nama_mapel ?? '-' }}</td>
+                            <td data-label="Durasi"><strong>{{ $jadwal->durasi_menit }} Menit</strong></td>
+                            <td data-label="Status">
                                 @if (!$peserta || $peserta->status === 'belum')
                                     <span style="color: #64748b; font-size: 12px;">Belum Dikerjakan</span>
                                 @elseif ($peserta->status === 'berlangsung')
@@ -379,7 +505,7 @@
                                     <span class="badge-done">Sudah Selesai</span>
                                 @endif
                             </td>
-                            <td style="text-align: right;">
+                            <td class="col-aksi" data-label="Tindakan" style="text-align: right;">
                                 @if (!$peserta || $peserta->status === 'belum')
                                     <a href="{{ route('siswa.konfirmasi', $jadwal->id) }}" class="btn-action btn-start">
                                         Ikuti Asesmen
@@ -397,13 +523,14 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" style="text-align: center; padding: 36px; color: #64748b;">
+                            <td class="col-empty" colspan="6" style="text-align: center; padding: 36px; color: #64748b;">
                                 Tidak ada ujian yang aktif untuk kelas Anda saat ini. Hubungi operator / proktor jika ujian belum muncul.
                             </td>
                         </tr>
                     @endforelse
                 </tbody>
             </table>
+            </div>
         </div>
     </main>
 

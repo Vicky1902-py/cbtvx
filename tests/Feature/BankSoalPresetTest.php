@@ -628,4 +628,107 @@ class BankSoalPresetTest extends TestCase
         @unlink($tmpImg);
         @unlink($tmpXlsx);
     }
+
+    public function test_keamanan_route_admin_dan_system_migrate_terblokir_untuk_siswa()
+    {
+        $kelas = \App\Models\Kelas::create(['kode_kelas' => 'X-TITL-SEC', 'nama_kelas' => 'X TITL 1', 'tingkat' => 10, 'jurusan' => 'TITL']);
+        $userSiswa = \App\Models\User::factory()->create(['role' => 'siswa', 'username' => 'siswa_sec_01']);
+        \App\Models\Siswa::create([
+            'user_id' => $userSiswa->id,
+            'kelas_id' => $kelas->id,
+            'nisn' => '0099887766',
+            'nama_lengkap' => 'Siswa Uji Keamanan',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab 1',
+        ]);
+
+        // Siswa tidak boleh mengakses panel admin maupun /system-migrate
+        $this->actingAs($userSiswa)->get(route('admin.bank_soal'))->assertRedirect(route('siswa.dashboard'));
+        $this->actingAs($userSiswa)->get('/system-migrate')->assertRedirect(route('siswa.dashboard'));
+
+        // Guest tidak boleh mengakses /system-migrate
+        auth()->logout();
+        $this->get('/system-migrate')->assertRedirect(route('login'));
+    }
+
+    public function test_selesai_ujian_menghitung_benar_salah_dan_uraian_secara_akurat()
+    {
+        $kelas = \App\Models\Kelas::create(['kode_kelas' => 'X-TPFL-BS', 'nama_kelas' => 'X TPFL 1', 'tingkat' => 10, 'jurusan' => 'TPFL']);
+        $userSiswa = \App\Models\User::factory()->create(['role' => 'siswa', 'username' => 'siswa_bs_01']);
+        $siswa = \App\Models\Siswa::create([
+            'user_id' => $userSiswa->id,
+            'kelas_id' => $kelas->id,
+            'nisn' => '0099112233',
+            'nama_lengkap' => 'Siswa Uji Skor',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab 1',
+        ]);
+
+        $soalBs = \App\Models\SoalButir::create([
+            'bank_soal_id' => $this->bank->id,
+            'nomor_urut' => 1,
+            'jenis_soal' => 'benar_salah',
+            'konten_soal' => 'Apakah Python berjalan di browser?',
+            'opsi_a' => 'Benar',
+            'opsi_b' => 'Salah',
+            'kunci_jawaban' => 'S',
+            'bobot' => 50,
+        ]);
+
+        $soalUraian = \App\Models\SoalButir::create([
+            'bank_soal_id' => $this->bank->id,
+            'nomor_urut' => 2,
+            'jenis_soal' => 'uraian',
+            'konten_soal' => 'Jelaskan konsep algoritma!',
+            'kunci_jawaban' => null,
+            'bobot' => 50,
+        ]);
+
+        $jadwal = \App\Models\JadwalUjian::create([
+            'bank_soal_id' => $this->bank->id,
+            'nama_ujian' => 'Tes BS & Uraian',
+            'waktu_mulai' => now()->subMinute(),
+            'waktu_selesai' => now()->addHour(),
+            'durasi_menit' => 60,
+            'token_ujian' => 'TEST12',
+            'status' => 'aktif',
+        ]);
+
+        $peserta = \App\Models\UjianPeserta::create([
+            'jadwal_ujian_id' => $jadwal->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'berlangsung',
+            'sisa_detik' => 3600,
+        ]);
+
+        // Cek tampilan tablet UI (drawer soal & zoom in-page) ada pada halaman ujian
+        $this->actingAs($userSiswa)->get(route('siswa.ujian', $jadwal->id))
+            ->assertStatus(200)
+            ->assertSee('image-zoom-modal')
+            ->assertSee('toggleNavDrawer');
+
+        // Simpan jawaban BS ('SALAH' cocok dengan kunci 'S') dan jawaban Uraian
+        $this->actingAs($userSiswa)->postJson(route('siswa.simpan', $jadwal->id), [
+            'soal_id' => $soalBs->id,
+            'jawaban' => 'SALAH',
+            'ragu_ragu' => false,
+            'sisa_detik' => 3500,
+        ])->assertStatus(200);
+
+        $this->actingAs($userSiswa)->postJson(route('siswa.simpan', $jadwal->id), [
+            'soal_id' => $soalUraian->id,
+            'jawaban' => 'Langkah sistematis menyelesaikan masalah.',
+            'ragu_ragu' => false,
+            'sisa_detik' => 3400,
+        ])->assertStatus(200);
+
+        $this->actingAs($userSiswa)->post(route('siswa.selesai', $jadwal->id))
+            ->assertRedirect(route('siswa.dashboard'));
+
+        $peserta->refresh();
+        $this->assertEquals('selesai', $peserta->status);
+        $this->assertEquals(1, $peserta->jawaban_benar);
+        $this->assertEquals(0, $peserta->jawaban_salah);
+        $this->assertEquals(50.0, (float) $peserta->nilai_pg);
+    }
 }

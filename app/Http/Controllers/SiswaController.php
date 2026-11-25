@@ -26,7 +26,7 @@ class SiswaController extends Controller
         }
 
         // Ambil jadwal ujian yang aktif dan sesuai kelas siswa atau untuk semua kelas
-        $jadwalAktif = JadwalUjian::with(['bankSoal.mataPelajaran'])
+        $jadwalAktif = JadwalUjian::with(['bankSoal.mataPelajaran', 'bankSoal.butirSoal'])
             ->where('status', 'aktif')
             ->where(function ($q) use ($siswa) {
                 $q->whereHas('kelas', function ($k) use ($siswa) {
@@ -252,25 +252,46 @@ class SiswaController extends Controller
             ->firstOrFail();
 
         $daftarSoal = $jadwal->bankSoal->butirSoal;
+        $jawabanMap = UjianJawaban::where('ujian_peserta_id', $peserta->id)
+            ->get()
+            ->keyBy('soal_butir_id');
+
         $totalBenar = 0;
         $totalSalah = 0;
         $totalKosong = 0;
-        $totalNilai = 0.0;
+        $totalNilaiPg = 0.0;
 
         foreach ($daftarSoal as $soal) {
-            $jwb = UjianJawaban::where('ujian_peserta_id', $peserta->id)
-                ->where('soal_butir_id', $soal->id)
-                ->first();
+            $jwb = $jawabanMap->get($soal->id);
 
-            if (!$jwb || empty($jwb->jawaban_siswa)) {
+            if (!$jwb || trim((string)$jwb->jawaban_siswa) === '') {
                 $totalKosong++;
-            } else if (strtoupper(trim($jwb->jawaban_siswa)) === strtoupper(trim($soal->kunci_jawaban))) {
+                continue;
+            }
+
+            if ($soal->jenis_soal === 'uraian') {
+                // Uraian dinilai manual oleh guru/proktor
+                continue;
+            }
+
+            $cleanSiswa = strtoupper(trim((string)$jwb->jawaban_siswa));
+            $cleanKunci = strtoupper(trim((string)$soal->kunci_jawaban));
+            if ($soal->jenis_soal === 'benar_salah') {
+                if ($cleanSiswa === 'B') $cleanSiswa = 'BENAR';
+                if ($cleanSiswa === 'S') $cleanSiswa = 'SALAH';
+                if ($cleanKunci === 'B') $cleanKunci = 'BENAR';
+                if ($cleanKunci === 'S') $cleanKunci = 'SALAH';
+            }
+
+            if ($cleanSiswa === $cleanKunci) {
                 $totalBenar++;
-                $totalNilai += (float)$soal->bobot;
+                $totalNilaiPg += (float)$soal->bobot;
             } else {
                 $totalSalah++;
             }
         }
+
+        $totalNilai = min(100.0, $totalNilaiPg + (float)($peserta->nilai_uraian ?? 0));
 
         $peserta->update([
             'status' => 'selesai',
@@ -279,8 +300,8 @@ class SiswaController extends Controller
             'jawaban_benar' => $totalBenar,
             'jawaban_salah' => $totalSalah,
             'jawaban_kosong' => $totalKosong,
-            'nilai_pg' => $totalNilai,
-            'total_nilai' => min(100.0, $totalNilai),
+            'nilai_pg' => $totalNilaiPg,
+            'total_nilai' => $totalNilai,
         ]);
 
         $siswa->update(['status_login' => 'selesai']);
