@@ -832,4 +832,28 @@ class BankSoalPresetTest extends TestCase
         // Bersihkan file backup tes
         @unlink(storage_path('app/backups/' . $latestSql));
     }
+
+    public function test_seeder_vx_simulasi_all_mapel_membuat_10_soal_bergambar_dan_semua_jenis()
+    {
+        \App\Models\Kelas::firstOrCreate(['kode_kelas' => 'X-TITL-SIM'], ['nama_kelas' => 'X TITL 1', 'tingkat' => 10, 'jurusan' => 'TITL']);
+        \App\Models\MataPelajaran::firstOrCreate(['kode_mapel' => 'TKA-SIMDIG'], ['nama_mapel' => 'Simulasi Digital', 'kelompok' => 'Umum', 'jurusan' => 'Semua Jurusan', 'tingkat' => 'Semua']);
+
+        (new \Database\Seeders\VxSimulasiAllMapelSeeder())->run();
+
+        $bank = \App\Models\BankSoal::where('kode_bank', 'VX-SIM-ALL-10')->first();
+        $this->assertNotNull($bank);
+        $this->assertEquals('Vx Simulasi All mapel', $bank->nama_bank);
+        $this->assertEquals(10, $bank->butirSoal()->count());
+        $this->assertEquals(6, $bank->butirSoal()->where('jenis_soal', 'pg')->count());
+        $this->assertEquals(2, $bank->butirSoal()->where('jenis_soal', 'benar_salah')->count());
+        $this->assertEquals(2, $bank->butirSoal()->where('jenis_soal', 'uraian')->count());
+        $this->assertEquals(100.0, (float) $bank->butirSoal()->sum('bobot'));
+        $this->assertGreaterThanOrEqual(5, $bank->butirSoal()->whereNotNull('gambar_soal')->count());
+
+        $jadwal = \App\Models\JadwalUjian::where('nama_ujian', 'Vx Simulasi All mapel')->first();
+        $this->assertNotNull($jadwal);
+        $this->assertEquals('SIMULASI', $jadwal->jenis_ujian);
+        $this->assertEquals('VXSIM', $jadwal->token_ujian);
+        $this->assertEquals('aktif', $jadwal->status);
+    }
 }
