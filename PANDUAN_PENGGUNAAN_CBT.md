@@ -105,9 +105,11 @@ Urutan kerja yang disarankan sebelum hari pelaksanaan ujian:
 
 ---
 
-## 6. Rekap Nilai, Analisis Soal, & Backup Setelah Ujian
+## 6. Rekap Nilai, Koreksi Uraian, Analisis Soal, & Backup/Restore
 
-1. **Hasil Ujian & Nilai** (`/admin/laporan/nilai`): lihat rekap nilai per kelas/jadwal, cetak laporan, atau ekspor ke **Excel (`.xlsx`)**. *(Jika ada soal Uraian, lengkapi penilaian manual uraian terlebih dahulu sebelum ekspor akhir).*
+1. **Hasil Ujian & Nilai** (`/admin/laporan/nilai`) dan **Rekap Nilai Jadwal** (`/admin/jadwal/{id}/rekap-nilai`): lihat rekap nilai, klik **Koreksi / Detail** untuk memeriksa jawaban siswa dan menginput skor manual butir **Uraian**, lalu cetak atau ekspor ke **Excel (`.xlsx`)**.
 2. **Analisis Butir Soal** (`/admin/laporan/analisis-soal`): lihat tingkat kesukaran dan persentase jawaban benar tiap butir soal serta ekspor ke Excel.
-3. **Backup Database & Soal** (`/admin/backup`):
-   - Setelah ujian selesai di **Lab 1** dan **Lab 2**, wajib lakukan **Backup Database** dan **Ekspor Nilai Excel** pada masing-masing server agar seluruh nilai dan arsip bank soal aman tersimpan.
+3. **Backup & Restore DB** (`/admin/backup` — khusus **Super Admin**):
+   - Setelah ujian selesai di **Lab 1** dan **Lab 2**, wajib buat **Cadangan Database SQL** dan ekspor nilai Excel pada masing-masing server.
+   - Menu ini juga menyediakan tombol **Pulihkan (Restore)** dari arsip `.sql` di server maupun unggah berkas `.sql`, serta tombol **Reset Hasil** di halaman Jadwal untuk membersihkan hasil uji coba satu jadwal saja tanpa mengganggu jadwal lain.
+   - Menu **Guru & Pengguna** (termasuk `Set Kepsek`), **Data Sekolah & TTD Kepsek**, dan **Backup & Restore DB** dikunci khusus untuk peran **Administrator** sehingga Proktor/Guru tidak bisa mengubah pengaturan inti sistem.

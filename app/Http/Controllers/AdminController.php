@@ -2503,7 +2503,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'bank_soal_id' => 'required|exists:bank_soal,id',
             'nama_ujian' => 'required|string|max:150',
-            'jenis_ujian' => 'required|in:TKA,ANBK,UTS,UAS,UH,TRYOUT',
+            'jenis_ujian' => 'required|string|max:50',
             'token_ujian' => 'required|string|max:10',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after_or_equal:waktu_mulai',
@@ -2538,7 +2538,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'bank_soal_id' => 'required|exists:bank_soal,id',
             'nama_ujian' => 'required|string|max:150',
-            'jenis_ujian' => 'required|in:TKA,ANBK,UTS,UAS,UH,TRYOUT',
+            'jenis_ujian' => 'required|string|max:50',
             'token_ujian' => 'required|string|max:10',
             'waktu_mulai' => 'required|date',
             'waktu_selesai' => 'required|date|after_or_equal:waktu_mulai',
@@ -2635,6 +2635,19 @@ class AdminController extends Controller
         return back()->with('success', 'Berhasil memaksa selesai ' . $pesertaList->count() . ' peserta ujian.');
     }
 
+    public function resetHasilJadwal($jadwalId)
+    {
+        $jadwal = JadwalUjian::findOrFail($jadwalId);
+        $pesertaIds = UjianPeserta::where('jadwal_ujian_id', $jadwalId)->pluck('id');
+
+        if ($pesertaIds->count() > 0) {
+            UjianJawaban::whereIn('ujian_peserta_id', $pesertaIds)->delete();
+            UjianPeserta::whereIn('id', $pesertaIds)->delete();
+        }
+
+        return back()->with('success', 'Seluruh hasil & jawaban peserta pada jadwal "' . $jadwal->nama_ujian . '" berhasil dikosongkan.');
+    }
+
     public function resetLogin($siswaId)
     {
         $siswa = Siswa::findOrFail($siswaId);
@@ -2681,6 +2694,60 @@ class AdminController extends Controller
             ->get();
 
         return view('admin.rekap_nilai', compact('sekolah', 'jadwal', 'pesertaList'));
+    }
+
+    public function koreksiPeserta($pesertaId)
+    {
+        $sekolah = MasterSekolah::first() ?? new MasterSekolah();
+        $peserta = UjianPeserta::with(['siswa.kelas', 'jadwalUjian.bankSoal.butirSoal'])->findOrFail($pesertaId);
+        $daftarSoal = $peserta->jadwalUjian->bankSoal->butirSoal ?? collect();
+        $jawabanMap = UjianJawaban::where('ujian_peserta_id', $peserta->id)
+            ->get()
+            ->keyBy('soal_butir_id');
+
+        return view('admin.koreksi_peserta', compact('sekolah', 'peserta', 'daftarSoal', 'jawabanMap'));
+    }
+
+    public function simpanKoreksiPeserta(Request $request, $pesertaId)
+    {
+        $peserta = UjianPeserta::with(['siswa', 'jadwalUjian.bankSoal.butirSoal'])->findOrFail($pesertaId);
+        $skorInput = $request->input('skor_uraian', []);
+        $totalNilaiUraian = 0.0;
+
+        foreach ($skorInput as $soalId => $nilai) {
+            $skorButir = max(0.0, min(100.0, (float) $nilai));
+            $totalNilaiUraian += $skorButir;
+
+            $jwb = UjianJawaban::firstOrCreate(
+                [
+                    'ujian_peserta_id' => $peserta->id,
+                    'soal_butir_id' => $soalId,
+                ],
+                [
+                    'jawaban_siswa' => '',
+                    'ragu_ragu' => false,
+                ]
+            );
+
+            $jwb->update([
+                'nilai_diperoleh' => $skorButir,
+                'is_benar' => $skorButir > 0,
+            ]);
+        }
+
+        if ($request->filled('override_nilai_uraian')) {
+            $totalNilaiUraian = max(0.0, min(100.0, (float) $request->input('override_nilai_uraian')));
+        }
+
+        $totalAkhir = min(100.0, (float) $peserta->nilai_pg + $totalNilaiUraian);
+
+        $peserta->update([
+            'nilai_uraian' => $totalNilaiUraian,
+            'total_nilai' => $totalAkhir,
+        ]);
+
+        return redirect()->route('admin.rekap_nilai', $peserta->jadwal_ujian_id)
+            ->with('success', 'Koreksi jawaban & nilai uraian untuk ' . ($peserta->siswa->nama_lengkap ?? 'peserta') . ' berhasil disimpan (Total: ' . number_format($totalAkhir, 1) . ').');
     }
 
     public function exportRekapNilaiXlsx($jadwalId)
@@ -4203,6 +4270,130 @@ class AdminController extends Controller
         File::put($filePath, $sqlContent);
 
         return back()->with('success', "Cadangan database berhasil dibuat dengan nama {$filename} (" . round(filesize($filePath) / 1024, 2) . " KB).");
+    }
+
+    public function restoreDatabase(Request $request)
+    {
+        $sqlRaw = null;
+        $sourceLabel = '';
+
+        if ($request->hasFile('file_sql')) {
+            $request->validate([
+                'file_sql' => 'required|file|max:51200',
+            ]);
+            $sqlRaw = File::get($request->file('file_sql')->getRealPath());
+            $sourceLabel = $request->file('file_sql')->getClientOriginalName();
+        } elseif ($request->filled('filename')) {
+            $cleanName = basename($request->input('filename'));
+            $filePath = storage_path('app/backups/' . $cleanName);
+            if (!File::exists($filePath)) {
+                return back()->with('error', 'Berkas cadangan tidak ditemukan di server.');
+            }
+            $sqlRaw = File::get($filePath);
+            $sourceLabel = $cleanName;
+        } else {
+            return back()->with('error', 'Pilih berkas cadangan atau unggah file .sql terlebih dahulu.');
+        }
+
+        if (!$sqlRaw || stripos($sqlRaw, 'INSERT INTO') === false) {
+            return back()->with('error', 'Berkas SQL tidak valid atau tidak berisi data cadangan CBT.');
+        }
+
+        // Pecah statement SQL secara aman (menghormati string kutip tunggal & multi-baris)
+        $statements = [];
+        $current = '';
+        $inString = false;
+        $len = strlen($sqlRaw);
+
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $sqlRaw[$i];
+            if ($inString) {
+                if ($ch === '\\' && $i + 1 < $len) {
+                    $current .= $ch . $sqlRaw[$i + 1];
+                    $i++;
+                    continue;
+                }
+                if ($ch === "'") {
+                    if ($i + 1 < $len && $sqlRaw[$i + 1] === "'") {
+                        $current .= "''";
+                        $i++;
+                        continue;
+                    }
+                    $inString = false;
+                }
+                $current .= $ch;
+            } else {
+                // Lewati komentar baris '-- ...'
+                if ($ch === '-' && $i + 1 < $len && $sqlRaw[$i + 1] === '-') {
+                    $nl = strpos($sqlRaw, "\n", $i);
+                    $i = ($nl === false) ? $len : $nl;
+                    continue;
+                }
+                if ($ch === "'") {
+                    $inString = true;
+                    $current .= $ch;
+                } elseif ($ch === ';') {
+                    $stmt = trim($current);
+                    if ($stmt !== '' && stripos($stmt, 'INSERT INTO') === 0) {
+                        $statements[] = $stmt;
+                    }
+                    $current = '';
+                } else {
+                    $current .= $ch;
+                }
+            }
+        }
+
+        if (count($statements) === 0) {
+            return back()->with('error', 'Tidak ada perintah pemulihan yang dapat diproses dari berkas SQL tersebut.');
+        }
+
+        $driver = DB::getDriverName();
+        $clearOrder = [
+            'daftar_hadir', 'berita_acara', 'petugas_ujian', 'ujian_jawaban',
+            'ujian_peserta', 'jadwal_ujian_kelas', 'jadwal_ujian', 'soal_butir',
+            'bank_soal', 'siswa', 'mata_pelajaran', 'kelas', 'users', 'master_sekolah',
+        ];
+
+        try {
+            if ($driver === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = OFF');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS = 0');
+            }
+
+            DB::beginTransaction();
+            foreach ($clearOrder as $table) {
+                if (Schema::hasTable($table)) {
+                    DB::table($table)->delete();
+                }
+            }
+
+            foreach ($statements as $stmt) {
+                if ($driver === 'sqlite') {
+                    // Normalisasi escape MySQL addslashes (\' -> '', \" -> ", \\ -> \) untuk SQLite
+                    $stmt = str_replace(["\\'", '\\"', '\\\\'], ["''", '"', '\\'], $stmt);
+                }
+                DB::unprepared($stmt . ';');
+            }
+            DB::commit();
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            if ($driver === 'sqlite') {
+                DB::statement('PRAGMA foreign_keys = ON');
+            } else {
+                DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+            }
+            return back()->with('error', 'Gagal memulihkan database: ' . $e->getMessage());
+        }
+
+        if ($driver === 'sqlite') {
+            DB::statement('PRAGMA foreign_keys = ON');
+        } else {
+            DB::statement('SET FOREIGN_KEY_CHECKS = 1');
+        }
+
+        return back()->with('success', "Database berhasil dipulihkan dari cadangan {$sourceLabel} (" . count($statements) . " baris data).");
     }
 
     public function downloadBackupDatabase($filename)

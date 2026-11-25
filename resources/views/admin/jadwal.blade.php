@@ -76,6 +76,23 @@
                 </td>
                 <td style="text-align: center;">
                     <div style="display: flex; gap: 4px; flex-wrap: wrap; justify-content: center;">
+                        <button type="button" class="btn btn-primary btn-sm" onclick="openEditJadwal({{ json_encode([
+                            'id' => $j->id,
+                            'bank_soal_id' => $j->bank_soal_id,
+                            'nama_ujian' => $j->nama_ujian,
+                            'jenis_ujian' => $j->jenis_ujian,
+                            'token_ujian' => $j->token_ujian,
+                            'durasi_menit' => $j->durasi_menit,
+                            'waktu_mulai' => $j->waktu_mulai ? \Carbon\Carbon::parse($j->waktu_mulai)->format('Y-m-d\TH:i') : '',
+                            'waktu_selesai' => $j->waktu_selesai ? \Carbon\Carbon::parse($j->waktu_selesai)->format('Y-m-d\TH:i') : '',
+                            'status' => $j->status,
+                            'acak_soal' => (bool)$j->acak_soal,
+                            'acak_opsi' => (bool)$j->acak_opsi,
+                            'tampilkan_nilai' => (bool)$j->tampilkan_nilai,
+                            'kelas_ids' => $j->kelas->pluck('id')->toArray(),
+                        ]) }})" title="Edit Jadwal, Durasi, Status &amp; Rombel">
+                            Edit
+                        </button>
                         <a href="{{ route('admin.rekap_nilai', $j->id) }}" class="btn btn-secondary btn-sm" title="Lihat Rekap Nilai Ujian">
                             Rekap Nilai
                         </a>
@@ -91,6 +108,14 @@
                                 Selesai
                             </button>
                         </form>
+                        @if (Auth::user()->role === 'admin')
+                        <form action="{{ route('admin.jadwal.reset_hasil', $j->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('KOSONGKAN semua jawaban &amp; nilai peserta pada jadwal {{ $j->nama_ujian }}? (Bank soal &amp; data siswa tetap aman)');">
+                            @csrf
+                            <button type="submit" class="btn btn-secondary btn-sm" style="color: #b45309; border-color: #fde68a; background: #fffbeb;" title="Reset / Kosongkan Hasil Peserta Jadwal Ini">
+                                Reset Hasil
+                            </button>
+                        </form>
+                        @endif
                         <form action="{{ route('admin.jadwal.hapus', $j->id) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus jadwal ujian {{ $j->nama_ujian }}?');">
                             @csrf
                             <button type="submit" class="btn btn-danger btn-sm" title="Hapus Jadwal">
@@ -202,11 +227,134 @@
         </form>
     </div>
 </div>
+
+<!-- Modal Edit Jadwal Ujian -->
+<div id="modalEditJadwal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,23,42,0.6); z-index: 999; align-items: center; justify-content: center;">
+    <div style="background: #ffffff; border-radius: var(--radius); width: 95%; max-width: 600px; padding: 24px; max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="font-size: 16px; font-weight: 700; color: var(--primary);">Edit Jadwal Ujian</h3>
+            <button type="button" onclick="closeModal('modalEditJadwal')" style="background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+        </div>
+        <form id="formEditJadwal" action="" method="POST">
+            @csrf
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Pilih Paket Bank Soal *</label>
+                <select name="bank_soal_id" id="edit_bank_soal_id" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                    @foreach ($bankList as $b)
+                        <option value="{{ $b->id }}">{{ $b->kode_bank }} - {{ $b->mataPelajaran->nama_mapel ?? '' }} (Tingkat: {{ $b->tingkat }})</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Nama Ujian / Asesmen *</label>
+                <input type="text" name="nama_ujian" id="edit_nama_ujian" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Jenis *</label>
+                    <select name="jenis_ujian" id="edit_jenis_ujian" required style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px;">
+                        <option value="SIMULASI">Simulasi</option>
+                        <option value="TKA">TKA</option>
+                        <option value="ANBK">ANBK</option>
+                        <option value="UTS">UTS</option>
+                        <option value="UAS">UAS</option>
+                        <option value="UH">UH</option>
+                        <option value="TRYOUT">Try Out</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Token *</label>
+                    <input type="text" name="token_ujian" id="edit_token_ujian" required style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px; font-family: monospace; font-weight: bold; text-transform: uppercase;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Durasi (Mnt) *</label>
+                    <input type="number" name="durasi_menit" id="edit_durasi_menit" required min="5" max="360" style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Status *</label>
+                    <select name="status" id="edit_status" required style="width: 100%; padding: 7px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12.5px;">
+                        <option value="aktif">Aktif</option>
+                        <option value="draft">Nonaktif / Draft</option>
+                        <option value="selesai">Selesai</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Waktu Mulai *</label>
+                    <input type="datetime-local" name="waktu_mulai" id="edit_waktu_mulai" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+                <div>
+                    <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px;">Waktu Selesai *</label>
+                    <input type="datetime-local" name="waktu_selesai" id="edit_waktu_selesai" required style="width: 100%; padding: 7px 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 13px;">
+                </div>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+                <label style="display: block; font-size: 12px; font-weight: 600; margin-bottom: 6px;">Rombel Kelas Target *</label>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; background: #f8fafc; padding: 10px; border: 1px solid var(--border-light); border-radius: var(--radius-sm);">
+                    @foreach ($kelasList as $k)
+                        <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="checkbox" name="kelas_ids[]" value="{{ $k->id }}" class="edit-kelas-chk" style="accent-color: var(--accent);">
+                            <span>{{ $k->nama_kelas }} ({{ $k->jurusan }})</span>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 16px; margin-bottom: 20px;">
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="acak_soal" id="edit_acak_soal" value="1" style="accent-color: var(--accent);">
+                    <span>Acak Urutan Soal</span>
+                </label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="acak_opsi" id="edit_acak_opsi" value="1" style="accent-color: var(--accent);">
+                    <span>Acak Opsi (A-E)</span>
+                </label>
+                <label style="font-size: 12px; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="tampilkan_nilai" id="edit_tampilkan_nilai" value="1" style="accent-color: var(--accent);">
+                    <span>Tampilkan Nilai Akhir</span>
+                </label>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal('modalEditJadwal')">Batal</button>
+                <button type="submit" class="btn btn-primary btn-sm">Simpan Perubahan Jadwal</button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @section('scripts')
 <script>
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+    function openEditJadwal(data) {
+        const form = document.getElementById('formEditJadwal');
+        form.action = '/admin/jadwal/' + data.id + '/update';
+        document.getElementById('edit_bank_soal_id').value = data.bank_soal_id;
+        document.getElementById('edit_nama_ujian').value = data.nama_ujian;
+        document.getElementById('edit_jenis_ujian').value = data.jenis_ujian;
+        document.getElementById('edit_token_ujian').value = data.token_ujian;
+        document.getElementById('edit_durasi_menit').value = data.durasi_menit;
+        document.getElementById('edit_status').value = data.status;
+        document.getElementById('edit_waktu_mulai').value = data.waktu_mulai;
+        document.getElementById('edit_waktu_selesai').value = data.waktu_selesai;
+        document.getElementById('edit_acak_soal').checked = Boolean(data.acak_soal);
+        document.getElementById('edit_acak_opsi').checked = Boolean(data.acak_opsi);
+        document.getElementById('edit_tampilkan_nilai').checked = Boolean(data.tampilkan_nilai);
+
+        const selectedIds = Array.isArray(data.kelas_ids) ? data.kelas_ids.map(Number) : [];
+        document.querySelectorAll('.edit-kelas-chk').forEach(chk => {
+            chk.checked = selectedIds.length === 0 || selectedIds.includes(Number(chk.value));
+        });
+
+        openModal('modalEditJadwal');
+    }
 </script>
 @endsection

@@ -59,12 +59,14 @@ Route::middleware(['auth', 'role:admin,guru,proktor'])->prefix('admin')->name('a
     Route::post('/mapel/import-xlsx', [AdminController::class, 'importMapelXlsx'])->name('mapel.import_xlsx');
     Route::get('/mapel/export-xlsx', [AdminController::class, 'exportMapelXlsx'])->name('mapel.export_xlsx');
 
-    // User CRUD
-    Route::get('/users', [AdminController::class, 'users'])->name('users');
-    Route::post('/users', [AdminController::class, 'simpanUser'])->name('users.simpan');
-    Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
-    Route::post('/users/{id}/set-kepsek', [AdminController::class, 'setKepsek'])->name('users.set_kepsek');
-    Route::post('/users/{id}/hapus', [AdminController::class, 'hapusUser'])->name('users.hapus');
+    // User CRUD & Kepsek (Khusus Super Admin)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::post('/users', [AdminController::class, 'simpanUser'])->name('users.simpan');
+        Route::post('/users/{id}/update', [AdminController::class, 'updateUser'])->name('users.update');
+        Route::post('/users/{id}/set-kepsek', [AdminController::class, 'setKepsek'])->name('users.set_kepsek');
+        Route::post('/users/{id}/hapus', [AdminController::class, 'hapusUser'])->name('users.hapus');
+    });
 
     // Bank Soal & Butir Soal (Roadmap Preset 25 & 40)
     Route::get('/bank-soal', [AdminController::class, 'bankSoal'])->name('bank_soal');
@@ -89,14 +91,17 @@ Route::middleware(['auth', 'role:admin,guru,proktor'])->prefix('admin')->name('a
     Route::post('/jadwal/{id}/hapus', [AdminController::class, 'hapusJadwal'])->name('jadwal.hapus');
     Route::post('/jadwal/{id}/generate-token', [AdminController::class, 'generateToken'])->name('generate_token');
     Route::post('/jadwal/{id}/force-finish', [AdminController::class, 'forceFinishAll'])->name('force_finish');
+    Route::middleware(['role:admin'])->post('/jadwal/{id}/reset-hasil', [AdminController::class, 'resetHasilJadwal'])->name('jadwal.reset_hasil');
 
     // Reset Sesi
     Route::post('/reset-login/{id}', [AdminController::class, 'resetLogin'])->name('reset_login');
     Route::post('/reset-all-logins', [AdminController::class, 'resetAllLogins'])->name('reset_all_logins');
 
-    // Rekap Nilai
+    // Rekap Nilai & Koreksi Jawaban / Uraian
     Route::get('/jadwal/{id}/rekap-nilai', [AdminController::class, 'rekapNilai'])->name('rekap_nilai');
     Route::get('/jadwal/{id}/export-nilai', [AdminController::class, 'exportRekapNilaiXlsx'])->name('export_nilai');
+    Route::get('/jadwal/peserta/{pesertaId}/koreksi', [AdminController::class, 'koreksiPeserta'])->name('koreksi_peserta');
+    Route::post('/jadwal/peserta/{pesertaId}/koreksi', [AdminController::class, 'simpanKoreksiPeserta'])->name('koreksi_peserta.simpan');
 
     // Dokumen Cetak, Daftar Hadir & Berita Acara
     Route::get('/cetak-kartu', [AdminController::class, 'cetakKartu'])->name('cetak_kartu');
@@ -138,17 +143,20 @@ Route::middleware(['auth', 'role:admin,guru,proktor'])->prefix('admin')->name('a
     Route::post('/reset-ujian/{pesertaId}/reset-pelanggaran', [AdminController::class, 'resetPelanggaranPeserta'])->name('reset_ujian.reset_pelanggaran');
     Route::post('/reset-ujian/{pesertaId}/force-finish', [AdminController::class, 'forceFinishPeserta'])->name('reset_ujian.force_finish');
 
-    // Backup & Pemulihan (Database & Bank Soal)
-    Route::get('/backup', [AdminController::class, 'backupIndex'])->name('backup');
-    Route::post('/backup/database', [AdminController::class, 'backupDatabase'])->name('backup.database');
-    Route::get('/backup/database/unduh/{filename}', [AdminController::class, 'downloadBackupDatabase'])->name('backup.database.unduh');
-    Route::post('/backup/database/hapus/{filename}', [AdminController::class, 'hapusBackupDatabase'])->name('backup.database.hapus');
-    Route::get('/backup/bank-soal/{id}/export-json', [AdminController::class, 'exportBankSoalJson'])->name('backup.bank_soal.export_json');
-    Route::post('/backup/bank-soal/import-json', [AdminController::class, 'importBankSoalJson'])->name('backup.bank_soal.import_json');
+    // Backup, Pemulihan & Pengaturan Sistem (Khusus Super Admin)
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/backup', [AdminController::class, 'backupIndex'])->name('backup');
+        Route::post('/backup/database', [AdminController::class, 'backupDatabase'])->name('backup.database');
+        Route::post('/backup/database/restore', [AdminController::class, 'restoreDatabase'])->name('backup.database.restore');
+        Route::get('/backup/database/unduh/{filename}', [AdminController::class, 'downloadBackupDatabase'])->name('backup.database.unduh');
+        Route::post('/backup/database/hapus/{filename}', [AdminController::class, 'hapusBackupDatabase'])->name('backup.database.hapus');
+        Route::get('/backup/bank-soal/{id}/export-json', [AdminController::class, 'exportBankSoalJson'])->name('backup.bank_soal.export_json');
+        Route::post('/backup/bank-soal/import-json', [AdminController::class, 'importBankSoalJson'])->name('backup.bank_soal.import_json');
 
-    // Pengaturan
-    Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
-    Route::post('/pengaturan', [AdminController::class, 'simpanPengaturan'])->name('pengaturan.simpan');
+        // Pengaturan
+        Route::get('/pengaturan', [AdminController::class, 'pengaturan'])->name('pengaturan');
+        Route::post('/pengaturan', [AdminController::class, 'simpanPengaturan'])->name('pengaturan.simpan');
+    });
 });
 
 // Route Migrasi Otomatis & Reset Database (Dibatasi hanya Administrator yang login)

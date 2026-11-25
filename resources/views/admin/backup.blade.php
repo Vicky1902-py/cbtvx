@@ -37,12 +37,21 @@
             Klik tombol di bawah ini untuk membuat salinan berkas cadangan database (.sql) yang kompatibel untuk dipulihkan baik di server lokal maupun cPanel hosting MySQL.
         </p>
 
-        <form action="{{ route('admin.backup.database') }}" method="POST">
+        <form action="{{ route('admin.backup.database') }}" method="POST" style="margin-bottom: 14px;">
             @csrf
             <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                 Buat Salinan Database SQL Sekarang
             </button>
+        </form>
+
+        <form action="{{ route('admin.backup.database.restore') }}" method="POST" enctype="multipart/form-data" style="padding-top: 12px; border-top: 1px dashed var(--border);" onsubmit="return confirm('PERINGATAN SUPER ADMIN: Seluruh data database saat ini akan diganti dengan berkas cadangan .SQL yang diunggah. Lanjutkan?');">
+            @csrf
+            <label style="display: block; font-size: 11.5px; font-weight: 700; color: #b91c1c; margin-bottom: 6px;">Pulihkan / Restore Database dari Berkas (.SQL):</label>
+            <div style="display: flex; gap: 8px;">
+                <input type="file" name="file_sql" accept=".sql,.txt" required style="flex: 1; padding: 6px; border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+                <button type="submit" class="btn btn-danger btn-sm">Restore SQL</button>
+            </div>
         </form>
     </div>
 
@@ -88,7 +97,7 @@
                     <th>Nama Berkas Cadangan</th>
                     <th>Ukuran Berkas</th>
                     <th>Waktu Pembuatan</th>
-                    <th style="text-align: center; width: 160px;">Tindakan</th>
+                    <th style="text-align: center; width: 240px;">Tindakan</th>
                 </tr>
             </thead>
             <tbody>
@@ -105,6 +114,11 @@
                             <a href="{{ route('admin.backup.database.unduh', $b['name']) }}" class="btn btn-primary btn-sm" title="Unduh Berkas ke Komputer">
                                 Unduh
                             </a>
+                            <form action="{{ route('admin.backup.database.restore') }}" method="POST" style="display: inline;" onsubmit="return confirm('PULIHKAN database ke kondisi berkas {{ $b['name'] }}? Data terbaru setelah waktu backup tersebut akan tertimpa!');">
+                                @csrf
+                                <input type="hidden" name="filename" value="{{ $b['name'] }}">
+                                <button type="submit" class="btn btn-secondary btn-sm" style="color: #b45309; border-color: #fde68a; background: #fffbeb;" title="Pulihkan database dari berkas ini">Pulihkan</button>
+                            </form>
                             <form action="{{ route('admin.backup.database.hapus', $b['name']) }}" method="POST" style="display: inline;" onsubmit="return confirm('Hapus berkas cadangan {{ $b['name'] }}?');">
                                 @csrf
                                 <button type="submit" class="btn btn-danger btn-sm">Hapus</button>

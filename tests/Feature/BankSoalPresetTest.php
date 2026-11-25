@@ -731,4 +731,105 @@ class BankSoalPresetTest extends TestCase
         $this->assertEquals(0, $peserta->jawaban_salah);
         $this->assertEquals(50.0, (float) $peserta->nilai_pg);
     }
+
+    public function test_admin_memiliki_kuasa_penuh_dan_rute_sensitif_terkunci_dari_non_admin()
+    {
+        $guru = \App\Models\User::factory()->create(['role' => 'guru', 'username' => 'guru_audit_01']);
+        $proktor = \App\Models\User::factory()->create(['role' => 'proktor', 'username' => 'proktor_audit_01']);
+
+        // 1. Guru & Proktor tidak bisa mengakses modul Super Admin (Users, Pengaturan Kepsek, Backup/Restore DB)
+        $this->actingAs($guru)->get(route('admin.users'))->assertRedirect(route('admin.dashboard'));
+        $this->actingAs($proktor)->get(route('admin.pengaturan'))->assertRedirect(route('admin.dashboard'));
+        $this->actingAs($proktor)->get(route('admin.backup'))->assertRedirect(route('admin.dashboard'));
+
+        // Admin penuh bisa mengakses semuanya
+        $this->actingAs($this->admin)->get(route('admin.users'))->assertStatus(200);
+        $this->actingAs($this->admin)->get(route('admin.pengaturan'))->assertStatus(200);
+        $this->actingAs($this->admin)->get(route('admin.backup'))->assertStatus(200);
+
+        // 2. Admin bisa membuat dan mengedit jadwal bertipe SIMULASI
+        $kelas = \App\Models\Kelas::create(['kode_kelas' => 'XII-TKL-1', 'nama_kelas' => 'XII TKL 1', 'tingkat' => 12, 'jurusan' => 'TKL']);
+        $this->actingAs($this->admin)->post(route('admin.jadwal.simpan'), [
+            'bank_soal_id' => $this->bank->id,
+            'nama_ujian' => 'Simulasi Kuasa Admin',
+            'jenis_ujian' => 'SIMULASI',
+            'token_ujian' => 'ADM01',
+            'waktu_mulai' => now()->format('Y-m-d H:i:s'),
+            'waktu_selesai' => now()->addDay()->format('Y-m-d H:i:s'),
+            'durasi_menit' => 60,
+            'kelas_ids' => [$kelas->id],
+        ])->assertRedirect();
+
+        $jadwal = \App\Models\JadwalUjian::where('nama_ujian', 'Simulasi Kuasa Admin')->firstOrFail();
+
+        $this->actingAs($this->admin)->post(route('admin.jadwal.update', $jadwal->id), [
+            'bank_soal_id' => $this->bank->id,
+            'nama_ujian' => 'Simulasi Kuasa Admin Revisi',
+            'jenis_ujian' => 'SIMULASI',
+            'token_ujian' => 'ADM02',
+            'waktu_mulai' => now()->format('Y-m-d H:i:s'),
+            'waktu_selesai' => now()->addDays(2)->format('Y-m-d H:i:s'),
+            'durasi_menit' => 90,
+            'status' => 'aktif',
+            'kelas_ids' => [$kelas->id],
+        ])->assertRedirect();
+
+        $jadwal->refresh();
+        $this->assertEquals('Simulasi Kuasa Admin Revisi', $jadwal->nama_ujian);
+        $this->assertEquals(90, $jadwal->durasi_menit);
+
+        // 3. Admin bisa mengoreksi jawaban & menginput nilai uraian peserta
+        $userSiswa = \App\Models\User::factory()->create(['role' => 'siswa', 'username' => 'siswa_koreksi_01']);
+        $siswa = \App\Models\Siswa::create([
+            'user_id' => $userSiswa->id,
+            'kelas_id' => $kelas->id,
+            'nisn' => '0088776655',
+            'nama_lengkap' => 'Siswa Koreksi',
+            'sesi_ujian' => 'Sesi 1',
+            'ruangan_ujian' => 'Lab 1',
+        ]);
+        $soalUraian = \App\Models\SoalButir::create([
+            'bank_soal_id' => $this->bank->id,
+            'nomor_urut' => 1,
+            'jenis_soal' => 'uraian',
+            'konten_soal' => 'Jelaskan prinsip kerja alternator.',
+            'bobot' => 25,
+        ]);
+        $peserta = \App\Models\UjianPeserta::create([
+            'jadwal_ujian_id' => $jadwal->id,
+            'siswa_id' => $siswa->id,
+            'status' => 'selesai',
+            'nilai_pg' => 60,
+            'total_nilai' => 60,
+        ]);
+
+        $this->actingAs($this->admin)->get(route('admin.koreksi_peserta', $peserta->id))
+            ->assertStatus(200)
+            ->assertSee('Siswa Koreksi');
+
+        $this->actingAs($this->admin)->post(route('admin.koreksi_peserta.simpan', $peserta->id), [
+            'skor_uraian' => [$soalUraian->id => 22.5],
+        ])->assertRedirect(route('admin.rekap_nilai', $jadwal->id));
+
+        $peserta->refresh();
+        $this->assertEquals(22.5, (float) $peserta->nilai_uraian);
+        $this->assertEquals(82.5, (float) $peserta->total_nilai);
+
+        // 4. Admin bisa backup & restore database SQL, serta reset hasil jadwal
+        $this->actingAs($this->admin)->post(route('admin.backup.database'))->assertSessionHas('success');
+        $backupFiles = glob(storage_path('app/backups/*.sql'));
+        $this->assertNotEmpty($backupFiles);
+        $latestSql = basename(end($backupFiles));
+
+        $this->actingAs($this->admin)->post(route('admin.jadwal.reset_hasil', $jadwal->id))->assertSessionHas('success');
+        $this->assertEquals(0, \App\Models\UjianPeserta::where('jadwal_ujian_id', $jadwal->id)->count());
+
+        $this->actingAs($this->admin)->post(route('admin.backup.database.restore'), [
+            'filename' => $latestSql,
+        ])->assertSessionHas('success');
+        $this->assertEquals(1, \App\Models\UjianPeserta::where('jadwal_ujian_id', $jadwal->id)->count());
+
+        // Bersihkan file backup tes
+        @unlink(storage_path('app/backups/' . $latestSql));
+    }
 }

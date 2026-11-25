@@ -555,12 +555,14 @@
                     <span>Data Siswa (Impor XLSX)</span>
                 </a>
             </li>
+            @if (Auth::user()->role === 'admin')
             <li class="nav-item {{ request()->routeIs('admin.users*') ? 'active' : '' }}" title="Guru & Pengguna">
                 <a href="{{ route('admin.users') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
                     <span>Guru & Pengguna</span>
                 </a>
             </li>
+            @endif
         </ul>
 
         <div class="nav-group-title">Bank Soal & Penilaian</div>
@@ -641,7 +643,8 @@
             </li>
         </ul>
 
-        <div class="nav-group-title">Sistem & Profil</div>
+        @if (Auth::user()->role === 'admin')
+        <div class="nav-group-title">Sistem & Profil (Super Admin)</div>
         <ul class="nav-menu">
             <li class="nav-item {{ request()->routeIs('admin.pengaturan*') ? 'active' : '' }}" title="Pengaturan & TTD Kepsek">
                 <a href="{{ route('admin.pengaturan') }}">
@@ -652,10 +655,11 @@
             <li class="nav-item {{ request()->routeIs('admin.backup*') ? 'active' : '' }}" title="Backup & Pemulihan">
                 <a href="{{ route('admin.backup') }}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                    <span>Backup Database & Soal</span>
+                    <span>Backup &amp; Restore DB</span>
                 </a>
             </li>
         </ul>
+        @endif
 
         <div class="sidebar-footer">
             <div>Kepala Sekolah:</div>
@@ -701,6 +705,17 @@
             @if (session('error'))
                 <div class="alert alert-danger">
                     {{ session('error') }}
+                </div>
+            @endif
+
+            @if ($errors->any())
+                <div class="alert alert-danger">
+                    <strong>Gagal menyimpan data:</strong>
+                    <ul style="margin: 6px 0 0 18px;">
+                        @foreach ($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
                 </div>
             @endif
 

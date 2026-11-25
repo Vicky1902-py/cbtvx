@@ -74,6 +74,7 @@
                 <th>Skor Uraian</th>
                 <th>Nilai Akhir</th>
                 <th>Keterangan KKM</th>
+                <th style="text-align: center;">Koreksi</th>
             </tr>
         </thead>
         <tbody>
@@ -105,10 +106,15 @@
                         <span class="badge badge-danger">BELUM TUNTAS</span>
                     @endif
                 </td>
+                <td style="text-align: center;">
+                    <a href="{{ route('admin.koreksi_peserta', $p->id) }}" class="btn btn-secondary btn-sm" title="Lihat detail jawaban & input nilai uraian">
+                        Koreksi / Detail
+                    </a>
+                </td>
             </tr>
             @empty
             <tr>
-                <td colspan="12" style="text-align: center; padding: 32px; color: #64748b;">
+                <td colspan="13" style="text-align: center; padding: 32px; color: #64748b;">
                     Belum ada nilai peserta ujian yang tersimpan pada jadwal ini.
                 </td>
             </tr>
