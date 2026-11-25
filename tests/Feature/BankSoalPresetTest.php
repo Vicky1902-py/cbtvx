@@ -942,4 +942,32 @@ class BankSoalPresetTest extends TestCase
             ->assertSee('Tersimpan')
             ->assertDontSee('Nilai: 50.0');
     }
+
+    public function test_perintah_pemantau_cbt_monitor_berjalan_sehat_dan_mendeteksi_error_log()
+    {
+        $logPath = storage_path('logs/laravel.log');
+        $offsetFile = storage_path('app/monitor_log_offset.txt');
+        $origLog = file_exists($logPath) ? file_get_contents($logPath) : null;
+        $origOffset = file_exists($offsetFile) ? file_get_contents($offsetFile) : null;
+
+        // 1. Kondisi normal harus HEALTHY (exit 0)
+        $this->artisan('cbt:monitor', ['--reset-offset' => true, '--json' => true])->assertExitCode(0);
+        $this->artisan('cbt:monitor', ['--heal' => true, '--json' => true])->assertExitCode(0);
+
+        // 2. Simulasikan ada error baru di laravel.log -> harus terdeteksi (exit 1)
+        file_put_contents($logPath, "[2026-11-25 12:15:00] local.ERROR: Simulasi database is locked\n", FILE_APPEND);
+        $this->artisan('cbt:monitor', ['--heal' => true, '--json' => true])
+            ->expectsOutputToContain('"status": "WARNING"')
+            ->assertExitCode(1);
+
+        // Pulihkan kondisi log & offset seperti semula
+        if ($origLog !== null) {
+            file_put_contents($logPath, $origLog);
+        }
+        if ($origOffset !== null) {
+            file_put_contents($offsetFile, $origOffset);
+        } else {
+            @unlink($offsetFile);
+        }
+    }
 }
